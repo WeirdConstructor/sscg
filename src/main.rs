@@ -8,6 +8,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::time::{Instant};
 
+mod logic;
+
 use wlambda;
 use wlambda::{VVal, GlobalEnv, EvalContext};
 
