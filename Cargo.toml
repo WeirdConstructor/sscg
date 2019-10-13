@@ -1,0 +1,15 @@
+[package]
+name = "sscg"
+version = "0.1.0"
+authors = ["Weird Constructor <weirdconstructor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+wlambda = { path = "../wlambda" }
+
+[dependencies.sdl2]
+version="0.32"
+default-features=false
+features=["ttf","bundled","gfx","image"]
+#,"image","gfx","ttf"]
+#,"mixer"]
