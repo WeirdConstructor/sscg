@@ -29,7 +29,7 @@ impl GameState {
 }
 
 #[derive(Debug, Clone)]
-enum Object {
+pub enum Object {
     None,
     Entity(Rc<RefCell<Entity>>),
     System(Rc<RefCell<System>>),
@@ -214,9 +214,10 @@ pub struct Ship {
     pub fuel_t:             i32, // 100:1
     pub fuel_cost:          i32, // per tank fill
     pub fuel:               i32, // 100:1
-    pub fuel_bill:          i32,
     pub capacity:           i32,
     pub cargo:              std::vec::Vec<Cargo>,
+    pub state:          VVal,
+    tick_count:         i32,
 }
 
 impl Ship {
@@ -225,17 +226,18 @@ impl Ship {
             name,
             max_fuel,
             capacity,
-            cargo:         std::vec::Vec::new(),
-            fuel:          max_fuel * 100,
-            fuel_t: 10,
-            fuel_cost:     100,
-            fuel_bill:     0,
-            course_progress: 0,
-            speed_t:       200,
-            course:        None,
-            pos:           (0, 0),
-            system:        0,
-            id:            0,
+            cargo:              std::vec::Vec::new(),
+            fuel:               max_fuel * 100,
+            fuel_t:             10,
+            fuel_cost:          100,
+            course_progress:    0,
+            speed_t:            200,
+            course:             None,
+            pos:                (0, 0),
+            system:             0,
+            id:                 0,
+            state:              VVal::map(),
+            tick_count:         0,
         }
     }
 
@@ -253,7 +255,8 @@ impl Ship {
             self.fuel -= self.fuel_t;
             if self.fuel <= 0 {
                 self.fuel = self.max_fuel * 100;
-                self.fuel_bill += self.fuel_cost;
+                er.emit("ship_fuel_bill".to_string(),
+                    VVal::Int(self.id as i64));
             }
 
             self.course_progress += self.speed_t;
@@ -274,8 +277,12 @@ impl Ship {
             println!("SHIP: pos={:?} dis={} cp={} fuel={}", self.pos, d, self.course_progress, self.fuel);
         }
 
-        er.emit("ship_tick".to_string(),
-            VVal::Int(self.id as i64));
+        self.tick_count += 1;
+        if self.tick_count > 5 {
+            self.tick_count = 0;
+            er.emit("ship_tick".to_string(),
+                VVal::Int(self.id as i64));
+        }
     }
 
     pub fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
@@ -297,12 +304,13 @@ impl Ship {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Entity {
     pub id:             ObjectID,
     pub typ:            SystemObject,
     pub x:              i32,
     pub y:              i32,
+    pub state:          VVal,
     draw_pos:           (i32, i32),
     is_highlighted:     bool,
 }
@@ -315,6 +323,7 @@ impl Entity {
             draw_pos: (0, 0),
             x: 0,
             y: 0,
+            state: VVal::map(),
             is_highlighted: false
         }
     }
@@ -347,17 +356,22 @@ pub struct System {
     x:      i32,
     y:      i32,
     objects: std::vec::Vec<Rc<RefCell<Entity>>>,
+    tick_count: i32,
 }
 
 impl System {
     pub fn new(x: i32, y: i32) -> Self {
-        System { id: 0, x, y, objects: std::vec::Vec::new() }
+        System { id: 0, x, y, objects: std::vec::Vec::new(), tick_count: 0 }
     }
 
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
 
     pub fn tick(&mut self, er: &mut EventRouter) {
-        er.emit("system_tick".to_string(), VVal::Int(self.id as i64));
+        self.tick_count += 1;
+        if self.tick_count > 10 {
+            self.tick_count = 0;
+            er.emit("system_tick".to_string(), VVal::Int(self.id as i64));
+        }
     }
 
     pub fn add(&mut self, x: i32, y: i32, e: Rc<RefCell<Entity>>) {
