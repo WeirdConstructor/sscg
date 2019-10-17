@@ -163,6 +163,23 @@ pub fn main() -> Result<(), String> {
         event_router:    Rc::new(RefCell::new(ERouter)),
     };
 
+    GS.event_router.borrow_mut().reg_cb("ship_tick".to_string(),
+        |gs: &mut GameState, v: VVal| {
+            let ship   : Rc<RefCell<Ship>>   = gs.get_ship(v.i() as ObjectID).unwrap();
+            let system : Rc<RefCell<System>> = gs.get_system(ship.borrow().system).unwrap();
+            let e = system.borrow_mut().get_entity_close_to(ship.borrow().pos.0, ship.borrow().pos.1);
+            if let Some(ent) = e {
+                println!("SHIP ARRIVED: {} AT SYS {} ENT: {:?}",
+                    v.s(), system.borrow().id, *(ent.borrow()));
+                match ent.borrow().typ {
+                    SystemObject::Station => {
+                    },
+                    SystemObject::AsteroidField => {
+                    },
+                }
+            }
+        });
+
     GS.event_router.borrow_mut().reg_cb("ship_arrived".to_string(),
         |gs: &mut GameState, v: VVal| {
             let ship   : Rc<RefCell<Ship>>   = gs.get_ship(v.i() as ObjectID).unwrap();
