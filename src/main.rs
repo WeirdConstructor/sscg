@@ -3,17 +3,17 @@ use sdl2::event::Event;
 use sdl2::event::WindowEvent;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
-use sdl2::rect::Point;
+//use sdl2::rect::Point;
 use sdl2::gfx::primitives::{DrawRenderer};
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::time::{Instant};
+use std::time::{Instant, Duration};
+//use vecmath::*;
 
 mod logic;
 use logic::*;
 
-use wlambda;
-use wlambda::{VVal, GlobalEnv, EvalContext};
+use wlambda::{VVal}; //, GlobalEnv, EvalContext};
 
 struct GUIPainter<'a, 'b> {
     canvas: sdl2::render::Canvas<sdl2::video::Window>,
@@ -89,7 +89,7 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
             t as u8,
             Color::from(color));
     }
-    fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32, fg: (u8, u8, u8, u8), bg: Option<(u8, u8, u8, u8)>, txt: &str) {
+    fn draw_text(&mut self, _xo: i32, _yo: i32, _max_w: u32, _fg: (u8, u8, u8, u8), _bg: Option<(u8, u8, u8, u8)>, _txt: &str) {
     }
 }
 
@@ -156,16 +156,41 @@ pub fn main() -> Result<(), String> {
         offs: (0, 0),
     };
 
-    let mut s = System::new(0, 0);
-    s.add(10, 10, Entity::new(logic::SystemObject::Station));
-    s.add(400, 200, Entity::new(logic::SystemObject::AsteroidField));
+    let OReg = ObjectRegistry::new();
+    let ERouter = EventRouter::new();
+    let mut GS = GameState {
+        object_registry: Rc::new(RefCell::new(OReg)),
+        event_router:    Rc::new(RefCell::new(ERouter)),
+    };
+
+    GS.event_router.borrow_mut().reg_cb("ship_arrived".to_string(),
+        |gs: &mut GameState, v: VVal| {
+            let ship   : Rc<RefCell<Ship>>   = gs.get_ship(v.i() as ObjectID).unwrap();
+            let system : Rc<RefCell<System>> = gs.get_system(ship.borrow().system).unwrap();
+            let e = system.borrow_mut().get_entity_close_to(ship.borrow().pos.0, ship.borrow().pos.1);
+            if let Some(ent) = e {
+                println!("SHIP ARRIVED: {} AT SYS {} ENT: {:?}", v.s(), system.borrow().id, *(ent.borrow()));
+            }
+        });
+
+    let (s, ship) = {
+        let mut os = GS.object_registry.borrow_mut();
+        let s = os.add_system(System::new(0, 0));
+        s.borrow_mut().add(10,   10, os.add_entity(Entity::new(logic::SystemObject::Station)));
+        s.borrow_mut().add(400, 200, os.add_entity(Entity::new(logic::SystemObject::AsteroidField)));
+        s.borrow_mut().add(150, 300, os.add_entity(Entity::new(logic::SystemObject::AsteroidField)));
+
+        let ship = os.add_ship(Ship::new("Cocky".to_string(), 100, 100));
+        ship.borrow_mut().set_system(s.borrow().id);
+        (s, ship)
+    };
+
+    let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> = std::vec::Vec::new();
 
     let mut last_frame = Instant::now();
     'running: loop {
-        let mut force_redraw = false;
-        let event = event_pump.wait_event_timeout(1);
         let mouse_state = event_pump.mouse_state();
-        if let Some(event) = event {
+        for event in event_pump.poll_iter() {
             match event {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
@@ -182,9 +207,13 @@ pub fn main() -> Result<(), String> {
 //                Event::KeyDown { keycode: Some(Keycode::L), .. } => {
 //                    fm.process_page_control(PageControl::Access, None);
 //                },
-//                Event::MouseButtonDown { x, y, .. } => {
-//                    fm.process_page_control(PageControl::Click((x, y)), Some((x, y)));
-//                },
+                Event::MouseButtonDown { x, y, .. } => {
+                    if let Some(e) = s.borrow_mut().get_entity_close_to(x, y) {
+                        let x = e.borrow().x;
+                        let y = e.borrow().y;
+                        ship.borrow_mut().set_course_to(x, y);
+                    }
+                },
 //                Event::TextInput { text, .. } => {
 //                    println!("TEXT: {}", text);
 //                },
@@ -207,16 +236,28 @@ pub fn main() -> Result<(), String> {
                 },
                 _ => {}
             }
-
-            let frame_time = last_frame.elapsed().as_millis();
-
-                gui_painter.clear();
-                s.draw(&mut gui_painter);
-                s.try_highlight_entity_close_to(mouse_state.x(), mouse_state.y());
-//                fm.redraw(&mut gui_painter);
-                gui_painter.done();
-//                last_frame = Instant::now();
         }
+
+        let frame_time_ms = last_frame.elapsed().as_micros() as f64 / 1000.0_f64;
+        {
+            let mut os = GS.object_registry.borrow_mut();
+            os.update(frame_time_ms, &mut *(GS.event_router.borrow_mut()));
+        }
+
+        GS.event_router.borrow_mut().get_events(&mut cb_queue);
+
+        while !cb_queue.is_empty() {
+            let c = cb_queue.pop().unwrap();
+            c.0(&mut GS, c.1);
+        }
+
+        gui_painter.clear();
+        s.borrow_mut().draw(&mut *ship.borrow_mut(), &mut gui_painter);
+        s.borrow_mut().try_highlight_entity_close_to(mouse_state.x(), mouse_state.y());
+        gui_painter.done();
+        last_frame = Instant::now();
+
+        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 
     Ok(())

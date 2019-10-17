@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 wlambda = { path = "../wlambda" }
 astar   = "4.0.0"
+vecmath = "1.0.0"
 
 [dependencies.sdl2]
 version="0.32"
