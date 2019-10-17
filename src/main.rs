@@ -4,11 +4,13 @@ use sdl2::event::WindowEvent;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
 use sdl2::rect::Point;
+use sdl2::gfx::primitives::{DrawRenderer};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::time::{Instant};
 
 mod logic;
+use logic::*;
 
 use wlambda;
 use wlambda::{VVal, GlobalEnv, EvalContext};
@@ -16,6 +18,8 @@ use wlambda::{VVal, GlobalEnv, EvalContext};
 struct GUIPainter<'a, 'b> {
     canvas: sdl2::render::Canvas<sdl2::video::Window>,
     font: Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
+    offs_stack: std::vec::Vec<(i32, i32)>,
+    offs: (i32, i32),
 }
 
 impl<'a, 'b> GUIPainter<'a, 'b> {
@@ -26,6 +30,66 @@ impl<'a, 'b> GUIPainter<'a, 'b> {
 
     fn done(&mut self) {
         self.canvas.present();
+    }
+}
+
+impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
+    fn push_offs(&mut self, xo: i32, yo: i32) {
+        self.offs_stack.push(self.offs);
+        self.offs = (xo, yo);
+    }
+
+    fn push_add_offs(&mut self, xo: i32, yo: i32) {
+        self.push_offs(xo + self.offs.0, yo + self.offs.1);
+    }
+
+    fn pop_offs(&mut self) {
+        if !self.offs_stack.is_empty() {
+            self.offs = self.offs_stack.pop().unwrap();
+        }
+    }
+
+    fn get_screen_pos(&self, xo: i32, yo: i32) -> (i32, i32) {
+        ((self.offs.0 + xo) as i32,
+         (self.offs.1 + yo) as i32)
+    }
+
+    fn draw_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
+        self.canvas.set_draw_color(Color::from(color));
+        self.canvas.draw_rect(Rect::new(xo + self.offs.0, yo + self.offs.1, w, h))
+            .expect("drawing rectangle");
+    }
+
+    fn draw_rect_filled(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
+        self.canvas.set_draw_color(Color::from(color));
+        self.canvas.fill_rect(Rect::new(xo + self.offs.0, yo + self.offs.1, w, h))
+            .expect("filling rectangle");
+    }
+
+    fn draw_dot(&mut self, xo: i32, yo: i32, r: u32, color: (u8, u8, u8, u8)) {
+        self.canvas.filled_circle(
+            (self.offs.0 + xo ) as i16,
+            (self.offs.1 + yo ) as i16,
+            r as i16,
+            Color::from(color));
+    }
+    fn draw_circle(&mut self, xo: i32, yo: i32, r: u32, color: (u8, u8, u8, u8)) {
+        self.canvas.circle(
+            (self.offs.0 + xo ) as i16,
+            (self.offs.1 + yo ) as i16,
+            r as i16,
+            Color::from(color));
+    }
+    fn draw_line(&mut self, xo: i32, yo: i32, x2o: i32, y2o: i32, t: u32, color: (u8, u8, u8, u8)) {
+        self.canvas.thick_line(
+            (self.offs.0 + xo ) as i16,
+            (self.offs.1 + yo ) as i16,
+            (self.offs.0 + x2o) as i16,
+            (self.offs.1 + y2o) as i16,
+            t as u8,
+            Color::from(color));
+    }
+    fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32, fg: (u8, u8, u8, u8), bg: Option<(u8, u8, u8, u8)>, txt: &str) {
     }
 }
 
@@ -88,7 +152,13 @@ pub fn main() -> Result<(), String> {
     let mut gui_painter = GUIPainter {
         canvas: canvas,
         font: Rc::new(RefCell::new(font)),
+        offs_stack: std::vec::Vec::new(),
+        offs: (0, 0),
     };
+
+    let mut s = System::new(0, 0);
+    s.add(10, 10, Entity::new(logic::SystemObject::Station));
+    s.add(400, 200, Entity::new(logic::SystemObject::AsteroidField));
 
     let mut last_frame = Instant::now();
     'running: loop {
@@ -141,6 +211,8 @@ pub fn main() -> Result<(), String> {
             let frame_time = last_frame.elapsed().as_millis();
 
                 gui_painter.clear();
+                s.draw(&mut gui_painter);
+                s.try_highlight_entity_close_to(mouse_state.x(), mouse_state.y());
 //                fm.redraw(&mut gui_painter);
                 gui_painter.done();
 //                last_frame = Instant::now();
