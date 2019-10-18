@@ -4,7 +4,7 @@ use std::cell::RefCell;
 
 pub type ObjectID = usize;
 
-pub type EventCallback = Fn(&mut GameState, VVal);
+pub type EventCallback = Fn(&Rc<RefCell<GameState>>, VVal);
 
 #[derive(Clone)]
 pub struct GameState {
@@ -13,18 +13,35 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn get_ship(&mut self, id: ObjectID) -> Option<Rc<RefCell<Ship>>> {
+    pub fn new_ref() -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(GameState {
+            object_registry: Rc::new(RefCell::new(ObjectRegistry::new())),
+            event_router:    Rc::new(RefCell::new(EventRouter::new())),
+        }))
+    }
+    pub fn get_ship(&self, id: ObjectID) -> Option<Rc<RefCell<Ship>>> {
         match self.object_registry.borrow_mut().get(id) {
             Some(Object::Ship(s)) => Some(s.clone()),
             _ => None,
         }
     }
 
-    pub fn get_system(&mut self, id: ObjectID) -> Option<Rc<RefCell<System>>> {
+    pub fn get_system(&self, id: ObjectID) -> Option<Rc<RefCell<System>>> {
         match self.object_registry.borrow_mut().get(id) {
             Some(Object::System(s)) => Some(s.clone()),
             _ => None,
         }
+    }
+
+    pub fn reg_cb<F>(&self, ev: String, f: F)
+        where F: 'static + Fn(&Rc<RefCell<GameState>>, VVal) {
+        self.event_router.borrow_mut().reg_cb(ev, f);
+    }
+
+    pub fn update(&self, frame_time_ms: f64) {
+        let mut os = self.object_registry.borrow_mut();
+        let mut er = self.event_router.borrow_mut();
+        os.update(frame_time_ms, &mut *er);
     }
 }
 
@@ -117,7 +134,9 @@ impl EventRouter {
         }
     }
 
-    pub fn reg_cb<F>(&mut self, ev: String, f: F) where F: 'static + Fn(&mut GameState, VVal) {
+    pub fn reg_cb<F>(&mut self, ev: String, f: F)
+        where F: 'static + Fn(&Rc<RefCell<GameState>>, VVal) {
+
         if let Some(cbs) = self.callbacks.get_mut(&ev) {
             cbs.push(Rc::new(f));
         } else {
@@ -128,7 +147,14 @@ impl EventRouter {
     }
 
     pub fn emit(&mut self, ev: String, args: VVal) {
-        self.event_queue.push((ev, args));
+        if self.callbacks.get(&ev).is_none() {
+            let a2 = VVal::vec();
+            a2.push(VVal::new_str_mv(ev));
+            a2.push(args);
+            self.event_queue.push(("*".to_string(), a2));
+        } else {
+            self.event_queue.push((ev, args));
+        }
     }
 
     pub fn get_events(&mut self, vec: &mut Vec<(Rc<EventCallback>, VVal)>) {
