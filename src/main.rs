@@ -13,7 +13,7 @@ use std::time::{Instant, Duration};
 mod logic;
 use logic::*;
 
-use wlambda::{VVal}; //, GlobalEnv, EvalContext};
+use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext};
 
 struct GUIPainter<'a, 'b> {
     canvas: sdl2::render::Canvas<sdl2::video::Window>,
@@ -126,6 +126,94 @@ fn draw_bg_text(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     draw_text(font, color, canvas, x, y, max_w, txt);
 }
 
+
+#[derive(Clone)]
+struct GameStateWlWrapper(Rc<RefCell<GameState>>);
+impl GameStateWlWrapper {
+    pub fn vval_from(r: Rc<RefCell<GameState>>) -> VVal {
+        VVal::Usr(Box::new(GameStateWlWrapper(r)))
+    }
+}
+
+impl VValUserData for GameStateWlWrapper {
+    fn s(&self) -> String { format!("$<GameState>") }
+    fn set_key(&self, key: &VVal, val: VVal) {
+//        self.0.borrow_mut().state.set_key(key, val);
+    }
+    fn get_key(&self, key: &str) -> Option<VVal> {
+        match key {
+            _    => None,
+        }
+    }
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
+    fn clone_ud(&self) -> Box<dyn wlambda::vval::VValUserData> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone)]
+struct EntityWlWrapper(Rc<RefCell<Entity>>);
+impl EntityWlWrapper {
+    pub fn vval_from(r: Rc<RefCell<Entity>>) -> VVal {
+        VVal::Usr(Box::new(EntityWlWrapper(r)))
+    }
+}
+
+impl VValUserData for EntityWlWrapper {
+    fn s(&self) -> String { format!("$<Entity:{}>", self.0.borrow().id) }
+    fn i(&self) -> i64 { self.0.borrow().id as i64 }
+    fn set_key(&self, key: &VVal, val: VVal) {
+        self.0.borrow_mut().state.set_key(key, val);
+    }
+    fn get_key(&self, key: &str) -> Option<VVal> {
+        match key {
+            "id"        => Some(VVal::Int(self.0.borrow().id as i64)),
+            _ => self.0.borrow().state.get_key(key),
+        }
+    }
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
+    fn clone_ud(&self) -> Box<dyn wlambda::vval::VValUserData> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone)]
+struct ShipWlWrapper(Rc<RefCell<Ship>>);
+impl ShipWlWrapper {
+    pub fn vval_from(r: Rc<RefCell<Ship>>) -> VVal {
+        VVal::Usr(Box::new(ShipWlWrapper(r)))
+    }
+}
+
+impl VValUserData for ShipWlWrapper {
+    fn s(&self) -> String { format!("$<Ship:{}>", self.0.borrow().id) }
+    fn i(&self) -> i64 { self.0.borrow().id as i64 }
+    fn set_key(&self, key: &VVal, val: VVal) {
+        self.0.borrow_mut().state.set_key(key, val);
+    }
+    fn get_key(&self, key: &str) -> Option<VVal> {
+        match key {
+            "id"        => Some(VVal::Int(self.0.borrow().id as i64)),
+            "system_id" => Some(VVal::Int(self.0.borrow().system as i64)),
+            _ => self.0.borrow().state.get_key(key),
+        }
+    }
+    fn call(&self, args: &[VVal]) -> Result<VVal, StackAction> {
+        if args.len() < 1 {
+            return Err(StackAction::panic_msg(
+                format!("{} called with too few arguments", self.s())));
+        }
+        match &args[0].s_raw()[..] {
+            "foo" => { Ok(VVal::Bol(true)) },
+            _ => Ok(VVal::Nul)
+        }
+    }
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
+    fn clone_ud(&self) -> Box<dyn wlambda::vval::VValUserData> {
+        Box::new(self.clone())
+    }
+}
+
 pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -156,42 +244,87 @@ pub fn main() -> Result<(), String> {
         offs: (0, 0),
     };
 
-    let OReg = ObjectRegistry::new();
-    let ERouter = EventRouter::new();
-    let mut GS = GameState {
-        object_registry: Rc::new(RefCell::new(OReg)),
-        event_router:    Rc::new(RefCell::new(ERouter)),
-    };
+    let GS = GameState::new_ref();
 
-    GS.event_router.borrow_mut().reg_cb("ship_tick".to_string(),
-        |gs: &mut GameState, v: VVal| {
-            let ship   : Rc<RefCell<Ship>>   = gs.get_ship(v.i() as ObjectID).unwrap();
-            let system : Rc<RefCell<System>> = gs.get_system(ship.borrow().system).unwrap();
-            let e = system.borrow_mut().get_entity_close_to(ship.borrow().pos.0, ship.borrow().pos.1);
+    let genv = GlobalEnv::new_default();
+    let mut wl_ctx = EvalContext::new_with_user(genv, GS.clone());
+
+    wl_ctx.set_global_var("game", &GameStateWlWrapper::vval_from(GS.clone()));
+
+    let mut callbacks : VVal = VVal::Nul;
+    match wl_ctx.eval_file("main.wl") {
+        Ok(v) => {
+            if v.is_err() {
+                panic!(format!("'main.wl' SCRIPT ERROR: {}", v.s()));
+            } else {
+                callbacks = v.clone();
+                println!("GET VALUE: {}", v.to_json(false).unwrap());
+            }
+        },
+        Err(e) => { panic!(format!("'main.wl' SCRIPT ERROR: {}", e)); }
+    }
+
+    let wlcb_ship_ent_tick =
+        callbacks.get_key("ship_entity_tick")
+                 .expect("ship_entity_tick key");
+    let wlcb_ship_tick =
+        callbacks.get_key("ship_tick")
+                 .expect("ship_tick key");
+    let wlcb_system_tick   = callbacks.get_key("system_tick");
+    let wlcb_ship_arrived  = callbacks.get_key("ship_arrived");
+
+    let wl_ctx_st = wl_ctx.clone();
+    GS.borrow_mut().reg_cb("ship_tick".to_string(),
+        move |gs: &Rc<RefCell<GameState>>, v: VVal| {
+            let ship   : Rc<RefCell<Ship>>   = gs.borrow().get_ship(v.i() as ObjectID).unwrap();
+            let system : Rc<RefCell<System>> = gs.borrow().get_system(ship.borrow().system).unwrap();
+
+            let v_ship = ShipWlWrapper::vval_from(ship.clone());
+            let v_sys_id  = VVal::Int(ship.borrow().system as i64);
+            {
+                let args = vec![v_ship.clone().into(), v_sys_id.clone()];
+                wl_ctx_st.clone().call(&wlcb_ship_tick, &args);
+            }
+
+            let e = system.borrow_mut().get_entity_close_to(
+                        ship.borrow().pos.0, ship.borrow().pos.1);
             if let Some(ent) = e {
                 println!("SHIP ARRIVED: {} AT SYS {} ENT: {:?}",
                     v.s(), system.borrow().id, *(ent.borrow()));
-                match ent.borrow().typ {
-                    SystemObject::Station => {
-                    },
-                    SystemObject::AsteroidField => {
-                    },
-                }
+                let typ = VVal::new_str(
+                    match ent.borrow().typ {
+                        SystemObject::Station => "station",
+                        SystemObject::AsteroidField => "asteroid_field",
+                        _ => "unknown",
+                    }
+                );
+                let v_ent = EntityWlWrapper::vval_from(ent.clone());
+                let args : Vec<VVal> = vec![
+                    v_ship.into(),
+                    v_sys_id,
+                    v_ent.into(),
+                    typ,
+                ];
+                wl_ctx_st.clone().call(&wlcb_ship_ent_tick, &args);
             }
         });
 
-    GS.event_router.borrow_mut().reg_cb("ship_arrived".to_string(),
-        |gs: &mut GameState, v: VVal| {
-            let ship   : Rc<RefCell<Ship>>   = gs.get_ship(v.i() as ObjectID).unwrap();
-            let system : Rc<RefCell<System>> = gs.get_system(ship.borrow().system).unwrap();
-            let e = system.borrow_mut().get_entity_close_to(ship.borrow().pos.0, ship.borrow().pos.1);
+    GS.borrow_mut().reg_cb("ship_arrived".to_string(),
+        |gs: &Rc<RefCell<GameState>>, v: VVal| {
+            let ship   : Rc<RefCell<Ship>>   =
+                gs.borrow().get_ship(v.i() as ObjectID).unwrap();
+            let system : Rc<RefCell<System>> =
+                gs.borrow().get_system(ship.borrow().system).unwrap();
+            let e = system.borrow_mut().get_entity_close_to(
+                        ship.borrow().pos.0, ship.borrow().pos.1);
             if let Some(ent) = e {
                 println!("SHIP ARRIVED: {} AT SYS {} ENT: {:?}", v.s(), system.borrow().id, *(ent.borrow()));
             }
         });
 
     let (s, ship) = {
-        let mut os = GS.object_registry.borrow_mut();
+        let gs = GS.borrow_mut();
+        let mut os = gs.object_registry.borrow_mut();
         let s = os.add_system(System::new(0, 0));
         s.borrow_mut().add(10,   10, os.add_entity(Entity::new(logic::SystemObject::Station)));
         s.borrow_mut().add(400, 200, os.add_entity(Entity::new(logic::SystemObject::AsteroidField)));
@@ -256,16 +389,12 @@ pub fn main() -> Result<(), String> {
         }
 
         let frame_time_ms = last_frame.elapsed().as_micros() as f64 / 1000.0_f64;
-        {
-            let mut os = GS.object_registry.borrow_mut();
-            os.update(frame_time_ms, &mut *(GS.event_router.borrow_mut()));
-        }
-
-        GS.event_router.borrow_mut().get_events(&mut cb_queue);
+        GS.borrow_mut().update(frame_time_ms);
+        GS.borrow_mut().event_router.borrow_mut().get_events(&mut cb_queue);
 
         while !cb_queue.is_empty() {
             let c = cb_queue.pop().unwrap();
-            c.0(&mut GS, c.1);
+            c.0(&GS, c.1);
         }
 
         gui_painter.clear();
