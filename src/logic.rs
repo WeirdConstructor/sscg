@@ -123,8 +123,9 @@ impl ObjectRegistry {
 
     fn vval_to_object(&mut self, v: VVal) -> Object {
         match &v.at(0).unwrap_or(VVal::Nul).s_raw()[..] {
-            "ship"   => Object::Ship(Ship::deserialize(self, v.at(1).unwrap_or(VVal::Nul))),
-            "system" => Object::System(System::deserialize(self, v.at(1).unwrap_or(VVal::Nul))),
+            "ship"   => Object::Ship(Rc::new(RefCell::new(Ship::deserialize(self, v.at(1).unwrap_or(VVal::Nul))))),
+            "system" => Object::System(Rc::new(RefCell::new(System::deserialize(self, v.at(1).unwrap_or(VVal::Nul))))),
+            _ => Object::None,
         }
     }
 
@@ -142,7 +143,7 @@ impl ObjectRegistry {
 
         if let VVal::Lst(m) = s {
             for v in m.borrow().iter() {
-                self.vval_to_object(v);
+                self.vval_to_object(v.clone());
             }
         }
     }
@@ -324,8 +325,8 @@ impl Ship {
         }
     }
 
-    pub fn deserialize(or: &mut ObjectRegistry, v: VVal) -> Self {
-        let s = Self::new(0, 0);
+    pub fn deserialize(_or: &mut ObjectRegistry, v: VVal) -> Self {
+        let mut s = Self::new("".to_string());
         s.id                = v.at(2).unwrap_or(VVal::Int(0)).i() as ObjectID;
         s.system            = v.at(3).unwrap_or(VVal::Int(0)).i() as ObjectID;
         s.name              = v.at(4).unwrap_or(VVal::new_str("")).s_raw();
@@ -334,10 +335,12 @@ impl Ship {
         s.speed_t           = v.at(7).unwrap_or(VVal::Int(0)).i() as i32;
         s.course_progress   = v.at(7).unwrap_or(VVal::Int(0)).i() as i32;
         if let Some(VVal::Lst(l)) = v.at(9) {
-            s.course.from.0 = l.at(0).unwrap_or(VVal::Int(0)).i() as i32;
-            s.course.from.1 = l.at(1).unwrap_or(VVal::Int(0)).i() as i32;
-            s.course.to.0   = l.at(2).unwrap_or(VVal::Int(0)).i() as i32;
-            s.course.to.1   = l.at(3).unwrap_or(VVal::Int(0)).i() as i32;
+            let mut c = Course::new(0, 0, 0, 0);
+            c.from.0 = l.borrow().get(0).unwrap().i() as i32;
+            c.from.1 = l.borrow().get(1).unwrap().i() as i32;
+            c.to.0   = l.borrow().get(2).unwrap().i() as i32;
+            c.to.1   = l.borrow().get(3).unwrap().i() as i32;
+            s.course = Some(c);
         } else {
             s.course = None;
         }
@@ -358,17 +361,17 @@ impl Ship {
         v.push(VVal::Int(self.speed_t as i64));
         v.push(VVal::Int(self.course_progress as i64));
         if let Some(c) = self.course {
-            let c = VVal::vec();
-            c.push(VVal::Int(self.course.from.0));
-            c.push(VVal::Int(self.course.from.1));
-            c.push(VVal::Int(self.course.to.0));
-            c.push(VVal::Int(self.course.to.1));
-            v.push(c);
+            let cv = VVal::vec();
+            cv.push(VVal::Int(c.from.0 as i64));
+            cv.push(VVal::Int(c.from.1 as i64));
+            cv.push(VVal::Int(c.to.0 as i64));
+            cv.push(VVal::Int(c.to.1 as i64));
+            v.push(cv);
         } else {
             v.push(VVal::Nul);
         }
         v.push(VVal::Int(self.tick_count  as i64));
-        v.push(VVal::Int(self.state));
+        v.push(self.state.clone());
         v
     }
 
@@ -452,10 +455,14 @@ impl Entity {
         }
     }
 
-    pub fn deserialize(or: &mut ObjectRegistry, v: VVal) -> Self {
-        let s = Self::new(0, 0);
+    pub fn deserialize(_or: &mut ObjectRegistry, v: VVal) -> Self {
+        let mut s = Self::new(SystemObject::Station);
         s.id            = v.at(2).unwrap_or(VVal::Int(0)).i() as ObjectID;
-        s.typ           = v.at(3).unwrap_or(VVal::Int(0)).i() as SystemObject;
+        s.typ           = match v.at(3).unwrap_or(VVal::Int(0)).i() {
+                              0 => SystemObject::Station,
+                              1 => SystemObject::AsteroidField,
+                              _ => SystemObject::Station,
+                          };
         s.x             = v.at(4).unwrap_or(VVal::Int(0)).i() as i32;
         s.y             = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
         s.state         = v.at(6).unwrap_or(VVal::Nul);
@@ -470,7 +477,7 @@ impl Entity {
         v.push(VVal::Int(self.typ as i64));
         v.push(VVal::Int(self.x   as i64));
         v.push(VVal::Int(self.y   as i64));
-        v.push(VVal::Int(self.state));
+        v.push(self.state.clone());
         v
     }
 
@@ -519,7 +526,7 @@ impl System {
     }
 
     pub fn deserialize(or: &mut ObjectRegistry, v: VVal) -> Self {
-        let s = Self::new(0, 0);
+        let mut s = Self::new(0, 0);
         s.id            = v.at(2).unwrap_or(VVal::Int(0)).i() as ObjectID;
         s.x             = v.at(3).unwrap_or(VVal::Int(0)).i() as i32;
         s.y             = v.at(4).unwrap_or(VVal::Int(0)).i() as i32;
@@ -527,7 +534,9 @@ impl System {
         s.state         = v.at(6).unwrap_or(VVal::Nul);
         if let Some(VVal::Lst(l)) = v.at(7) {
             for o in l.borrow().iter() {
-                s.objects.push(Entity::deserialize(or, o));
+                let e = Rc::new(RefCell::new(Entity::deserialize(or, o.clone())));
+                let id = e.borrow().id;
+                or.set_object_at(id, Object::Entity(e));
             }
         }
         s
@@ -541,7 +550,7 @@ impl System {
         v.push(VVal::Int(self.x           as i64));
         v.push(VVal::Int(self.y           as i64));
         v.push(VVal::Int(self.tick_count  as i64));
-        v.push(VVal::Int(self.state));
+        v.push(self.state.clone());
         let o = VVal::vec();
         for obj in self.objects.iter() {
             o.push(obj.borrow().serialize());
