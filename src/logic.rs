@@ -101,6 +101,52 @@ impl ObjectRegistry {
         }
     }
 
+    pub fn serialize(&self) -> VVal {
+        let v = VVal::vec();
+        v.push(VVal::new_str("sscg_savegame"));
+        v.push(VVal::Int(0)); // version
+        v.push(VVal::Int(self.objects.len() as i64));
+
+        let objs = VVal::vec();
+        for o in self.objects.iter() {
+            objs.push(match o {
+                Object::Entity(e) => e.borrow().serialize(),
+                Object::System(e) => e.borrow().serialize(),
+                Object::Ship(e)   => e.borrow().serialize(),
+                _                 => VVal::Nul,
+            });
+        }
+        v.push(objs);
+
+        v
+    }
+
+    fn vval_to_object(&mut self, v: VVal) -> Object {
+        match &v.at(0).unwrap_or(VVal::Nul).s_raw()[..] {
+            "ship"   => Object::Ship(Ship::deserialize(self, v.at(1).unwrap_or(VVal::Nul))),
+            "system" => Object::System(System::deserialize(self, v.at(1).unwrap_or(VVal::Nul))),
+        }
+    }
+
+    pub fn set_object_at(&mut self, idx: usize, o: Object) {
+        self.objects[idx] = o;
+    }
+
+    pub fn deserialize(&mut self, s: VVal) {
+        self.objects = std::vec::Vec::new();
+        self.tick_time_ms = 0.0;
+
+        self.objects.resize(
+            s.at(2).unwrap_or(VVal::Int(0)).i() as usize,
+            Object::None);
+
+        if let VVal::Lst(m) = s {
+            for v in m.borrow().iter() {
+                self.vval_to_object(v);
+            }
+        }
+    }
+
     pub fn update(&mut self, dt: f64, er: &mut EventRouter) {
         self.tick_time_ms += dt;
         //d// println!("UPD: {} {}", dt, self.tick_time_ms);
@@ -249,17 +295,6 @@ impl Course {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
-enum CargoType {
-    Rocks,
-}
-
-#[derive(Debug, Clone)]
-pub struct Cargo {
-    typ:        CargoType,
-    count:      i32,
-}
-
 // 10 ticks == 1 second
 #[derive(Debug, Clone)]
 pub struct Ship {
@@ -268,28 +303,16 @@ pub struct Ship {
     pub name:           String,
     pub pos:            (i32, i32),
     pub speed_t:        i32, // 100:1 => speed_t * 10 is speed per second
+    pub state:          VVal,
     course_progress:    i32, // 100:1
     course:             Option<Course>,
-    pub max_fuel:           i32, // 1:1
-    pub fuel_t:             i32, // 100:1
-    pub fuel_cost:          i32, // per tank fill
-    pub fuel:               i32, // 100:1
-    pub capacity:           i32,
-    pub cargo:              std::vec::Vec<Cargo>,
-    pub state:          VVal,
     tick_count:         i32,
 }
 
 impl Ship {
-    pub fn new(name: String, max_fuel: i32, capacity: i32) -> Self {
+    pub fn new(name: String) -> Self {
         Ship {
             name,
-            max_fuel,
-            capacity,
-            cargo:              std::vec::Vec::new(),
-            fuel:               max_fuel * 100,
-            fuel_t:             10,
-            fuel_cost:          100,
             course_progress:    0,
             speed_t:            200,
             course:             None,
@@ -299,6 +322,54 @@ impl Ship {
             state:              VVal::map(),
             tick_count:         0,
         }
+    }
+
+    pub fn deserialize(or: &mut ObjectRegistry, v: VVal) -> Self {
+        let s = Self::new(0, 0);
+        s.id                = v.at(2).unwrap_or(VVal::Int(0)).i() as ObjectID;
+        s.system            = v.at(3).unwrap_or(VVal::Int(0)).i() as ObjectID;
+        s.name              = v.at(4).unwrap_or(VVal::new_str("")).s_raw();
+        s.pos.0             = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
+        s.pos.1             = v.at(6).unwrap_or(VVal::Int(0)).i() as i32;
+        s.speed_t           = v.at(7).unwrap_or(VVal::Int(0)).i() as i32;
+        s.course_progress   = v.at(7).unwrap_or(VVal::Int(0)).i() as i32;
+        if let Some(VVal::Lst(l)) = v.at(9) {
+            s.course.from.0 = l.at(0).unwrap_or(VVal::Int(0)).i() as i32;
+            s.course.from.1 = l.at(1).unwrap_or(VVal::Int(0)).i() as i32;
+            s.course.to.0   = l.at(2).unwrap_or(VVal::Int(0)).i() as i32;
+            s.course.to.1   = l.at(3).unwrap_or(VVal::Int(0)).i() as i32;
+        } else {
+            s.course = None;
+        }
+        s.tick_count        = v.at(10).unwrap_or(VVal::Int(0)).i() as i32;
+        s.state             = v.at(11).unwrap_or(VVal::Nul);
+        s
+    }
+
+    pub fn serialize(&self) -> VVal {
+        let v = VVal::vec();
+        v.push(VVal::new_str("ship"));
+        v.push(VVal::Int(0)); // version
+        v.push(VVal::Int(self.id      as i64));
+        v.push(VVal::Int(self.system  as i64));
+        v.push(VVal::new_str(&self.name));
+        v.push(VVal::Int(self.pos.0   as i64));
+        v.push(VVal::Int(self.pos.1   as i64));
+        v.push(VVal::Int(self.speed_t as i64));
+        v.push(VVal::Int(self.course_progress as i64));
+        if let Some(c) = self.course {
+            let c = VVal::vec();
+            c.push(VVal::Int(self.course.from.0));
+            c.push(VVal::Int(self.course.from.1));
+            c.push(VVal::Int(self.course.to.0));
+            c.push(VVal::Int(self.course.to.1));
+            v.push(c);
+        } else {
+            v.push(VVal::Nul);
+        }
+        v.push(VVal::Int(self.tick_count  as i64));
+        v.push(VVal::Int(self.state));
+        v
     }
 
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
@@ -312,13 +383,6 @@ impl Ship {
 
     pub fn tick(&mut self, er: &mut EventRouter) {
         if let Some(_) = self.course {
-            self.fuel -= self.fuel_t;
-            if self.fuel <= 0 {
-                self.fuel = self.max_fuel * 100;
-                er.emit("ship_fuel_bill".to_string(),
-                    VVal::Int(self.id as i64));
-            }
-
             self.course_progress += self.speed_t;
             let d = self.course.unwrap().distance() * 100;
             if self.course_progress >= d {
@@ -334,7 +398,7 @@ impl Ship {
                     VVal::Int(self.id as i64));
             }
 
-            println!("SHIP: pos={:?} dis={} cp={} fuel={}", self.pos, d, self.course_progress, self.fuel);
+            println!("SHIP: pos={:?} dis={} cp={}", self.pos, d, self.course_progress);
         }
 
         self.tick_count += 1;
@@ -388,6 +452,28 @@ impl Entity {
         }
     }
 
+    pub fn deserialize(or: &mut ObjectRegistry, v: VVal) -> Self {
+        let s = Self::new(0, 0);
+        s.id            = v.at(2).unwrap_or(VVal::Int(0)).i() as ObjectID;
+        s.typ           = v.at(3).unwrap_or(VVal::Int(0)).i() as SystemObject;
+        s.x             = v.at(4).unwrap_or(VVal::Int(0)).i() as i32;
+        s.y             = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
+        s.state         = v.at(6).unwrap_or(VVal::Nul);
+        s
+    }
+
+    pub fn serialize(&self) -> VVal {
+        let v = VVal::vec();
+        v.push(VVal::new_str("entity"));
+        v.push(VVal::Int(0)); // version
+        v.push(VVal::Int(self.id  as i64));
+        v.push(VVal::Int(self.typ as i64));
+        v.push(VVal::Int(self.x   as i64));
+        v.push(VVal::Int(self.y   as i64));
+        v.push(VVal::Int(self.state));
+        v
+    }
+
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
 
     fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
@@ -422,7 +508,46 @@ pub struct System {
 
 impl System {
     pub fn new(x: i32, y: i32) -> Self {
-        System { id: 0, x, y, objects: std::vec::Vec::new(), tick_count: 0, state: VVal::map() }
+        System {
+            id: 0,
+            x,
+            y,
+            objects: std::vec::Vec::new(),
+            tick_count: 0,
+            state: VVal::map()
+        }
+    }
+
+    pub fn deserialize(or: &mut ObjectRegistry, v: VVal) -> Self {
+        let s = Self::new(0, 0);
+        s.id            = v.at(2).unwrap_or(VVal::Int(0)).i() as ObjectID;
+        s.x             = v.at(3).unwrap_or(VVal::Int(0)).i() as i32;
+        s.y             = v.at(4).unwrap_or(VVal::Int(0)).i() as i32;
+        s.tick_count    = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
+        s.state         = v.at(6).unwrap_or(VVal::Nul);
+        if let Some(VVal::Lst(l)) = v.at(7) {
+            for o in l.borrow().iter() {
+                s.objects.push(Entity::deserialize(or, o));
+            }
+        }
+        s
+    }
+
+    pub fn serialize(&self) -> VVal {
+        let v = VVal::vec();
+        v.push(VVal::new_str("system"));
+        v.push(VVal::Int(0)); // version
+        v.push(VVal::Int(self.id          as i64));
+        v.push(VVal::Int(self.x           as i64));
+        v.push(VVal::Int(self.y           as i64));
+        v.push(VVal::Int(self.tick_count  as i64));
+        v.push(VVal::Int(self.state));
+        let o = VVal::vec();
+        for obj in self.objects.iter() {
+            o.push(obj.borrow().serialize());
+        }
+        v.push(o);
+        v
     }
 
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
