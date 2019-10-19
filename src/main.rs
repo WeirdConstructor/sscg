@@ -12,7 +12,6 @@ use std::time::{Instant, Duration};
 
 mod logic;
 mod util;
-use util::*;
 use logic::*;
 
 use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext};
@@ -453,19 +452,28 @@ pub fn main() -> Result<(), String> {
             }
         });
 
-    let ship = {
-        let gs = GS.borrow_mut();
-        let mut os = gs.object_registry.borrow_mut();
-        os.add_ship(Ship::new("Cocky".to_string()))
-    };
-    let args = vec![ShipWlWrapper::vval_from(ship.clone())];
-    wl_ctx.clone().call(&wlcb_init, &args);
+    {
+        let ship = {
+            let mut gs = GS.borrow_mut();
+            let s = {
+                let mut os = gs.object_registry.borrow_mut();
+                os.add_ship(Ship::new("Cocky".to_string()))
+            };
+            gs.active_ship_id = s.borrow().id;
+            s
+        };
+        let args = vec![ShipWlWrapper::vval_from(ship.clone())];
+        wl_ctx.clone().call(&wlcb_init, &args);
+    }
 
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> = std::vec::Vec::new();
 
     let mut last_frame = Instant::now();
     'running: loop {
-        let system_of_ship = GS.borrow_mut().get_system(ship.borrow().system);
+        let active_ship_id = GS.borrow().active_ship_id;
+        let active_ship    = GS.borrow().get_ship(active_ship_id)
+                               .expect("active ship is present");
+        let system_of_ship = GS.borrow_mut().get_system(active_ship.borrow().system);
 
         let mouse_state = event_pump.mouse_state();
         for event in event_pump.poll_iter() {
@@ -473,9 +481,14 @@ pub fn main() -> Result<(), String> {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
                 },
-//                Event::KeyDown { keycode: Some(Keycode::H), .. } => {
-//                    fm.process_page_control(PageControl::Back, None);
-//                },
+                Event::KeyDown { keycode: Some(Keycode::F2), .. } => {
+                    let ser = GS.borrow().serialize();
+                    util::write_file_safely("sscg_save.json", &ser.to_json(false).unwrap());
+                },
+                Event::KeyDown { keycode: Some(Keycode::F3), .. } => {
+                    let ser = util::read_vval_json_file("sscg_save.json");
+                    GS.borrow_mut().deserialize(ser);
+                },
 //                Event::KeyDown { keycode: Some(Keycode::J), .. } => {
 //                    fm.process_page_control(PageControl::CursorDown, None);
 //                },
@@ -490,7 +503,7 @@ pub fn main() -> Result<(), String> {
                         if let Some(e) = sys.borrow_mut().get_entity_close_to(x, y) {
                             let x = e.borrow().x;
                             let y = e.borrow().y;
-                            ship.borrow_mut().set_course_to(x, y);
+                            active_ship.borrow_mut().set_course_to(x, y);
                         }
                     }
                 },
@@ -518,6 +531,11 @@ pub fn main() -> Result<(), String> {
             }
         }
 
+        let active_ship_id = GS.borrow().active_ship_id;
+        let active_ship    = GS.borrow().get_ship(active_ship_id)
+                               .expect("active ship is present");
+        let system_of_ship = GS.borrow_mut().get_system(active_ship.borrow().system);
+
         let frame_time_ms = last_frame.elapsed().as_micros() as f64 / 1000.0_f64;
         GS.borrow_mut().update(frame_time_ms);
         GS.borrow_mut().event_router.borrow_mut().get_events(&mut cb_queue);
@@ -530,7 +548,7 @@ pub fn main() -> Result<(), String> {
         gui_painter.clear();
         {
             if let Some(sys) = system_of_ship {
-                sys.borrow_mut().draw(&mut *ship.borrow_mut(), &mut gui_painter);
+                sys.borrow_mut().draw(&mut *active_ship.borrow_mut(), &mut gui_painter);
                 sys.borrow_mut()
                    .try_highlight_entity_close_to(
                         mouse_state.x(),
