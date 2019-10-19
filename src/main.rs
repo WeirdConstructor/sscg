@@ -153,7 +153,7 @@ impl GameStateWlWrapper {
 
 impl VValUserData for GameStateWlWrapper {
     fn s(&self) -> String { format!("$<GameState>") }
-    fn set_key(&self, key: &VVal, val: VVal) {
+    fn set_key(&self, _key: &VVal, _val: VVal) {
 //        self.0.borrow_mut().state.set_key(key, val);
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
@@ -380,18 +380,18 @@ pub fn main() -> Result<(), String> {
 
     wl_ctx.set_global_var("game", &GameStateWlWrapper::vval_from(GS.clone()));
 
-    let mut callbacks : VVal = VVal::Nul;
-    match wl_ctx.eval_file("main.wl") {
-        Ok(v) => {
-            if v.is_err() {
-                panic!(format!("'main.wl' SCRIPT ERROR: {}", v.s()));
-            } else {
-                callbacks = v.clone();
-                println!("GET VALUE: {}", v.to_json(false).unwrap());
-            }
-        },
-        Err(e) => { panic!(format!("'main.wl' SCRIPT ERROR: {}", e)); }
-    }
+    let callbacks : VVal =
+        match wl_ctx.eval_file("main.wl") {
+            Ok(v) => {
+                if v.is_err() {
+                    panic!(format!("'main.wl' SCRIPT ERROR: {}", v.s()));
+                } else {
+                    println!("GET VALUE: {}", v.to_json(false).unwrap());
+                    v.clone()
+                }
+            },
+            Err(e) => { panic!(format!("'main.wl' SCRIPT ERROR: {}", e)); }
+        };
 
     let wlcb_ship_ent_tick =
         callbacks.get_key("ship_entity_tick")
@@ -399,8 +399,8 @@ pub fn main() -> Result<(), String> {
     let wlcb_ship_tick =
         callbacks.get_key("ship_tick")
                  .expect("ship_tick key");
-    let wlcb_system_tick   = callbacks.get_key("system_tick");
-    let wlcb_ship_arrived  = callbacks.get_key("ship_arrived");
+//    let wlcb_system_tick   = callbacks.get_key("system_tick");
+//    let wlcb_ship_arrived  = callbacks.get_key("ship_arrived");
     let wlcb_init          = callbacks.get_key("init").expect("init key");
 
     let wl_ctx_st = wl_ctx.clone();
@@ -423,9 +423,8 @@ pub fn main() -> Result<(), String> {
                     v.s(), system.borrow().id, *(ent.borrow()));
                 let typ = VVal::new_str(
                     match ent.borrow().typ {
-                        SystemObject::Station => "station",
+                        SystemObject::Station       => "station",
                         SystemObject::AsteroidField => "asteroid_field",
-                        _ => "unknown",
                     }
                 );
                 let v_ent = EntityWlWrapper::vval_from(ent.clone());
