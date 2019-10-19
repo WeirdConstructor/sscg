@@ -126,6 +126,22 @@ fn draw_bg_text(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     draw_text(font, color, canvas, x, y, max_w, txt);
 }
 
+fn vval_to_system(v: VVal) -> Result<Rc<RefCell<System>>, StackAction> {
+    match v {
+        VVal::Usr(mut ud) => {
+            if let Some(sys) = ud.as_any().downcast_ref::<SystemWlWrapper>() {
+                Ok(sys.0.clone())
+            } else {
+                Err(StackAction::panic_msg(
+                    format!("{} is not a system", ud.s())))
+            }
+        },
+        _ => {
+            Err(StackAction::panic_msg(
+                format!("{} is not a system", v.s())))
+        }
+    }
+}
 
 #[derive(Clone)]
 struct GameStateWlWrapper(Rc<RefCell<GameState>>);
@@ -143,6 +159,62 @@ impl VValUserData for GameStateWlWrapper {
     fn get_key(&self, key: &str) -> Option<VVal> {
         match key {
             _    => None,
+        }
+    }
+    fn call(&self, args: &[VVal]) -> Result<VVal, StackAction> {
+        if args.len() < 1 {
+            return Err(StackAction::panic_msg(
+                format!("{} called with too few arguments", self.s())));
+        }
+        match &args[0].s_raw()[..] {
+            "add_entity" => {
+                if args.len() < 5 {
+                    return Err(StackAction::panic_msg(
+                        format!("`{} :add_entity` called with too few arguments",
+                                self.s())));
+                }
+                let sys = vval_to_system(args[1].clone())?;
+                Ok(EntityWlWrapper::vval_from(
+                    self.0.borrow_mut().system_add_entity(
+                        sys,
+                        args[2].i() as i32,
+                        args[3].i() as i32,
+                        args[4].clone())))
+            },
+            "add_system" => {
+                if args.len() < 4 {
+                    return Err(StackAction::panic_msg(
+                        format!("`{} :add_system` called with too few arguments",
+                                self.s())));
+                }
+                Ok(SystemWlWrapper::vval_from(
+                    self.0.borrow_mut().add_system(
+                        args[1].i() as i32,
+                        args[2].i() as i32,
+                        args[3].clone())))
+            },
+            "object_by_id" => {
+                if args.len() < 2 {
+                    return Err(StackAction::panic_msg(
+                        format!("`{} :object_by_id` called with too few arguments",
+                                self.s())));
+                }
+                let o =
+                    self.0.borrow_mut()
+                        .object_registry.borrow_mut()
+                        .get(args[1].i() as ObjectID);
+                if let Some(obj) = o {
+                    Ok(match obj {
+                        Object::Entity(e) => EntityWlWrapper::vval_from(e),
+                        Object::System(s) => SystemWlWrapper::vval_from(s),
+                        Object::Ship(s)   => ShipWlWrapper::vval_from(s),
+                        Object::None      => VVal::Nul,
+                    })
+                } else {
+                    Ok(VVal::Nul)
+                }
+            },
+            _ => Ok(VVal::Nul)
         }
     }
     fn as_any(&mut self) -> &mut dyn std::any::Any { self }
@@ -167,8 +239,17 @@ impl VValUserData for EntityWlWrapper {
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
         match key {
-            "id"        => Some(VVal::Int(self.0.borrow().id as i64)),
-            _ => self.0.borrow().state.get_key(key),
+            "id" => Some(VVal::Int(self.0.borrow().id as i64)),
+            _    => self.0.borrow().state.get_key(key),
+        }
+    }
+    fn call(&self, args: &[VVal]) -> Result<VVal, StackAction> {
+        if args.len() < 1 {
+            return Err(StackAction::panic_msg(
+                format!("{} called with too few arguments", self.s())));
+        }
+        match &args[0].s_raw()[..] {
+            _            => Ok(VVal::Nul)
         }
     }
     fn as_any(&mut self) -> &mut dyn std::any::Any { self }
@@ -204,7 +285,18 @@ impl VValUserData for ShipWlWrapper {
                 format!("{} called with too few arguments", self.s())));
         }
         match &args[0].s_raw()[..] {
-            "foo" => { Ok(VVal::Bol(true)) },
+            "set_system" => {
+                if args.len() < 2 {
+                    return Err(StackAction::panic_msg(
+                        format!("`{} :set_system` called with too few arguments",
+                                self.s())));
+                }
+
+                let sys = vval_to_system(args[1].clone())?;
+
+                self.0.borrow_mut().system = sys.borrow().id;
+                Ok(VVal::Bol(true))
+            },
             _ => Ok(VVal::Nul)
         }
     }
@@ -213,6 +305,43 @@ impl VValUserData for ShipWlWrapper {
         Box::new(self.clone())
     }
 }
+
+#[derive(Clone)]
+struct SystemWlWrapper(Rc<RefCell<System>>);
+impl SystemWlWrapper {
+    pub fn vval_from(r: Rc<RefCell<System>>) -> VVal {
+        VVal::Usr(Box::new(SystemWlWrapper(r)))
+    }
+}
+
+impl VValUserData for SystemWlWrapper {
+    fn s(&self) -> String { format!("$<System:{}>", self.0.borrow().id) }
+    fn i(&self) -> i64 { self.0.borrow().id as i64 }
+    fn set_key(&self, key: &VVal, val: VVal) {
+        self.0.borrow_mut().state.set_key(key, val);
+    }
+    fn get_key(&self, key: &str) -> Option<VVal> {
+        match key {
+            "id"    => Some(VVal::Int(self.0.borrow().id as i64)),
+            _       => self.0.borrow().state.get_key(key),
+        }
+    }
+    fn call(&self, args: &[VVal]) -> Result<VVal, StackAction> {
+        if args.len() < 1 {
+            return Err(StackAction::panic_msg(
+                format!("{} called with too few arguments", self.s())));
+        }
+        match &args[0].s_raw()[..] {
+            "foo" => { Ok(VVal::Bol(true)) },
+            _     => Ok(VVal::Nul)
+        }
+    }
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
+    fn clone_ud(&self) -> Box<dyn wlambda::vval::VValUserData> {
+        Box::new(self.clone())
+    }
+}
+
 
 pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -272,6 +401,7 @@ pub fn main() -> Result<(), String> {
                  .expect("ship_tick key");
     let wlcb_system_tick   = callbacks.get_key("system_tick");
     let wlcb_ship_arrived  = callbacks.get_key("ship_arrived");
+    let wlcb_init          = callbacks.get_key("init").expect("init key");
 
     let wl_ctx_st = wl_ctx.clone();
     GS.borrow_mut().reg_cb("ship_tick".to_string(),
@@ -322,23 +452,20 @@ pub fn main() -> Result<(), String> {
             }
         });
 
-    let (s, ship) = {
+    let ship = {
         let gs = GS.borrow_mut();
         let mut os = gs.object_registry.borrow_mut();
-        let s = os.add_system(System::new(0, 0));
-        s.borrow_mut().add(10,   10, os.add_entity(Entity::new(logic::SystemObject::Station)));
-        s.borrow_mut().add(400, 200, os.add_entity(Entity::new(logic::SystemObject::AsteroidField)));
-        s.borrow_mut().add(150, 300, os.add_entity(Entity::new(logic::SystemObject::AsteroidField)));
-
-        let ship = os.add_ship(Ship::new("Cocky".to_string(), 100, 100));
-        ship.borrow_mut().set_system(s.borrow().id);
-        (s, ship)
+        os.add_ship(Ship::new("Cocky".to_string(), 100, 100))
     };
+    let args = vec![ShipWlWrapper::vval_from(ship.clone())];
+    wl_ctx.clone().call(&wlcb_init, &args);
 
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> = std::vec::Vec::new();
 
     let mut last_frame = Instant::now();
     'running: loop {
+        let system_of_ship = GS.borrow_mut().get_system(ship.borrow().system);
+
         let mouse_state = event_pump.mouse_state();
         for event in event_pump.poll_iter() {
             match event {
@@ -358,10 +485,12 @@ pub fn main() -> Result<(), String> {
 //                    fm.process_page_control(PageControl::Access, None);
 //                },
                 Event::MouseButtonDown { x, y, .. } => {
-                    if let Some(e) = s.borrow_mut().get_entity_close_to(x, y) {
-                        let x = e.borrow().x;
-                        let y = e.borrow().y;
-                        ship.borrow_mut().set_course_to(x, y);
+                    if let Some(sys) = system_of_ship.clone() {
+                        if let Some(e) = sys.borrow_mut().get_entity_close_to(x, y) {
+                            let x = e.borrow().x;
+                            let y = e.borrow().y;
+                            ship.borrow_mut().set_course_to(x, y);
+                        }
                     }
                 },
 //                Event::TextInput { text, .. } => {
@@ -398,8 +527,15 @@ pub fn main() -> Result<(), String> {
         }
 
         gui_painter.clear();
-        s.borrow_mut().draw(&mut *ship.borrow_mut(), &mut gui_painter);
-        s.borrow_mut().try_highlight_entity_close_to(mouse_state.x(), mouse_state.y());
+        {
+            if let Some(sys) = system_of_ship {
+                sys.borrow_mut().draw(&mut *ship.borrow_mut(), &mut gui_painter);
+                sys.borrow_mut()
+                   .try_highlight_entity_close_to(
+                        mouse_state.x(),
+                        mouse_state.y());
+            }
+        }
         gui_painter.done();
         last_frame = Instant::now();
 

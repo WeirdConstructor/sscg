@@ -33,6 +33,40 @@ impl GameState {
         }
     }
 
+    pub fn add_system(&self, x: i32, y: i32, state: VVal) -> Rc<RefCell<System>> {
+        for o in self.object_registry.borrow().objects.iter() {
+            match o {
+                Object::System(s) => {
+                    return s.clone();
+                },
+                _ => (),
+            }
+        }
+
+        let mut sys = System::new(x, y);
+        sys.state = state;
+        self.object_registry.borrow_mut().add_system(sys)
+    }
+
+    pub fn system_add_entity(
+        &self, sys: Rc<RefCell<System>>,
+        x: i32, y: i32, state: VVal) -> Rc<RefCell<Entity>> {
+
+        let typ =
+            match &state.get_key("type").unwrap_or(VVal::Nul).s_raw()[..] {
+                "station"           => SystemObject::Station,
+                "asteroid_field"    => SystemObject::AsteroidField,
+                _                   => SystemObject::AsteroidField,
+            };
+
+        let mut ent = Entity::new(typ);
+        ent.state = state;
+
+        let e = self.object_registry.borrow_mut().add_entity(ent);
+        sys.borrow_mut().add(x, y, e.clone());
+        e
+    }
+
     pub fn reg_cb<F>(&self, ev: String, f: F)
         where F: 'static + Fn(&Rc<RefCell<GameState>>, VVal) {
         self.event_router.borrow_mut().reg_cb(ev, f);
@@ -378,16 +412,17 @@ impl Entity {
 
 #[derive(Debug, Clone)]
 pub struct System {
-    pub id: ObjectID,
-    x:      i32,
-    y:      i32,
-    objects: std::vec::Vec<Rc<RefCell<Entity>>>,
+    pub id:     ObjectID,
+    pub x:      i32,
+    pub y:      i32,
+    pub state:  VVal,
+    objects:    std::vec::Vec<Rc<RefCell<Entity>>>,
     tick_count: i32,
 }
 
 impl System {
     pub fn new(x: i32, y: i32) -> Self {
-        System { id: 0, x, y, objects: std::vec::Vec::new(), tick_count: 0 }
+        System { id: 0, x, y, objects: std::vec::Vec::new(), tick_count: 0, state: VVal::map() }
     }
 
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
