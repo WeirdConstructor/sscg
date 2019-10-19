@@ -455,7 +455,7 @@ pub fn main() -> Result<(), String> {
     let ship = {
         let gs = GS.borrow_mut();
         let mut os = gs.object_registry.borrow_mut();
-        os.add_ship(Ship::new("Cocky".to_string(), 100, 100))
+        os.add_ship(Ship::new("Cocky".to_string()))
     };
     let args = vec![ShipWlWrapper::vval_from(ship.clone())];
     wl_ctx.clone().call(&wlcb_init, &args);
