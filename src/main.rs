@@ -11,6 +11,8 @@ use std::time::{Instant, Duration};
 //use vecmath::*;
 
 mod logic;
+mod util;
+use util::*;
 use logic::*;
 
 use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext};
