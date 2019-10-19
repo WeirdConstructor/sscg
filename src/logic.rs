@@ -10,6 +10,8 @@ pub type EventCallback = Fn(&Rc<RefCell<GameState>>, VVal);
 pub struct GameState {
     pub object_registry:    Rc<RefCell<ObjectRegistry>>,
     pub event_router:       Rc<RefCell<EventRouter>>,
+    pub active_ship_id:     ObjectID,
+    pub state:              VVal,
 }
 
 impl GameState {
@@ -17,8 +19,28 @@ impl GameState {
         Rc::new(RefCell::new(GameState {
             object_registry: Rc::new(RefCell::new(ObjectRegistry::new())),
             event_router:    Rc::new(RefCell::new(EventRouter::new())),
+            state:           VVal::map(),
+            active_ship_id:  0,
         }))
     }
+
+    pub fn serialize(&self) -> VVal {
+        let objreg = self.object_registry.borrow().serialize();
+        let v = VVal::vec();
+        v.push(VVal::new_str("sscg_savegame"));
+        v.push(VVal::Int(0)); // version
+        v.push(self.state.clone());
+        v.push(VVal::Int(self.active_ship_id as i64));
+        v.push(objreg);
+        return v;
+    }
+
+    pub fn deserialize(&mut self, v: VVal) {
+        self.object_registry.borrow_mut().deserialize(v.at(4).unwrap_or(VVal::Nul));
+        self.state          = v.at(2).unwrap_or(VVal::Nul);
+        self.active_ship_id = v.at(3).unwrap_or(VVal::Nul).i() as ObjectID;
+    }
+
     pub fn get_ship(&self, id: ObjectID) -> Option<Rc<RefCell<Ship>>> {
         match self.object_registry.borrow_mut().get(id) {
             Some(Object::Ship(s)) => Some(s.clone()),
@@ -87,6 +109,17 @@ pub enum Object {
     Ship(Rc<RefCell<Ship>>),
 }
 
+impl Object {
+    pub fn id(&self) -> ObjectID {
+        match self {
+            Object::None      => 0,
+            Object::Entity(e) => e.borrow().id,
+            Object::System(s) => s.borrow().id,
+            Object::Ship(s)   => s.borrow().id,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ObjectRegistry {
     objects:            std::vec::Vec<Object>,
@@ -103,8 +136,6 @@ impl ObjectRegistry {
 
     pub fn serialize(&self) -> VVal {
         let v = VVal::vec();
-        v.push(VVal::new_str("sscg_savegame"));
-        v.push(VVal::Int(0)); // version
         v.push(VVal::Int(self.objects.len() as i64));
 
         let objs = VVal::vec();
@@ -122,14 +153,16 @@ impl ObjectRegistry {
     }
 
     fn vval_to_object(&mut self, v: VVal) -> Object {
-        match &v.at(0).unwrap_or(VVal::Nul).s_raw()[..] {
-            "ship"   => Object::Ship(Rc::new(RefCell::new(Ship::deserialize(self, v.at(1).unwrap_or(VVal::Nul))))),
-            "system" => Object::System(Rc::new(RefCell::new(System::deserialize(self, v.at(1).unwrap_or(VVal::Nul))))),
+        let typ : String = v.at(0).unwrap_or(VVal::Nul).s_raw();
+        match &typ[..] {
+            "ship"   => Object::Ship(Rc::new(RefCell::new(Ship::deserialize(self, v)))),
+            "system" => Object::System(Rc::new(RefCell::new(System::deserialize(self, v)))),
             _ => Object::None,
         }
     }
 
     pub fn set_object_at(&mut self, idx: usize, o: Object) {
+        println!("SET OBJ {} = {:?}", idx, o);
         self.objects[idx] = o;
     }
 
@@ -138,12 +171,16 @@ impl ObjectRegistry {
         self.tick_time_ms = 0.0;
 
         self.objects.resize(
-            s.at(2).unwrap_or(VVal::Int(0)).i() as usize,
+            s.at(0).unwrap_or(VVal::Int(0)).i() as usize,
             Object::None);
 
-        if let VVal::Lst(m) = s {
+        if let VVal::Lst(m) = s.at(1).unwrap_or(VVal::Nul) {
             for v in m.borrow().iter() {
-                self.vval_to_object(v.clone());
+                let o = self.vval_to_object(v.clone());
+                match o {
+                    Object::None => (),
+                    _ => self.set_object_at(o.id(), o),
+                }
             }
         }
     }
@@ -333,7 +370,7 @@ impl Ship {
         s.pos.0             = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
         s.pos.1             = v.at(6).unwrap_or(VVal::Int(0)).i() as i32;
         s.speed_t           = v.at(7).unwrap_or(VVal::Int(0)).i() as i32;
-        s.course_progress   = v.at(7).unwrap_or(VVal::Int(0)).i() as i32;
+        s.course_progress   = v.at(8).unwrap_or(VVal::Int(0)).i() as i32;
         if let Some(VVal::Lst(l)) = v.at(9) {
             let mut c = Course::new(0, 0, 0, 0);
             c.from.0 = l.borrow().get(0).unwrap().i() as i32;
@@ -536,7 +573,8 @@ impl System {
             for o in l.borrow().iter() {
                 let e = Rc::new(RefCell::new(Entity::deserialize(or, o.clone())));
                 let id = e.borrow().id;
-                or.set_object_at(id, Object::Entity(e));
+                or.set_object_at(id, Object::Entity(e.clone()));
+                s.objects.push(e);
             }
         }
         s

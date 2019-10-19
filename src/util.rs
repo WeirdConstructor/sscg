@@ -1,3 +1,4 @@
+use wlambda::VVal;
 
 pub fn write_file_safely(filename: &str, s: &str) -> std::io::Result<()> {
     use std::io::Write;
@@ -9,7 +10,8 @@ pub fn write_file_safely(filename: &str, s: &str) -> std::io::Result<()> {
 }
 
 pub fn read_vval_json_file(filename: &str) -> VVal {
-    match std::fs::File::open("tracker.json") {
+    use std::io::Read;
+    match std::fs::File::open(filename) {
         Ok(mut file) => {
             let mut c = String::new();
             match file.read_to_string(&mut c) {
