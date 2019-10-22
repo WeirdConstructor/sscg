@@ -12,6 +12,7 @@ use std::time::{Instant, Duration};
 
 mod logic;
 mod util;
+mod gui;
 use logic::*;
 
 use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext};
@@ -55,6 +56,10 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
          (self.offs.1 + yo) as i32)
     }
 
+    fn draw_sprite_ex(&mut self, xo: i32, yo: i32, w: u32, h: u32,
+                      id: usize, angle: f64, flip_h: bool, flip_v: bool) {
+    }
+
     fn draw_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
         self.canvas.set_draw_color(Color::from(color));
         self.canvas.draw_rect(Rect::new(xo + self.offs.0, yo + self.offs.1, w, h))
@@ -90,6 +95,10 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
             t as u8,
             Color::from(color));
     }
+    fn text_size(&mut self, txt: &str) -> (u32, u32) {
+        self.font.size_of(txt).unwrap_or((0, 0))
+    }
+
     fn draw_text(&mut self, _xo: i32, _yo: i32, _max_w: u32, _fg: (u8, u8, u8, u8), _bg: Option<(u8, u8, u8, u8)>, _txt: &str) {
     }
 }
