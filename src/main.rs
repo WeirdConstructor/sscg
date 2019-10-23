@@ -56,8 +56,11 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
          (self.offs.1 + yo) as i32)
     }
 
-    fn draw_sprite_ex(&mut self, xo: i32, yo: i32, w: u32, h: u32,
-                      id: usize, angle: f64, flip_h: bool, flip_v: bool) {
+    fn get_sprite_size(&self, _id: usize) -> (u32, u32) {
+        (0, 0)
+    }
+    fn draw_sprite_ex(&mut self, _xo: i32, _yo: i32, _w: u32, _h: u32,
+                      _id: usize, _angle: f64, _flip_h: bool, _flip_v: bool) {
     }
 
     fn draw_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
@@ -96,7 +99,7 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
             Color::from(color));
     }
     fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        self.font.size_of(txt).unwrap_or((0, 0))
+        self.font.borrow().size_of(txt).unwrap_or((0, 0))
     }
 
     fn draw_text(&mut self, _xo: i32, _yo: i32, _max_w: u32, _fg: (u8, u8, u8, u8), _bg: Option<(u8, u8, u8, u8)>, _txt: &str) {

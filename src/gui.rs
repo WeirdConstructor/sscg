@@ -7,11 +7,20 @@ pub enum Widget {
 }
 
 impl Widget {
-    pub fn calc_size<P>(&self, max_w: u32, max_h: u32, p: &mut P) -> (u32, u32) where P: GamePainter {
-        let pos = p.get_screen_pos();
-        let (mw, mh) = self.1.size(max_w, max_h);
+    pub fn id(&self) -> usize {
+        match self {
+            Widget::Container(id, _, _) => *id,
+            Widget::Label(id, _, _)     => *id,
+        }
+    }
+    pub fn calc_feedback<P>(&self, max_w: u32, max_h: u32, p: &mut P) -> WidgetFeedback where P: GamePainter {
+        let pos = p.get_screen_pos(0, 0);
+        let (id, (mw, mh)) = match self {
+            Widget::Container(id, l, _) => (*id, l.size(max_w, max_h)),
+            Widget::Label(id, l, _)     => (*id, l.size(max_w, max_h)),
+        };
         WidgetFeedback {
-            id: self.0,
+            id,
             x: pos.0 as u32,
             y: pos.1 as u32,
             w: mw,
@@ -19,23 +28,23 @@ impl Widget {
         }
     }
 
-    pub fn draw<P>(&mut self, win: &Window, fb: &mut [WidgetFeedback], max_w: u32, max_h: u32, p: &mut P) -> (u32, u32)
+    pub fn draw<P>(&self, win: &Window, fb: &mut [WidgetFeedback], max_w: u32, max_h: u32, p: &mut P) -> (u32, u32)
         where P: GamePainter {
 
-        let w_fb = self.calc_size(max_w, max_h, p);
-        fb[id] = w_fb;
+        let w_fb = self.calc_feedback(max_w, max_h, p);
+        fb[self.id()] = w_fb;
         let (mw, mh) = (w_fb.w, w_fb.h);
         match self {
-            Container(id, layout, c) => {
+            Widget::Container(_id, _layout, c) => {
                 match c.dir {
                     BoxDir::Vert => {
                         let mut offs = 0;
                         p.push_add_offs(0, offs);
-                        for c_id in c.childs {
+                        for c_id in c.childs.iter() {
                             let (_w, h) =
-                                win.childs[c_id].draw(
+                                win.widgets[*c_id].draw(
                                     win, fb, mw, mh, p);
-                            offs += h;
+                            offs += h as i32;
                             p.pop_offs();
                             p.push_add_offs(0, offs);
                         }
@@ -44,11 +53,11 @@ impl Widget {
                     BoxDir::Hori => {
                         let mut offs = 0;
                         p.push_add_offs(offs, 0);
-                        for c_id in c.childs {
+                        for c_id in c.childs.iter() {
                             let (w, _h) =
-                                win.childs[c_id].draw(
+                                win.widgets[*c_id].draw(
                                     win, fb, mw, mh, p);
-                            offs += w;
+                            offs += w as i32;
                             p.pop_offs();
                             p.push_add_offs(offs, 0);
                         }
@@ -56,33 +65,33 @@ impl Widget {
                     },
                 }
             },
-            Label(id, layout, lbl) => {
+            Widget::Label(_id, _layout, lbl) => {
                 let txt = lbl.text.clone();
-                let (tw, th) = p.text_size(txt);
+                let (tw, _th) = p.text_size(&txt);
                 if tw > mw {
                     let mut line = String::from("");
                     let mut y = 0;
                     for c in txt.chars() {
                         line.push(c);
-                        let (tw, th) = p.text_size(line);
+                        let (tw, th) = p.text_size(&line);
                         if tw > mw {
                             line.pop();
                             p.draw_text(
-                                0, y, line, mw, lbl.fg_color, lbl.bg_color);
+                                0, y, mw, lbl.fg_color, Some(lbl.bg_color), &line);
                             line = String::from("");
                             line.push(c);
-                            y += th:
+                            y += th as i32;
                         }
                     }
 
                     if line.len() > 0 {
                         p.draw_text(
-                            0, y, line, mw, lbl.fg_color, lbl.bg_color);
+                            0, y, mw, lbl.fg_color, Some(lbl.bg_color), &line);
                     }
                 } else {
                     p.draw_text(
                         0, 0,
-                        lbl.text, mw, lbl.fg_color, lbl.bg_color);
+                        mw, lbl.fg_color, Some(lbl.bg_color), &lbl.text);
                 }
             },
         }
@@ -124,7 +133,7 @@ pub struct Window {
     h:            u32,
     min_w:        u32,
     min_h:        u32,
-    needs_redraw: u32,
+    needs_redraw: bool,
 }
 
 /// All values are in 0.1% scale. that means, to represent 100% you have to
@@ -142,13 +151,13 @@ impl Window {
     pub fn draw<P>(&mut self, max_w: u32, max_h: u32, p: &mut P)
         where P: GamePainter {
 
-        let feedback = std::vec::Vec::new();
+        let mut feedback = std::vec::Vec::new();
         feedback.resize(self.widgets.len(), WidgetFeedback::new());
         let child    = &self.widgets[self.child];
 
         p.push_offs(
-            p2r(max_w, self.x),
-            p2r(max_h, self.y));
+            p2r(max_w, self.x) as i32,
+            p2r(max_h, self.y) as i32);
         child.draw(
             &self, &mut feedback[..],
             p2r(max_w, self.w),
@@ -161,14 +170,14 @@ impl Window {
     pub fn needs_redraw(&self) -> bool { self.needs_redraw }
 
     pub fn get_label_text(&self, lblref: &str) -> Option<String> {
-        for c in self.widgets.iter_mut() {
+        for c in self.widgets.iter() {
             match c {
                 Widget::Label(_, _, lbl) => {
                     if &lbl.lblref[..] == lblref {
                         return Some(lbl.text.clone());
                     }
                 },
-                _ => None,
+                _ => (),
             }
         }
 
@@ -180,7 +189,7 @@ impl Window {
             match c {
                 Widget::Label(_, _, lbl) => {
                     if &lbl.lblref[..] == lblref {
-                        lbl.text = text;
+                        lbl.text = text.clone();
                         self.needs_redraw = true;
                     }
                 },
@@ -191,8 +200,9 @@ impl Window {
 
     pub fn collect_activated_child(&mut self) -> Option<String> {
         if let Some(idx) = self.activ_child {
-            match self.widgets[idx] {
-                Widget::Label(_, _, lbl) => { Some(lbl.lblref.clone()) }
+            match &self.widgets[idx] {
+                Widget::Label(_, _, lbl) => { return Some(lbl.lblref.clone()); }
+                _ => (),
             }
         }
         None
@@ -200,12 +210,13 @@ impl Window {
 
     pub fn handle_event(&mut self, ev: WindowEvent) -> bool {
         match ev {
-            WindowEvent::MousePos(x, y) => { },
-            WindowEvent::Click(x, y)    => {
+            WindowEvent::MousePos(_x, _y) => { true },
+            WindowEvent::Click(_x, _y)    => {
                 // set self.activ_child ...
+                true
             },
-            WindowEvent::TextInput(c)   => { },
-            WindowEvent::Backspace      => { },
+            WindowEvent::TextInput(_c)   => { true },
+            WindowEvent::Backspace      => { true },
         }
     }
 }
@@ -243,9 +254,9 @@ impl Layout {
         let rh = p2r(max_h, self.h);
         (
             if rw < self.min_w { self.min_w }
-            else rw,
+            else { rw },
             if rh < self.min_h { self.min_h }
-            else rh,
+            else { rh },
         )
     }
 }
