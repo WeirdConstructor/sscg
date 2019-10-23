@@ -2,22 +2,22 @@ use crate::logic::GamePainter;
 
 #[derive(Debug, Clone)]
 pub enum Widget {
-    Container(usize, Layout, Container),
-    Label(usize, Layout, Label),
+    Layout(usize, Size, Layout),
+    Label(usize, Size, Label),
 }
 
 impl Widget {
     pub fn id(&self) -> usize {
         match self {
-            Widget::Container(id, _, _) => *id,
-            Widget::Label(id, _, _)     => *id,
+            Widget::Layout(id, _, _) => *id,
+            Widget::Label(id, _, _)  => *id,
         }
     }
     pub fn calc_feedback<P>(&self, max_w: u32, max_h: u32, p: &mut P) -> WidgetFeedback where P: GamePainter {
         let pos = p.get_screen_pos(0, 0);
         let (id, (mw, mh)) = match self {
-            Widget::Container(id, l, _) => (*id, l.size(max_w, max_h)),
-            Widget::Label(id, l, _)     => (*id, l.size(max_w, max_h)),
+            Widget::Layout(id, l, _) => (*id, l.size(max_w, max_h)),
+            Widget::Label(id, l, _)  => (*id, l.size(max_w, max_h)),
         };
         WidgetFeedback {
             id,
@@ -35,7 +35,7 @@ impl Widget {
         fb[self.id()] = w_fb;
         let (mw, mh) = (w_fb.w, w_fb.h);
         match self {
-            Widget::Container(_id, _layout, c) => {
+            Widget::Layout(_id, _size, c) => {
                 match c.dir {
                     BoxDir::Vert => {
                         let mut offs = 0;
@@ -65,10 +65,10 @@ impl Widget {
                     },
                 }
             },
-            Widget::Label(_id, _layout, lbl) => {
+            Widget::Label(_id, _size, lbl) => {
                 let txt = lbl.text.clone();
                 let (tw, _th) = p.text_size(&txt);
-                if tw > mw {
+                if lbl.wrap && tw > mw {
                     let mut line = String::from("");
                     let mut y = 0;
                     for c in txt.chars() {
@@ -77,7 +77,8 @@ impl Widget {
                         if tw > mw {
                             line.pop();
                             p.draw_text(
-                                0, y, mw, lbl.fg_color, Some(lbl.bg_color), &line);
+                                0, y, mw,
+                                lbl.fg_color, Some(lbl.bg_color), lbl.align, &line);
                             line = String::from("");
                             line.push(c);
                             y += th as i32;
@@ -86,12 +87,13 @@ impl Widget {
 
                     if line.len() > 0 {
                         p.draw_text(
-                            0, y, mw, lbl.fg_color, Some(lbl.bg_color), &line);
+                            0, y, mw,
+                            lbl.fg_color, Some(lbl.bg_color), lbl.align, &line);
                     }
                 } else {
                     p.draw_text(
                         0, 0,
-                        mw, lbl.fg_color, Some(lbl.bg_color), &lbl.text);
+                        mw, lbl.fg_color, Some(lbl.bg_color), lbl.align, &lbl.text);
                 }
             },
         }
@@ -121,19 +123,21 @@ impl WidgetFeedback {
 }
 
 pub struct Window {
+    pub title:    String,
     widgets:      std::vec::Vec<Widget>,
     feedback:     std::vec::Vec<WidgetFeedback>,
-    child:        usize,
+    pub child:    usize,
     focus_child:  Option<usize>,
     hover_child:  Option<usize>,
     activ_child:  Option<usize>,
-    x:            u32,
-    y:            u32,
-    w:            u32,
-    h:            u32,
-    min_w:        u32,
-    min_h:        u32,
+    pub x:        u32,
+    pub y:        u32,
+    pub w:        u32,
+    pub h:        u32,
+    pub min_w:    u32,
+    pub min_h:    u32,
     needs_redraw: bool,
+    win_feedback:     WidgetFeedback,
 }
 
 /// All values are in 0.1% scale. that means, to represent 100% you have to
@@ -141,13 +145,33 @@ pub struct Window {
 fn p2r(value: u32, ratio: u32) -> u32 { (value * ratio) / 1000 }
 
 pub enum WindowEvent {
-    MousePos(u32, u32),
-    Click(u32, u32),
-    TextInput(char),
+    MousePos(i32, i32),
+    Click(i32, i32),
+    TextInput(String),
     Backspace,
 }
 
 impl Window {
+    pub fn new() -> Self {
+        Self {
+            title: String::from(""),
+            widgets: std::vec::Vec::new(),
+            feedback: std::vec::Vec::new(),
+            child: 0,
+            focus_child: None,
+            hover_child: None,
+            activ_child: None,
+            x: 0,
+            y: 0,
+            w: 0,
+            h: 0,
+            min_w: 0,
+            min_h: 0,
+            needs_redraw: false,
+            win_feedback: WidgetFeedback::new(),
+        }
+    }
+
     pub fn draw<P>(&mut self, max_w: u32, max_h: u32, p: &mut P)
         where P: GamePainter {
 
@@ -155,16 +179,39 @@ impl Window {
         feedback.resize(self.widgets.len(), WidgetFeedback::new());
         let child    = &self.widgets[self.child];
 
+        let mut w_fb = WidgetFeedback::new();
+
         p.push_offs(
             p2r(max_w, self.x) as i32,
             p2r(max_h, self.y) as i32);
+        let sp = p.get_screen_pos(0, 0);
+        w_fb.x = sp.0 as u32;
+        w_fb.y = sp.1 as u32;
+        w_fb.w = p2r(max_w, self.w);
+        w_fb.h = p2r(max_h, self.h);
         child.draw(
             &self, &mut feedback[..],
-            p2r(max_w, self.w),
-            p2r(max_h, self.h),
+            w_fb.w,
+            w_fb.h,
             p);
         p.pop_offs();
         self.feedback = feedback;
+        self.win_feedback = w_fb;
+    }
+
+    pub fn add_layout(&mut self, s: Size, dir: BoxDir, c: &[usize]) -> usize {
+        let id = self.widgets.len();
+        self.widgets.push(Widget::Layout(id, s, Layout {
+            dir,
+            childs: c.to_vec(),
+        }));
+        id
+    }
+
+    pub fn add_label(&mut self, s: Size, l: Label) -> usize {
+        let id = self.widgets.len();
+        self.widgets.push(Widget::Label(id, s, l));
+        id
     }
 
     pub fn needs_redraw(&self) -> bool { self.needs_redraw }
@@ -210,12 +257,14 @@ impl Window {
 
     pub fn handle_event(&mut self, ev: WindowEvent) -> bool {
         match ev {
-            WindowEvent::MousePos(_x, _y) => { true },
+            WindowEvent::MousePos(_x, _y) => {
+                true
+            },
             WindowEvent::Click(_x, _y)    => {
                 // set self.activ_child ...
                 true
             },
-            WindowEvent::TextInput(_c)   => { true },
+            WindowEvent::TextInput(s)   => { true },
             WindowEvent::Backspace      => { true },
         }
     }
@@ -228,7 +277,7 @@ enum BoxDir {
 }
 
 #[derive(Debug, Clone)]
-pub struct Container {
+pub struct Layout {
     dir:        BoxDir,
     childs:     std::vec::Vec<usize>,
 }
@@ -240,15 +289,25 @@ enum HAlign {
     Right,
 }
 
-#[derive(Debug, Clone)]
-pub struct Layout {
-    min_w: u32,
-    w:     u32,
-    min_h: u32,
-    h:     u32,
+impl HAlign {
+    fn xoffs(&self, tw: u32, mw: u32) -> i32 {
+        (match self {
+            HAlign::Left   => 0,
+            HAlign::Right  => mw - tw,
+            HAlign::Center => (mw - tw) / 2,
+        }) as i32
+    }
 }
 
-impl Layout {
+#[derive(Debug, Clone)]
+pub struct Size {
+    pub min_w: u32,
+    pub w:     u32,
+    pub min_h: u32,
+    pub h:     u32,
+}
+
+impl Size {
     pub fn size(&self, max_w: u32, max_h: u32) -> (u32, u32) {
         let rw = p2r(max_w, self.w);
         let rh = p2r(max_h, self.h);
@@ -270,9 +329,60 @@ pub enum LabelStyle {
 pub struct Label {
     lblref:     String,
     text:       String,
-    align:      HAlign,
+    wrap:       bool,
+    align:      i32,
     editable:   bool,
     clickable:  bool,
     fg_color:   (u8, u8, u8, u8),
     bg_color:   (u8, u8, u8, u8),
+}
+
+impl Label {
+    pub fn new(txt: &str, fg: (u8, u8, u8, u8), bg: (u8, u8, u8, u8)) -> Self {
+        Self {
+            lblref:    String::from(""),
+            text:      txt.to_string(),
+            align:     1,
+            wrap:      false,
+            editable:  false,
+            clickable: false,
+            fg_color:  fg,
+            bg_color:  bg,
+        }
+    }
+
+    pub fn lblref(mut self, r: &str) -> Self {
+        self.lblref = r.to_string();
+        self
+    }
+
+    pub fn center(mut self) -> Self {
+        self.align = 0;
+        self
+    }
+
+    pub fn right(mut self) -> Self {
+        self.align = -1;
+        self
+    }
+
+    pub fn left(mut self) -> Self {
+        self.align = 1;
+        self
+    }
+
+    pub fn clickable(mut self) -> Self {
+        self.clickable = true;
+        self
+    }
+
+    pub fn editable(mut self) -> Self {
+        self.editable = true;
+        self
+    }
+
+    pub fn wrap(mut self) -> Self {
+        self.wrap = true;
+        self
+    }
 }

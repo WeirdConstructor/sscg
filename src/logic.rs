@@ -311,6 +311,7 @@ pub trait GamePainter {
     fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32,
                  fg: (u8, u8, u8, u8),
                  bg: Option<(u8, u8, u8, u8)>,
+                 align: i32,
                  txt: &str);
 }
 

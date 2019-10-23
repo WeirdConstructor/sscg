@@ -20,6 +20,7 @@ use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext};
 struct GUIPainter<'a, 'b> {
     canvas: sdl2::render::Canvas<sdl2::video::Window>,
     font: Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
+    font_h: i32,
     offs_stack: std::vec::Vec<(i32, i32)>,
     offs: (i32, i32),
 }
@@ -28,6 +29,18 @@ impl<'a, 'b> GUIPainter<'a, 'b> {
     fn clear(&mut self) {
         self.canvas.set_draw_color(Color::RGB(255, 255, 255));
         self.canvas.clear();
+    }
+
+    fn get_font_h(&mut self) -> i32 {
+        if self.font_h == 0 {
+            let (w, h) = self.text_size("M");
+            self.font_h = h as i32;
+        }
+        self.font_h
+    }
+
+    fn text_size(&mut self, txt: &str) -> (u32, u32) {
+        self.font.borrow().size_of(txt).unwrap_or((0, 0))
     }
 
     fn done(&mut self) {
@@ -99,19 +112,50 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
             Color::from(color));
     }
     fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        self.font.borrow().size_of(txt).unwrap_or((0, 0))
+        self.text_size(txt)
     }
 
-    fn draw_text(&mut self, _xo: i32, _yo: i32, _max_w: u32, _fg: (u8, u8, u8, u8), _bg: Option<(u8, u8, u8, u8)>, _txt: &str) {
+    fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32, fg: (u8, u8, u8, u8),
+                 bg: Option<(u8, u8, u8, u8)>, align: i32, txt: &str) {
+        if let Some(c) = bg {
+            let h = self.get_font_h();
+            draw_bg_text(
+                &mut self.canvas,
+                &mut *self.font.borrow_mut(),
+                fg.into(),
+                c.into(),
+                self.offs.0 + xo,
+                self.offs.1 + yo,
+                max_w as i32,
+                h,
+                align,
+                txt);
+        } else {
+            draw_text(
+                &mut *self.font.borrow_mut(),
+                fg.into(),
+                &mut self.canvas,
+                self.offs.0 + xo,
+                self.offs.1 + yo,
+                max_w as i32,
+                align,
+                txt);
+        }
     }
 }
 
-fn draw_text(font: &mut sdl2::ttf::Font, color: Color, canvas: &mut sdl2::render::Canvas<sdl2::video::Window>, x: i32, y: i32, max_w: i32, txt: &str) {
+fn draw_text(font: &mut sdl2::ttf::Font, color: Color,
+             canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
+             x: i32, y: i32, max_w: i32, align: i32, txt: &str) {
     let txt_crt = canvas.texture_creator();
 
     let sf = font.render(txt).blended(color).map_err(|e| e.to_string()).unwrap();
     let txt = txt_crt.create_texture_from_surface(&sf).map_err(|e| e.to_string()).unwrap();
     let tq = txt.query();
+
+    let xo = if align == 0 { (max_w - (tq.width as i32)) / 2 }
+        else if align < 0  { max_w - (tq.width as i32) }
+        else { 0 };
 
     let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
 
@@ -119,7 +163,7 @@ fn draw_text(font: &mut sdl2::ttf::Font, color: Color, canvas: &mut sdl2::render
     canvas.copy(
         &txt,
         Some(Rect::new(0, 0, w as u32, tq.height)),
-        Some(Rect::new(x, y, w as u32, tq.height))
+        Some(Rect::new(x + xo, y, w as u32, tq.height))
     ).map_err(|e| e.to_string()).unwrap();
 }
 
@@ -131,12 +175,13 @@ fn draw_bg_text(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
                 y: i32,
                 max_w: i32,
                 h: i32,
+                align: i32,
                 txt: &str) {
 
     canvas.set_draw_color(bg_color);
     canvas.fill_rect(Rect::new(x, y, max_w as u32, h as u32))
         .expect("filling rectangle");
-    draw_text(font, color, canvas, x, y, max_w, txt);
+    draw_text(font, color, canvas, x, y, max_w, align, txt);
 }
 
 fn vval_to_system(v: VVal) -> Result<Rc<RefCell<System>>, StackAction> {
@@ -382,6 +427,7 @@ pub fn main() -> Result<(), String> {
     let mut gui_painter = GUIPainter {
         canvas: canvas,
         font: Rc::new(RefCell::new(font)),
+        font_h: 0,
         offs_stack: std::vec::Vec::new(),
         offs: (0, 0),
     };
@@ -478,6 +524,18 @@ pub fn main() -> Result<(), String> {
         wl_ctx.clone().call(&wlcb_init, &args);
     }
 
+    let mut test_win = gui::Window::new();
+    test_win.x = 0;
+    test_win.y = 500;
+    test_win.w = 250;
+    test_win.h = 500;
+    test_win.title = String::from("Test");
+    let id = test_win.add_label(
+        gui::Size { w: 200, h: 600, min_w: 0, min_h: 0 },
+        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
+        .center().wrap());
+    test_win.child = id;
+
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> = std::vec::Vec::new();
 
     let mut last_frame = Instant::now();
@@ -510,6 +568,12 @@ pub fn main() -> Result<(), String> {
 //                Event::KeyDown { keycode: Some(Keycode::L), .. } => {
 //                    fm.process_page_control(PageControl::Access, None);
 //                },
+                Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
+                    test_win.handle_event(gui::WindowEvent::Backspace);
+                },
+                Event::MouseMotion { x, y, .. } => {
+                    test_win.handle_event(gui::WindowEvent::MousePos(x, y));
+                },
                 Event::MouseButtonDown { x, y, .. } => {
                     if let Some(sys) = system_of_ship.clone() {
                         if let Some(e) = sys.borrow_mut().get_entity_close_to(x, y) {
@@ -518,10 +582,13 @@ pub fn main() -> Result<(), String> {
                             active_ship.borrow_mut().set_course_to(x, y);
                         }
                     }
+
+                    test_win.handle_event(gui::WindowEvent::Click(x, y));
                 },
-//                Event::TextInput { text, .. } => {
-//                    println!("TEXT: {}", text);
-//                },
+                Event::TextInput { text, .. } => {
+                    test_win.handle_event(gui::WindowEvent::TextInput(text.clone()));
+                    println!("TEXT: {}", text);
+                },
                 Event::Window { win_event: w, timestamp: _, window_id: _ } => {
                     match w {
                         WindowEvent::Resized(w, h) => {
@@ -567,6 +634,8 @@ pub fn main() -> Result<(), String> {
                         mouse_state.y());
             }
         }
+        let win_size = gui_painter.canvas.window().size();
+        test_win.draw(win_size.0, win_size.1, &mut gui_painter);
         gui_painter.done();
         last_frame = Instant::now();
 
