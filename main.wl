@@ -1,4 +1,5 @@
 
+!x = $&0;
 std:displayln "GAMESTATE: " game;
 ${
 
@@ -13,9 +14,12 @@ init = {!(ship) = @;
 
 ship_entity_tick = {
     std:displayln "SHIP ENT TICK" @ game;
+    .x = x + 1;
+    _ :set_notification ~ std:str:cat "ARR" $*x;
 },
 ship_tick = {
-#    std:displayln "SHIP TICK" @;
+    _ :set_notification "";
+    std:displayln "SHIP TICK" @;
 #    std:displayln "SHIP TICK" _;
 #    std:displayln "SHIP TICK" (_ "foo");
 #    _.ticky = 1 + _.ticky;
