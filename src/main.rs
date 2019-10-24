@@ -343,6 +343,18 @@ impl VValUserData for ShipWlWrapper {
                 format!("{} called with too few arguments", self.s())));
         }
         match &args[0].s_raw()[..] {
+            "set_notification" => {
+                if args.len() < 2 {
+                    return Err(StackAction::panic_msg(
+                        format!("`{} :set_system` called with too few arguments",
+                                self.s())));
+                }
+
+                let txt = args[1].s_raw();
+
+                self.0.borrow_mut().set_notification(txt);
+                Ok(VVal::Bol(true))
+            },
             "set_system" => {
                 if args.len() < 2 {
                     return Err(StackAction::panic_msg(

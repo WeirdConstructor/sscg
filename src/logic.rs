@@ -353,6 +353,7 @@ pub struct Ship {
     pub id:             ObjectID,
     pub system:         ObjectID,
     pub name:           String,
+    pub notify_txt:     String,
     pub pos:            (i32, i32),
     pub speed_t:        i32, // 100:1 => speed_t * 10 is speed per second
     pub state:          VVal,
@@ -373,6 +374,7 @@ impl Ship {
             id:                 0,
             state:              VVal::map(),
             tick_count:         0,
+            notify_txt:         String::from(""),
         }
     }
 
@@ -430,6 +432,8 @@ impl Ship {
 
     pub fn set_system(&mut self, sys_id: ObjectID) { self.system = sys_id; }
 
+    pub fn set_notification(&mut self, not: String) { self.notify_txt = not; }
+
     pub fn set_course_to(&mut self, x: i32, y: i32) {
         self.course = Some(Course::new(self.pos.0, self.pos.1, x, y));
         self.course_progress = 0;
@@ -479,6 +483,13 @@ impl Ship {
             self.pos.1,
             3,
             (160, 160, 255, 255));
+
+        if self.notify_txt.len() > 0 {
+            p.draw_text(
+                self.pos.0 - 100, self.pos.1 + 10, 200,
+                (255, 0, 255, 255), None,
+                0, &self.notify_txt);
+        }
     }
 }
 
