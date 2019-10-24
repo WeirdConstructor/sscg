@@ -120,6 +120,11 @@ impl WidgetFeedback {
             h: 0,
         }
     }
+
+    pub fn is_inside(&self, x: u32, y: u32) -> bool {
+           x >= self.x && x <= (self.x + self.w)
+        && y >= self.y && y <= (self.y + self.h)
+    }
 }
 
 pub struct Window {
@@ -142,7 +147,9 @@ pub struct Window {
 
 /// All values are in 0.1% scale. that means, to represent 100% you have to
 /// supply 1000 to ratio to get the full value.
-fn p2r(value: u32, ratio: u32) -> u32 { (value * ratio) / 1000 }
+fn p2r(value: u32, ratio: u32) -> u32 {
+    (value * ratio) / 1000
+}
 
 pub enum WindowEvent {
     MousePos(i32, i32),
@@ -181,19 +188,52 @@ impl Window {
 
         let mut w_fb = WidgetFeedback::new();
 
-        p.push_offs(
-            p2r(max_w, self.x) as i32,
-            p2r(max_h, self.y) as i32);
-        let sp = p.get_screen_pos(0, 0);
-        w_fb.x = sp.0 as u32;
-        w_fb.y = sp.1 as u32;
+        w_fb.x = p2r(max_w, self.x);
+        w_fb.y = p2r(max_h, self.y);
         w_fb.w = p2r(max_w, self.w);
         w_fb.h = p2r(max_h, self.h);
-        child.draw(
-            &self, &mut feedback[..],
-            w_fb.w,
-            w_fb.h,
-            p);
+
+        let padding : i32 = 4;
+        let ww = w_fb.w - ((2 * padding) as u32);
+        let wh = w_fb.h - ((3 * padding) as u32);
+
+        p.push_offs(
+            padding + w_fb.x as i32,
+            padding + w_fb.y as i32);
+
+        let ts = p.text_size(&self.title);
+        p.draw_rect_filled(
+            -padding,
+            -padding,
+            w_fb.w + 2 * (padding as u32),
+            w_fb.h + 2 * (padding as u32),
+            (55, 0, 44, 255));
+        let title_height = (ts.1 + 4) / 2;
+        let gclr = (255, 128, 128, 255);
+        p.draw_dot(
+            title_height as i32,
+            title_height as i32,
+            title_height,
+            gclr);
+        p.draw_rect_filled(
+            title_height as i32, 0,
+            2 * title_height + 1, 2 * title_height + 1,
+            gclr);
+        p.draw_text(
+            3 * title_height as i32 + 3,
+            2,
+            ts.0,
+            gclr, None, 1, &self.title);
+        p.draw_rect_filled(
+            title_height as i32, 0,
+            2 * title_height + 1, 2 * title_height + 1,
+            gclr);
+
+        p.push_add_offs(0, padding as i32 + 2 * title_height as i32);
+
+        child.draw(&self, &mut feedback[..], ww, wh, p);
+        p.pop_offs();
+        p.pop_offs();
         p.pop_offs();
         self.feedback = feedback;
         self.win_feedback = w_fb;
@@ -257,8 +297,13 @@ impl Window {
 
     pub fn handle_event(&mut self, ev: WindowEvent) -> bool {
         match ev {
-            WindowEvent::MousePos(_x, _y) => {
-                true
+            WindowEvent::MousePos(x, y) => {
+                if self.win_feedback.is_inside(x as u32, y as u32) {
+                    println!("MOUSE INSIDE WIN");
+                    true
+                } else {
+                    false
+                }
             },
             WindowEvent::Click(_x, _y)    => {
                 // set self.activ_child ...
