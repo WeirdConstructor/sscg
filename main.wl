@@ -10,6 +10,12 @@ init = {!(ship) = @;
     game :add_entity sys 300 300 ${ type = :station };
     game :add_entity sys 200 100 ${ type = :asteroid_field };
     ship :set_system sys;
+    win :set_window 0 ${
+        x = 0,
+        y = 0,
+        w = 1000,
+        h = 1000,
+    } {|| std:displayln "FOO" @ };
 },
 
 ship_entity_tick = {

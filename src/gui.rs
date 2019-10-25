@@ -143,6 +143,7 @@ impl WidgetFeedback {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Window {
     pub title:    String,
     widgets:      std::vec::Vec<Widget>,
@@ -158,7 +159,7 @@ pub struct Window {
     pub min_w:    u32,
     pub min_h:    u32,
     needs_redraw: bool,
-    win_feedback:     WidgetFeedback,
+    win_feedback: WidgetFeedback,
 }
 
 /// All values are in 0.1% scale. that means, to represent 100% you have to
