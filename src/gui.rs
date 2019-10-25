@@ -64,7 +64,13 @@ impl Widget {
                     },
                 }
             },
-            Widget::Label(_id, _size, lbl) => {
+            Widget::Label(id, _size, lbl) => {
+                let bg_color =
+                    Some(if let Some(hchld_id) = win.hover_child {
+                            if *id == hchld_id { lbl.hlt_color }
+                            else { lbl.bg_color } }
+                         else { lbl.bg_color });
+
                 let txt = lbl.text.clone();
                 let (tw, th) = p.text_size(&txt);
                 if lbl.wrap && tw > mw {
@@ -77,7 +83,7 @@ impl Widget {
                             if line.len() > 1 { line.pop(); }
                             p.draw_text(
                                 0, y, mw,
-                                lbl.fg_color, Some(lbl.bg_color), lbl.align, &line);
+                                lbl.fg_color, bg_color, lbl.align, &line);
                             if line.len() > 1 {
                                 line = String::from("");
                                 line.push(c);
@@ -91,14 +97,14 @@ impl Widget {
                     if line.len() > 0 {
                         p.draw_text(
                             0, y, mw,
-                            lbl.fg_color, Some(lbl.bg_color), lbl.align, &line);
+                            lbl.fg_color, bg_color, lbl.align, &line);
                     }
 
                     mh += y as u32 + th;
                 } else {
                     p.draw_text(
                         0, 0,
-                        mw, lbl.fg_color, Some(lbl.bg_color), lbl.align, &lbl.text);
+                        mw, lbl.fg_color, bg_color, lbl.align, &lbl.text);
                     mh += th;
                 }
             },
@@ -344,6 +350,7 @@ impl Window {
 
     pub fn collect_activated_child(&mut self) -> Option<String> {
         if let Some(idx) = self.activ_child {
+            self.activ_child = None;
             match &self.widgets[idx] {
                 Widget::Label(_, _, lbl) => { return Some(lbl.lblref.clone()); }
                 _ => (),
@@ -352,19 +359,37 @@ impl Window {
         None
     }
 
+    pub fn get_label_at(&self, x: u32, y: u32) -> Option<usize> {
+        for (idx, fb) in self.feedback.iter().enumerate() {
+            match &self.widgets[idx] {
+                Widget::Label(_, _, _) => {
+                    if fb.is_inside(x as u32, y as u32) {
+                        return Some(fb.id);
+                    }
+                }
+                _ => ()
+            }
+        }
+        return None;
+    }
+
     pub fn handle_event(&mut self, ev: WindowEvent) -> bool {
         match ev {
             WindowEvent::MousePos(x, y) => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
-                    println!("MOUSE INSIDE WIN");
+                    self.hover_child = self.get_label_at(x as u32, y as u32);
                     true
                 } else {
                     false
                 }
             },
-            WindowEvent::Click(_x, _y)    => {
-                // set self.activ_child ...
-                true
+            WindowEvent::Click(x, y)    => {
+                if self.win_feedback.is_inside(x as u32, y as u32) {
+                    self.activ_child = self.get_label_at(x as u32, y as u32);
+                    true
+                } else {
+                    false
+                }
             },
             WindowEvent::TextInput(s)   => { true },
             WindowEvent::Backspace      => { true },
@@ -437,6 +462,7 @@ pub struct Label {
     align:      i32,
     editable:   bool,
     clickable:  bool,
+    hlt_color:  (u8, u8, u8, u8),
     fg_color:   (u8, u8, u8, u8),
     bg_color:   (u8, u8, u8, u8),
 }
@@ -450,6 +476,7 @@ impl Label {
             wrap:      false,
             editable:  false,
             clickable: false,
+            hlt_color: (255 - fg.0, 255 - fg.1, 255 - fg.2, fg.3),
             fg_color:  fg,
             bg_color:  bg,
         }

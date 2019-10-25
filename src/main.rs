@@ -552,11 +552,11 @@ pub fn main() -> Result<(), String> {
     let id = test_win.add_label(
         gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
         gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-        .center().wrap());
+        .center().wrap().lblref("XX1"));
     let id2 = test_win.add_label(
         gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
         gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-        .center().wrap());
+        .center().wrap().lblref("XX2"));
     let lay = test_win.add_layout(
         gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
         gui::BoxDir::Vert(10),
@@ -564,7 +564,7 @@ pub fn main() -> Result<(), String> {
     let id3 = test_win.add_label(
         gui::Size { w: 200, h: 0, min_w: 200, min_h: 0, margin: 0 },
         gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-        .center().wrap());
+        .center().wrap().lblref("OF"));
     let lay2 = test_win.add_layout(
         gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
         gui::BoxDir::Vert(0),
@@ -643,6 +643,10 @@ pub fn main() -> Result<(), String> {
                 },
                 _ => {}
             }
+        }
+        if let Some(lblref) = test_win.collect_activated_child() {
+            println!("ACTIVE CHILD: {}", lblref);
+            test_win.set_label_text(&lblref, "MOCK".to_string());
         }
 
         let active_ship_id = GS.borrow().active_ship_id;
