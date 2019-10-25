@@ -419,6 +419,116 @@ impl VValUserData for SystemWlWrapper {
     }
 }
 
+struct WindowManager {
+    windows: std::vec::Vec<Option<gui::Window>>,
+    ev_cbs: std::vec::Vec<VVal>,
+}
+
+impl WindowManager {
+    pub fn new() -> Self {
+        Self {
+            windows: std::vec::Vec::new(),
+            ev_cbs: std::vec::Vec::new(),
+        }
+    }
+
+    pub fn handle_activated_childs(&mut self, wl_ctx: &mut EvalContext) {
+        for (w, cb) in self.windows.iter_mut().zip(self.ev_cbs.iter()) {
+            if let Some(w) = w {
+                if let Some(lblref) = w.collect_activated_child() {
+                    let args = vec![VVal::new_str_mv(lblref.to_string())];
+                    wl_ctx.clone().call(cb, &args);
+                }
+            }
+        }
+    }
+
+    pub fn new_ref() -> std::rc::Rc<std::cell::RefCell<Self>> {
+        std::rc::Rc::new(std::cell::RefCell::new(Self::new()))
+    }
+
+    pub fn delete(&mut self, idx: usize) {
+        if idx >= self.windows.len() { return; }
+        self.windows[idx] = None;
+        self.ev_cbs[idx] = VVal::Nul;
+    }
+
+    pub fn set(&mut self, idx: usize, win: gui::Window, cb: VVal) -> usize {
+        if idx >= self.windows.len() {
+            self.windows.resize(idx + 1, None);
+            self.ev_cbs.resize(idx + 1, VVal::Nul);
+        }
+        println!("SET WINDOW {}", idx);
+        self.windows[idx] = Some(win);
+        self.ev_cbs[idx]  = cb;
+        idx
+    }
+}
+
+#[derive(Clone)]
+struct WindowManagerWlWrapper(Rc<RefCell<WindowManager>>);
+impl WindowManagerWlWrapper {
+    pub fn vval_from(r: Rc<RefCell<WindowManager>>) -> VVal {
+        VVal::Usr(Box::new(WindowManagerWlWrapper(r)))
+    }
+}
+
+fn vval2win(v: VVal) -> gui::Window {
+    let mut w = gui::Window::new();
+    w.x     = v.get_key("x").unwrap_or(VVal::Int(0)).i() as u32;
+    w.y     = v.get_key("y").unwrap_or(VVal::Int(0)).i() as u32;
+    w.w     = v.get_key("w").unwrap_or(VVal::Int(500)).i() as u32;
+    w.h     = v.get_key("h").unwrap_or(VVal::Int(500)).i() as u32;
+    w.min_w = v.get_key("min_w").unwrap_or(VVal::Int(100)).i() as u32;
+    w.min_h = v.get_key("min_h").unwrap_or(VVal::Int(100)).i() as u32;
+    w.title = v.get_key("title").unwrap_or(VVal::new_str("Unnamed")).s();
+
+    w
+}
+
+impl VValUserData for WindowManagerWlWrapper {
+    fn s(&self) -> String { format!("$<WindowManager>") }
+    fn i(&self) -> i64 { 0 }
+    fn call(&self, args: &[VVal]) -> Result<VVal, StackAction> {
+        if args.len() < 1 {
+            return Err(StackAction::panic_msg(
+                format!("{} called with too few arguments", self.s())));
+        }
+        match &args[0].s_raw()[..] {
+            "set_window" => {
+                if args.len() < 4 {
+                    return Err(StackAction::panic_msg(
+                        format!("`{} :set_window` called with too few arguments",
+                                self.s())));
+                }
+
+
+                let idx = args[1].i();
+                if !args[2].is_none() {
+                    let mut win = vval2win(args[2].clone());
+                    let cb      = args[3].clone();
+
+    // TODO XXX
+    let id2 = win.add_label(
+        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
+        .center().wrap().lblref("XX2"));
+    win.child = id2;
+                    self.0.borrow_mut().set(idx as usize, win, cb);
+                } else {
+                    self.0.borrow_mut().delete(idx as usize);
+                }
+
+                Ok(VVal::Bol(true))
+            },
+            _ => Ok(VVal::Nul)
+        }
+    }
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
+    fn clone_ud(&self) -> Box<dyn wlambda::vval::VValUserData> {
+        Box::new(self.clone())
+    }
+}
 
 pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -451,12 +561,14 @@ pub fn main() -> Result<(), String> {
         offs: (0, 0),
     };
 
+    let WM = WindowManager::new_ref();
     let GS = GameState::new_ref();
 
     let genv = GlobalEnv::new_default();
     let mut wl_ctx = EvalContext::new_with_user(genv, GS.clone());
 
     wl_ctx.set_global_var("game", &GameStateWlWrapper::vval_from(GS.clone()));
+    wl_ctx.set_global_var("win", &WindowManagerWlWrapper::vval_from(WM.clone()));
 
     let callbacks : VVal =
         match wl_ctx.eval_file("main.wl") {
@@ -479,7 +591,7 @@ pub fn main() -> Result<(), String> {
                  .expect("ship_tick key");
 //    let wlcb_system_tick   = callbacks.get_key("system_tick");
 //    let wlcb_ship_arrived  = callbacks.get_key("ship_arrived");
-    let wlcb_init          = callbacks.get_key("init").expect("init key");
+    let wlcb_init = callbacks.get_key("init").expect("init key");
 
     let wl_ctx_st = wl_ctx.clone();
     GS.borrow_mut().reg_cb("ship_tick".to_string(),
@@ -540,45 +652,47 @@ pub fn main() -> Result<(), String> {
             s
         };
         let args = vec![ShipWlWrapper::vval_from(ship.clone())];
-        wl_ctx.clone().call(&wlcb_init, &args);
+        wl_ctx.call(&wlcb_init, &args);
     }
 
-    let mut test_win = gui::Window::new();
-    test_win.x = 0;
-    test_win.y = 500;
-    test_win.w = 250;
-    test_win.h = 500;
-    test_win.title = String::from("Test 123");
-    let id = test_win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-        .center().wrap().lblref("XX1"));
-    let id2 = test_win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-        .center().wrap().lblref("XX2"));
-    let lay = test_win.add_layout(
-        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
-        gui::BoxDir::Vert(10),
-        &vec![id, id2]);
-    let id3 = test_win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 200, min_h: 0, margin: 0 },
-        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-        .center().wrap().lblref("OF"));
-    let lay2 = test_win.add_layout(
-        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
-        gui::BoxDir::Vert(0),
-        &vec![lay, id3]);
-    test_win.child = lay2;
+//    let mut test_win = gui::Window::new();
+//    test_win.x = 0;
+//    test_win.y = 500;
+//    test_win.w = 250;
+//    test_win.h = 500;
+//    test_win.title = String::from("Test 123");
+//    let id = test_win.add_label(
+//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
+//        .center().wrap().lblref("XX1"));
+//    let id2 = test_win.add_label(
+//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
+//        .center().wrap().lblref("XX2"));
+//    let lay = test_win.add_layout(
+//        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+//        gui::BoxDir::Vert(10),
+//        &vec![id, id2]);
+//    let id3 = test_win.add_label(
+//        gui::Size { w: 200, h: 0, min_w: 200, min_h: 0, margin: 0 },
+//        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
+//        .center().wrap().lblref("OF"));
+//    let lay2 = test_win.add_layout(
+//        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+//        gui::BoxDir::Vert(0),
+//        &vec![lay, id3]);
+//    test_win.child = lay2;
 
-    let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> = std::vec::Vec::new();
+    let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> =
+        std::vec::Vec::new();
 
     let mut last_frame = Instant::now();
     'running: loop {
         let active_ship_id = GS.borrow().active_ship_id;
         let active_ship    = GS.borrow().get_ship(active_ship_id)
                                .expect("active ship is present");
-        let system_of_ship = GS.borrow_mut().get_system(active_ship.borrow().system);
+        let system_of_ship =
+            GS.borrow_mut().get_system(active_ship.borrow().system);
 
         let mouse_state = event_pump.mouse_state();
         for event in event_pump.poll_iter() {
@@ -604,10 +718,18 @@ pub fn main() -> Result<(), String> {
 //                    fm.process_page_control(PageControl::Access, None);
 //                },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    test_win.handle_event(gui::WindowEvent::Backspace);
+                    for w in WM.borrow_mut().windows.iter_mut() {
+                        if let Some(w) = w {
+                            w.handle_event(gui::WindowEvent::Backspace);
+                        }
+                    }
                 },
                 Event::MouseMotion { x, y, .. } => {
-                    test_win.handle_event(gui::WindowEvent::MousePos(x, y));
+                    for w in WM.borrow_mut().windows.iter_mut() {
+                        if let Some(w) = w {
+                            w.handle_event(gui::WindowEvent::MousePos(x, y));
+                        }
+                    }
                 },
                 Event::MouseButtonDown { x, y, .. } => {
                     if let Some(sys) = system_of_ship.clone() {
@@ -618,11 +740,18 @@ pub fn main() -> Result<(), String> {
                         }
                     }
 
-                    test_win.handle_event(gui::WindowEvent::Click(x, y));
+                    for w in WM.borrow_mut().windows.iter_mut() {
+                        if let Some(w) = w {
+                            w.handle_event(gui::WindowEvent::Click(x, y));
+                        }
+                    }
                 },
                 Event::TextInput { text, .. } => {
-                    test_win.handle_event(gui::WindowEvent::TextInput(text.clone()));
-                    println!("TEXT: {}", text);
+                    for w in WM.borrow_mut().windows.iter_mut() {
+                        if let Some(w) = w {
+                            w.handle_event(gui::WindowEvent::TextInput(text.clone()));
+                        }
+                    }
                 },
                 Event::Window { win_event: w, timestamp: _, window_id: _ } => {
                     match w {
@@ -644,15 +773,14 @@ pub fn main() -> Result<(), String> {
                 _ => {}
             }
         }
-        if let Some(lblref) = test_win.collect_activated_child() {
-            println!("ACTIVE CHILD: {}", lblref);
-            test_win.set_label_text(&lblref, "MOCK".to_string());
-        }
+
+        WM.borrow_mut().handle_activated_childs(&mut wl_ctx);
 
         let active_ship_id = GS.borrow().active_ship_id;
         let active_ship    = GS.borrow().get_ship(active_ship_id)
                                .expect("active ship is present");
-        let system_of_ship = GS.borrow_mut().get_system(active_ship.borrow().system);
+        let system_of_ship =
+            GS.borrow_mut().get_system(active_ship.borrow().system);
 
         let frame_time_ms = last_frame.elapsed().as_micros() as f64 / 1000.0_f64;
         GS.borrow_mut().update(frame_time_ms);
@@ -666,7 +794,9 @@ pub fn main() -> Result<(), String> {
         gui_painter.clear();
         {
             if let Some(sys) = system_of_ship {
-                sys.borrow_mut().draw(&mut *active_ship.borrow_mut(), &mut gui_painter);
+                sys.borrow_mut().draw(
+                    &mut *active_ship.borrow_mut(),
+                    &mut gui_painter);
                 sys.borrow_mut()
                    .try_highlight_entity_close_to(
                         mouse_state.x(),
@@ -674,7 +804,11 @@ pub fn main() -> Result<(), String> {
             }
         }
         let win_size = gui_painter.canvas.window().size();
-        test_win.draw(win_size.0, win_size.1, &mut gui_painter);
+        for w in WM.borrow_mut().windows.iter_mut() {
+            if let Some(w) = w {
+                w.draw(win_size.0, win_size.1, &mut gui_painter);
+            }
+        }
         gui_painter.done();
         last_frame = Instant::now();
 
