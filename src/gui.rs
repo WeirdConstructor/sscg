@@ -146,6 +146,7 @@ impl WidgetFeedback {
 #[derive(Debug, Clone)]
 pub struct Window {
     pub title:    String,
+    pub title_color: (u8, u8, u8, u8),
     widgets:      std::vec::Vec<Widget>,
     feedback:     std::vec::Vec<WidgetFeedback>,
     pub child:    usize,
@@ -179,6 +180,7 @@ impl Window {
     pub fn new() -> Self {
         Self {
             title: String::from(""),
+            title_color: (255, 128, 128, 255),
             widgets: std::vec::Vec::new(),
             feedback: std::vec::Vec::new(),
             child: 0,
@@ -214,7 +216,7 @@ impl Window {
         let corner_radius   : u32 = ts.1 / 2;
         let text_lr_pad     : i32 = 4;
         let padding         : i32 = 4;
-        let title_color = (255, 128, 128, 255);
+        let title_color = self.title_color;
         let min_text_width : u32 = 20;
 
         // calculate min window size

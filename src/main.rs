@@ -473,6 +473,10 @@ impl WindowManagerWlWrapper {
     }
 }
 
+fn color_hex24tpl(s: &str) -> (u8, u8, u8, u8) {
+    u8::from_str_radix(&s[0..2]).unwrap_or(0)
+}
+
 fn vval2win(v: VVal) -> gui::Window {
     let mut w = gui::Window::new();
     w.x     = v.get_key("x").unwrap_or(VVal::Int(0)).i() as u32;
@@ -482,6 +486,9 @@ fn vval2win(v: VVal) -> gui::Window {
     w.min_w = v.get_key("min_w").unwrap_or(VVal::Int(100)).i() as u32;
     w.min_h = v.get_key("min_h").unwrap_or(VVal::Int(100)).i() as u32;
     w.title = v.get_key("title").unwrap_or(VVal::new_str("Unnamed")).s();
+    if let Some(tc) = v.get_key("title_color") {
+        w.title_color = color_hex24tpl(&tc.s_raw());
+    }
 
     w
 }
