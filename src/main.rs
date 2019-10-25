@@ -82,6 +82,14 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
             .expect("drawing rectangle");
     }
 
+    fn disable_clip_rect(&mut self) {
+        self.canvas.set_clip_rect(None);
+    }
+    fn set_clip_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32) {
+        self.canvas.set_clip_rect(
+            Rect::new(xo + self.offs.0, yo + self.offs.1, w, h));
+    }
+
     fn draw_rect_filled(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
         self.canvas.set_draw_color(Color::from(color));
         self.canvas.fill_rect(Rect::new(xo + self.offs.0, yo + self.offs.1, w, h))
@@ -159,7 +167,6 @@ fn draw_text(font: &mut sdl2::ttf::Font, color: Color,
 
     let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
 
-//    txt.set_color_mod(255, 0, 0);
     canvas.copy(
         &txt,
         Some(Rect::new(0, 0, w as u32, tq.height)),
@@ -541,12 +548,28 @@ pub fn main() -> Result<(), String> {
     test_win.y = 500;
     test_win.w = 250;
     test_win.h = 500;
-    test_win.title = String::from("Test");
+    test_win.title = String::from("Test 123");
     let id = test_win.add_label(
-        gui::Size { w: 200, h: 600, min_w: 0, min_h: 0 },
+        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
         gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
         .center().wrap());
-    test_win.child = id;
+    let id2 = test_win.add_label(
+        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
+        .center().wrap());
+    let lay = test_win.add_layout(
+        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+        gui::BoxDir::Vert(10),
+        &vec![id, id2]);
+    let id3 = test_win.add_label(
+        gui::Size { w: 200, h: 0, min_w: 200, min_h: 0, margin: 0 },
+        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
+        .center().wrap());
+    let lay2 = test_win.add_layout(
+        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+        gui::BoxDir::Vert(0),
+        &vec![lay, id3]);
+    test_win.child = lay2;
 
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> = std::vec::Vec::new();
 
