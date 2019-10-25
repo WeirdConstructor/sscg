@@ -16,8 +16,8 @@ impl Widget {
     pub fn calc_feedback<P>(&self, max_w: u32, max_h: u32, p: &mut P) -> WidgetFeedback where P: GamePainter {
         let pos = p.get_screen_pos(0, 0);
         let (id, (mw, mh)) = match self {
-            Widget::Layout(id, l, _) => (*id, l.size(max_w, max_h)),
-            Widget::Label(id, l, _)  => (*id, l.size(max_w, max_h)),
+            Widget::Layout(id, l, _) => { p.push_add_offs(l.margin as i32, l.margin as i32); (*id, l.size(max_w, max_h)) },
+            Widget::Label(id, l, _)  => { p.push_add_offs(l.margin as i32, l.margin as i32); (*id, l.size(max_w, max_h)) },
         };
         WidgetFeedback {
             id,
@@ -31,43 +31,42 @@ impl Widget {
     pub fn draw<P>(&self, win: &Window, fb: &mut [WidgetFeedback], max_w: u32, max_h: u32, p: &mut P) -> (u32, u32)
         where P: GamePainter {
 
-        let w_fb = self.calc_feedback(max_w, max_h, p);
-        fb[self.id()] = w_fb;
-        let (mw, mh) = (w_fb.w, w_fb.h);
+        let mut w_fb = self.calc_feedback(max_w, max_h, p);
+        let (mut mw, mut mh) = (w_fb.w, w_fb.h);
         match self {
             Widget::Layout(_id, _size, c) => {
                 match c.dir {
-                    BoxDir::Vert => {
+                    BoxDir::Vert(spacing) => {
                         let mut offs = 0;
-                        p.push_add_offs(0, offs);
                         for c_id in c.childs.iter() {
-                            let (_w, h) =
-                                win.widgets[*c_id].draw(
-                                    win, fb, mw, mh, p);
-                            offs += h as i32;
-                            p.pop_offs();
+                            if offs > 0 { offs += spacing as i32; }
                             p.push_add_offs(0, offs);
-                        }
-                        p.pop_offs();
-                    },
-                    BoxDir::Hori => {
-                        let mut offs = 0;
-                        p.push_add_offs(offs, 0);
-                        for c_id in c.childs.iter() {
-                            let (w, _h) =
-                                win.widgets[*c_id].draw(
-                                    win, fb, mw, mh, p);
-                            offs += w as i32;
+                            let (w, h) =
+                                win.widgets[*c_id].draw(win, fb, mw, mh, p);
+                            if w > mw { mw = w }
                             p.pop_offs();
-                            p.push_add_offs(offs, 0);
+                            offs += h as i32;
                         }
-                        p.pop_offs();
+                        mh = offs as u32;
+                    },
+                    BoxDir::Hori(spacing) => {
+                        let mut offs = 0;
+                        for c_id in c.childs.iter() {
+                            if offs > 0 { offs += spacing as i32; }
+                            p.push_add_offs(offs, 0);
+                            let (w, h) =
+                                win.widgets[*c_id].draw(win, fb, mw, mh, p);
+                            if h > mh { mh = h }
+                            p.pop_offs();
+                            offs += w as i32;
+                        }
+                        mw = offs as u32;
                     },
                 }
             },
             Widget::Label(_id, _size, lbl) => {
                 let txt = lbl.text.clone();
-                let (tw, _th) = p.text_size(&txt);
+                let (tw, th) = p.text_size(&txt);
                 if lbl.wrap && tw > mw {
                     let mut line = String::from("");
                     let mut y = 0;
@@ -75,12 +74,16 @@ impl Widget {
                         line.push(c);
                         let (tw, th) = p.text_size(&line);
                         if tw > mw {
-                            line.pop();
+                            if line.len() > 1 { line.pop(); }
                             p.draw_text(
                                 0, y, mw,
                                 lbl.fg_color, Some(lbl.bg_color), lbl.align, &line);
-                            line = String::from("");
-                            line.push(c);
+                            if line.len() > 1 {
+                                line = String::from("");
+                                line.push(c);
+                            } else {
+                                line = String::from("");
+                            }
                             y += th as i32;
                         }
                     }
@@ -90,14 +93,21 @@ impl Widget {
                             0, y, mw,
                             lbl.fg_color, Some(lbl.bg_color), lbl.align, &line);
                     }
+
+                    mh += y as u32 + th;
                 } else {
                     p.draw_text(
                         0, 0,
                         mw, lbl.fg_color, Some(lbl.bg_color), lbl.align, &lbl.text);
+                    mh += th;
                 }
             },
         }
-        (w_fb.w, w_fb.h)
+        p.pop_offs();
+        w_fb.w = mw;
+        w_fb.h = mh;
+        fb[self.id()] = w_fb;
+        (mw, mh)
     }
 }
 
@@ -193,46 +203,93 @@ impl Window {
         w_fb.w = p2r(max_w, self.w);
         w_fb.h = p2r(max_h, self.h);
 
-        let padding : i32 = 4;
-        let ww = w_fb.w - ((2 * padding) as u32);
-        let wh = w_fb.h - ((3 * padding) as u32);
+        let mut ts = p.text_size(&self.title);
+        let corner_radius   : u32 = ts.1 / 2;
+        let text_lr_pad     : i32 = 4;
+        let padding         : i32 = 4;
+        let title_color = (255, 128, 128, 255);
+        let min_text_width : u32 = 20;
+
+        // calculate min window size
+        let min_size_due_to_decor =
+            ((4 * padding as u32) + (3 * corner_radius)) as u32
+            + (2 * text_lr_pad) as u32
+            + min_text_width;
+        if w_fb.w <= min_size_due_to_decor {
+            w_fb.w = min_size_due_to_decor;
+        }
+        if w_fb.h <= min_size_due_to_decor {
+            w_fb.h = min_size_due_to_decor;
+        }
+
+        // adjust text width
+        let available_text_width =
+            w_fb.w - (min_size_due_to_decor - min_text_width);
+        ts.0 =
+            if available_text_width <= 0 { min_text_width }
+            else if ts.0 > available_text_width { available_text_width }
+            else { ts.0 };
 
         p.push_offs(
             padding + w_fb.x as i32,
             padding + w_fb.y as i32);
 
-        let ts = p.text_size(&self.title);
+        // window background rect
         p.draw_rect_filled(
             -padding,
             -padding,
             w_fb.w + 2 * (padding as u32),
             w_fb.h + 2 * (padding as u32),
-            (55, 0, 44, 255));
-        let title_height = (ts.1 + 4) / 2;
-        let gclr = (255, 128, 128, 255);
+            (0, 0, 0, 255));
+        // left round circle
         p.draw_dot(
-            title_height as i32,
-            title_height as i32,
-            title_height,
-            gclr);
+            corner_radius as i32,
+            corner_radius as i32,
+            corner_radius,
+            title_color);
+        // extension of left circle to text
         p.draw_rect_filled(
-            title_height as i32, 0,
-            2 * title_height + 1, 2 * title_height + 1,
-            gclr);
+            corner_radius as i32, 0,
+            2 * corner_radius + 1, 2 * corner_radius + 1,
+            title_color);
+        // title text
+        let text_pos = 3 * corner_radius as i32 + text_lr_pad;
         p.draw_text(
-            3 * title_height as i32 + 3,
-            2,
+            text_pos,
+            0,
             ts.0,
-            gclr, None, 1, &self.title);
+            title_color, None, 1, &self.title);
+        let after_text = text_pos + text_lr_pad + ts.0 as i32;
+        let after_text_to_win_max_x = w_fb.w as i32 - after_text;
+        // rectangle from text end to right circle
         p.draw_rect_filled(
-            title_height as i32, 0,
-            2 * title_height + 1, 2 * title_height + 1,
-            gclr);
+            after_text, 0,
+            (after_text_to_win_max_x - corner_radius as i32) as u32,
+            2 * corner_radius + 1,
+            title_color);
+        // right circle
+        let right_dot_x =
+            after_text + after_text_to_win_max_x - corner_radius as i32;
+        p.draw_dot(
+            right_dot_x,
+            corner_radius as i32,
+            corner_radius,
+            title_color);
+        // right window border decor down from top right circle
+        p.draw_rect_filled(
+            right_dot_x, corner_radius as i32,
+            corner_radius + 1,
+            w_fb.h - (corner_radius + padding as u32),
+            title_color);
 
-        p.push_add_offs(0, padding as i32 + 2 * title_height as i32);
+        let ww = w_fb.w - ((2 * padding) as u32);
+        let wh = w_fb.h - ((3 * padding) as u32);
 
+        p.push_add_offs(0, padding as i32 + 2 * corner_radius as i32);
+
+        p.set_clip_rect(0, 0, ww, wh);
         child.draw(&self, &mut feedback[..], ww, wh, p);
-        p.pop_offs();
+        p.disable_clip_rect();
         p.pop_offs();
         p.pop_offs();
         self.feedback = feedback;
@@ -316,9 +373,9 @@ impl Window {
 }
 
 #[derive(Debug, Copy, Clone)]
-enum BoxDir {
-    Vert,
-    Hori,
+pub enum BoxDir {
+    Vert(u32),
+    Hori(u32),
 }
 
 #[derive(Debug, Clone)]
@@ -350,16 +407,18 @@ pub struct Size {
     pub w:     u32,
     pub min_h: u32,
     pub h:     u32,
+    pub margin:u32,
 }
 
 impl Size {
     pub fn size(&self, max_w: u32, max_h: u32) -> (u32, u32) {
-        let rw = p2r(max_w, self.w);
-        let rh = p2r(max_h, self.h);
+        let margin2 = self.margin * 2;
+        let rw = p2r(max_w, self.w) + margin2;
+        let rh = p2r(max_h, self.h) + margin2;
         (
-            if rw < self.min_w { self.min_w }
+            if rw < (self.min_w + margin2) { self.min_w + margin2 }
             else { rw },
-            if rh < self.min_h { self.min_h }
+            if rh < (self.min_h + margin2) { self.min_h + margin2 }
             else { rh },
         )
     }

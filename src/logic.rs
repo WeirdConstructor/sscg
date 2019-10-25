@@ -299,6 +299,8 @@ pub trait GamePainter {
     }
     fn draw_sprite_ex(&mut self, xo: i32, yo: i32, w: u32, h: u32,
                       id: usize, angle: f64, flip_h: bool, flip_v: bool);
+    fn disable_clip_rect(&mut self);
+    fn set_clip_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32);
     fn draw_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32,
                  color: (u8, u8, u8, u8));
     fn draw_rect_filled(&mut self, xo: i32, yo: i32, w: u32, h: u32,
