@@ -1,3 +1,4 @@
+use regex::Regex;
 use crate::logic::GamePainter;
 
 #[derive(Debug, Clone)]
@@ -28,7 +29,8 @@ impl Widget {
         }
     }
 
-    pub fn draw<P>(&self, win: &Window, fb: &mut [WidgetFeedback], max_w: u32, max_h: u32, p: &mut P) -> (u32, u32)
+    pub fn draw<P>(&self, win: &Window, fb: &mut [WidgetFeedback],
+                   max_w: u32, max_h: u32, p: &mut P) -> (u32, u32)
         where P: GamePainter {
 
         let mut w_fb = self.calc_feedback(max_w, max_h, p);
@@ -65,15 +67,31 @@ impl Widget {
                 }
             },
             Widget::Label(id, _size, lbl) => {
-                let bg_color =
+                let mut bg_color =
                     if let Some(hchld_id) = win.hover_child {
                         if *id == hchld_id { lbl.hlt_color }
                         else { lbl.bg_color } }
                     else { lbl.bg_color };
 
+                if let Some(fchld_id) = win.focus_child {
+                    if *id == fchld_id { bg_color = lbl.hlt_color; }
+                }
+
                 let txt = lbl.text.clone();
                 let (tw, th) = p.text_size(&txt);
-                if lbl.wrap && tw > mw {
+
+                if lbl.editable {
+                    let border_pad = 4;
+                    mw = mw + 2 * border_pad;
+                    mh = th;
+                    p.draw_line(1, 0, 1, mh as i32 - 1, 2, bg_color);
+                    p.draw_line(mw as i32 - 1, 0, mw as i32 - 1, mh as i32 - 1, 2, bg_color);
+                    p.draw_text(
+                        border_pad as i32, 0,
+                        mw - 2 * border_pad, lbl.fg_color,
+                        Some(lbl.bg_color), lbl.align, &lbl.text);
+
+                } else if lbl.wrap && tw > mw {
                     let mut line = String::from("");
                     let mut y = 0;
                     for c in txt.chars() {
@@ -117,7 +135,8 @@ impl Widget {
                                     corner_radius,
                                     bg_color);
                                 p.draw_rect_filled(
-                                    (mw - text_pad) as i32, 0, text_pad, th, bg_color);
+                                    (mw - text_pad) as i32, 0, text_pad, th,
+                                    bg_color);
                                 xo = corner_radius as i32;
                                 text_width = mw - (text_pad + corner_radius);
                             },
@@ -159,7 +178,8 @@ impl Widget {
                     } else {
                         p.draw_text(
                             0, 0,
-                            mw, lbl.fg_color, Some(bg_color), lbl.align, &lbl.text);
+                            mw, lbl.fg_color, Some(bg_color), lbl.align,
+                            &lbl.text);
                         mh += th;
                     }
                 }
@@ -418,15 +438,13 @@ impl Window {
         None
     }
 
-    pub fn get_label_at(&self, x: u32, y: u32, active: bool) -> Option<usize> {
+    pub fn get_label_at<P>(&self, x: u32, y: u32, p: P) -> Option<usize>
+        where P: Fn(&Label) -> bool {
+
         for (idx, fb) in self.feedback.iter().enumerate() {
             match &self.widgets[idx] {
                 Widget::Label(_, _, lbl) => {
-                    if active && (lbl.clickable || lbl.editable) {
-                        if fb.is_inside(x as u32, y as u32) {
-                            return Some(fb.id);
-                        }
-                    } else if !active {
+                    if p(&lbl) {
                         if fb.is_inside(x as u32, y as u32) {
                             return Some(fb.id);
                         }
@@ -442,7 +460,11 @@ impl Window {
         match ev {
             WindowEvent::MousePos(x, y) => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
-                    self.hover_child = self.get_label_at(x as u32, y as u32, true);
+                    self.hover_child =
+                        self.get_label_at(
+                            x as u32,
+                            y as u32,
+                            |l| { l.clickable || l.editable });
                     true
                 } else {
                     false
@@ -450,15 +472,47 @@ impl Window {
             },
             WindowEvent::Click(x, y)    => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
-                    self.activ_child = self.get_label_at(x as u32, y as u32, true);
-                    self.focus_child = self.get_label_at(x as u32, y as u32, false);
+                    self.activ_child =
+                        self.get_label_at(x as u32, y as u32, |l: &Label| { l.clickable });
+                    self.focus_child =
+                        self.get_label_at(x as u32, y as u32, |l: &Label| { l.editable });
                     true
                 } else {
                     false
                 }
             },
-            WindowEvent::TextInput(s)   => { true },
-            WindowEvent::Backspace      => { true },
+            WindowEvent::TextInput(s)   => {
+                if let Some(id) = self.focus_child {
+                    match &mut self.widgets[id] {
+                        Widget::Label(_, _, lbl) => {
+                            let new = lbl.text.clone() + &s;
+                            if let Ok(rx) = Regex::new(&lbl.edit_regex) {
+                                if let Some(_) = rx.find(&new) {
+                                    lbl.text = new;
+                                }
+                            }
+                        }
+                        _ => ()
+                    }
+                }
+                true
+            },
+            WindowEvent::Backspace => {
+                if let Some(id) = self.focus_child {
+                    match &mut self.widgets[id] {
+                        Widget::Label(_, _, lbl) => {
+                            if !lbl.text.is_empty() {
+                                lbl.text =
+                                    lbl.text.chars()
+                                        .take(lbl.text.chars().count() - 1)
+                                        .collect();
+                            }
+                        }
+                        _ => ()
+                    }
+                }
+                true
+            },
         }
     }
 }
@@ -527,6 +581,7 @@ pub struct Label {
     wrap:       bool,
     align:      i32,
     editable:   bool,
+    edit_regex: String,
     clickable:  bool,
     hlt_color:  (u8, u8, u8, u8),
     fg_color:   (u8, u8, u8, u8),
@@ -541,6 +596,7 @@ impl Label {
             align:     1,
             wrap:      false,
             editable:  false,
+            edit_regex: String::from(".*"),
             clickable: false,
             hlt_color: (255 - fg.0, 255 - fg.1, 255 - fg.2, fg.3),
             fg_color:  fg,
@@ -578,8 +634,9 @@ impl Label {
         self
     }
 
-    pub fn editable(mut self) -> Self {
-        self.editable = true;
+    pub fn editable(mut self, rx: &str) -> Self {
+        self.editable  = true;
+        self.edit_regex = String::from(rx);
         self
     }
 
