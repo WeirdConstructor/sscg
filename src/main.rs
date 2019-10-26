@@ -40,7 +40,11 @@ impl<'a, 'b> GUIPainter<'a, 'b> {
     }
 
     fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        self.font.borrow().size_of(txt).unwrap_or((0, 0))
+        if txt.is_empty() {
+            (0, self.get_font_h() as u32)
+        } else {
+            self.font.borrow().size_of(txt).unwrap_or((0, 0))
+        }
     }
 
     fn done(&mut self) {
@@ -155,11 +159,13 @@ impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
 fn draw_text(font: &mut sdl2::ttf::Font, color: Color,
              canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
              x: i32, y: i32, max_w: i32, align: i32, txt: &str) {
+    if txt.is_empty() { return; }
+
     let txt_crt = canvas.texture_creator();
 
-    let sf = font.render(txt).blended(color).map_err(|e| e.to_string()).unwrap();
+    let sf  = font.render(txt).blended(color).map_err(|e| e.to_string()).unwrap();
     let txt = txt_crt.create_texture_from_surface(&sf).map_err(|e| e.to_string()).unwrap();
-    let tq = txt.query();
+    let tq  = txt.query();
 
     let xo = if align == 2
              || align == 0 { (max_w - (tq.width as i32)) / 2 }
@@ -549,8 +555,8 @@ impl VValUserData for WindowManagerWlWrapper {
     // TODO XXX
     let id0 = win.add_label(
         gui::Size { w: 100, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("Some Text Field", (0, 0, 0, 255), (255, 128, 128, 255))
-        .right().editable().lblref("TXT"));
+        gui::Label::new("A", (0, 0, 0, 255), (255, 128, 128, 255))
+        .left().editable("^\\d+(\\.|\\.\\d+)?$").lblref("TXT"));
     let id1 = win.add_label(
         gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
         gui::Label::new("Right Btn", (0, 0, 0, 255), (255, 128, 128, 255))

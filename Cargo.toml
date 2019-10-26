@@ -1,12 +1,20 @@
+#cargo-features = ["profile-overrides"]
+
 [package]
 name = "sscg"
 version = "0.1.0"
 authors = ["Weird Constructor <weirdconstructor@gmail.com>"]
 edition = "2018"
 
+## All dependencies (but not this crate itself or any workspace member)
+## will be compiled with -Copt-level=2 . This includes build dependencies.
+#[profile.dev.overrides."*"]
+#opt-level = 2
+
 [dependencies]
 wlambda = { path = "../wlambda" }
 astar   = "4.0.0"
+regex   = "1.1.9"
 vecmath = "1.0.0"
 
 [dependencies.sdl2]
@@ -15,3 +23,4 @@ default-features=false
 features=["ttf","bundled","gfx","image"]
 #,"image","gfx","ttf"]
 #,"mixer"]
+
