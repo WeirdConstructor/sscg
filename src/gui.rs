@@ -66,10 +66,10 @@ impl Widget {
             },
             Widget::Label(id, _size, lbl) => {
                 let bg_color =
-                    Some(if let Some(hchld_id) = win.hover_child {
-                            if *id == hchld_id { lbl.hlt_color }
-                            else { lbl.bg_color } }
-                         else { lbl.bg_color });
+                    if let Some(hchld_id) = win.hover_child {
+                        if *id == hchld_id { lbl.hlt_color }
+                        else { lbl.bg_color } }
+                    else { lbl.bg_color };
 
                 let txt = lbl.text.clone();
                 let (tw, th) = p.text_size(&txt);
@@ -83,7 +83,7 @@ impl Widget {
                             if line.len() > 1 { line.pop(); }
                             p.draw_text(
                                 0, y, mw,
-                                lbl.fg_color, bg_color, lbl.align, &line);
+                                lbl.fg_color, Some(bg_color), lbl.align, &line);
                             if line.len() > 1 {
                                 line = String::from("");
                                 line.push(c);
@@ -97,15 +97,71 @@ impl Widget {
                     if line.len() > 0 {
                         p.draw_text(
                             0, y, mw,
-                            lbl.fg_color, bg_color, lbl.align, &line);
+                            lbl.fg_color, Some(bg_color), lbl.align, &line);
                     }
 
                     mh += y as u32 + th;
                 } else {
-                    p.draw_text(
-                        0, 0,
-                        mw, lbl.fg_color, bg_color, lbl.align, &lbl.text);
-                    mh += th;
+                    let th = if th % 2 == 0 {th + 1 } else { th };
+                    let corner_radius : u32 = th / 2;
+                    let mut text_pad = (corner_radius * 3) / 4;
+                    let needed_width = text_pad + tw + 2 * corner_radius;
+                    if mw >= needed_width && lbl.clickable {
+                        let mut text_width : u32 = mw;
+                        let mut xo         : i32 = 0;
+                        match lbl.align {
+                            -1 => {
+                                p.draw_dot(
+                                    corner_radius as i32,
+                                    corner_radius as i32,
+                                    corner_radius,
+                                    bg_color);
+                                p.draw_rect_filled(
+                                    (mw - text_pad) as i32, 0, text_pad, th, bg_color);
+                                xo = corner_radius as i32;
+                                text_width = mw - (text_pad + corner_radius);
+                            },
+                            1 => {
+                                p.draw_dot(
+                                    mw as i32 - corner_radius as i32,
+                                    corner_radius as i32,
+                                    corner_radius,
+                                    bg_color);
+                                p.draw_rect_filled(
+                                    0, 0, text_pad, th, bg_color);
+                                xo = text_pad as i32;
+                                text_width = mw - (text_pad + corner_radius);
+                            },
+                            2 => { },
+                            _ => {
+                                p.draw_dot(
+                                    corner_radius as i32,
+                                    corner_radius as i32,
+                                    corner_radius,
+                                    bg_color);
+                                p.draw_dot(
+                                    w_fb.w as i32 - corner_radius as i32,
+                                    corner_radius as i32,
+                                    corner_radius,
+                                    bg_color);
+                                xo = corner_radius as i32;
+                                text_width = mw - 2 * corner_radius;
+                            },
+                        }
+
+                        p.draw_rect_filled(
+                            xo, 0, text_width, th, bg_color);
+                        p.draw_text(
+                            xo, 0, text_width,
+                            lbl.fg_color,
+                            None, lbl.align, &lbl.text);
+                        mh += th;
+                    } else {
+                        p.draw_text(
+                            0, 0,
+                            mw, lbl.fg_color, Some(bg_color), lbl.align, &lbl.text);
+                        mh += th;
+                    }
                 }
             },
         }
@@ -362,12 +418,18 @@ impl Window {
         None
     }
 
-    pub fn get_label_at(&self, x: u32, y: u32) -> Option<usize> {
+    pub fn get_label_at(&self, x: u32, y: u32, active: bool) -> Option<usize> {
         for (idx, fb) in self.feedback.iter().enumerate() {
             match &self.widgets[idx] {
-                Widget::Label(_, _, _) => {
-                    if fb.is_inside(x as u32, y as u32) {
-                        return Some(fb.id);
+                Widget::Label(_, _, lbl) => {
+                    if active && (lbl.clickable || lbl.editable) {
+                        if fb.is_inside(x as u32, y as u32) {
+                            return Some(fb.id);
+                        }
+                    } else if !active {
+                        if fb.is_inside(x as u32, y as u32) {
+                            return Some(fb.id);
+                        }
                     }
                 }
                 _ => ()
@@ -380,7 +442,7 @@ impl Window {
         match ev {
             WindowEvent::MousePos(x, y) => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
-                    self.hover_child = self.get_label_at(x as u32, y as u32);
+                    self.hover_child = self.get_label_at(x as u32, y as u32, true);
                     true
                 } else {
                     false
@@ -388,7 +450,8 @@ impl Window {
             },
             WindowEvent::Click(x, y)    => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
-                    self.activ_child = self.get_label_at(x as u32, y as u32);
+                    self.activ_child = self.get_label_at(x as u32, y as u32, true);
+                    self.focus_child = self.get_label_at(x as u32, y as u32, false);
                     true
                 } else {
                     false
@@ -487,6 +550,11 @@ impl Label {
 
     pub fn lblref(mut self, r: &str) -> Self {
         self.lblref = r.to_string();
+        self
+    }
+
+    pub fn center_no_decor(mut self) -> Self {
+        self.align = 2;
         self
     }
 

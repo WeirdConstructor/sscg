@@ -161,15 +161,18 @@ fn draw_text(font: &mut sdl2::ttf::Font, color: Color,
     let txt = txt_crt.create_texture_from_surface(&sf).map_err(|e| e.to_string()).unwrap();
     let tq = txt.query();
 
-    let xo = if align == 0 { (max_w - (tq.width as i32)) / 2 }
+    let xo = if align == 2
+             || align == 0 { (max_w - (tq.width as i32)) / 2 }
         else if align < 0  { max_w - (tq.width as i32) }
         else { 0 };
 
     let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
 
+    let xo = if xo < 0 { 0 } else { xo };
+
     canvas.copy(
         &txt,
-        Some(Rect::new(0, 0, w as u32, tq.height)),
+        Some(Rect::new(0,      0, w as u32, tq.height)),
         Some(Rect::new(x + xo, y, w as u32, tq.height))
     ).map_err(|e| e.to_string()).unwrap();
 }
@@ -473,8 +476,36 @@ impl WindowManagerWlWrapper {
     }
 }
 
+fn shiftaddup4(u: u8) -> u8 { (u << 4) | u }
+
 fn color_hex24tpl(s: &str) -> (u8, u8, u8, u8) {
-    u8::from_str_radix(&s[0..2]).unwrap_or(0)
+    match s.len() {
+        8 => (
+            u8::from_str_radix(&s[0..2], 16).unwrap_or(0),
+            u8::from_str_radix(&s[2..4], 16).unwrap_or(0),
+            u8::from_str_radix(&s[4..6], 16).unwrap_or(0),
+            u8::from_str_radix(&s[6..8], 16).unwrap_or(255)
+        ),
+        6 => (
+            u8::from_str_radix(&s[0..2], 16).unwrap_or(0),
+            u8::from_str_radix(&s[2..4], 16).unwrap_or(0),
+            u8::from_str_radix(&s[4..6], 16).unwrap_or(0),
+            255
+        ),
+        4 => (
+            shiftaddup4(u8::from_str_radix(&s[0..1], 16).unwrap_or(0)),
+            shiftaddup4(u8::from_str_radix(&s[1..2], 16).unwrap_or(0)),
+            shiftaddup4(u8::from_str_radix(&s[2..3], 16).unwrap_or(0)),
+            shiftaddup4(u8::from_str_radix(&s[3..4], 16).unwrap_or(0xF)),
+        ),
+        3 => (
+            shiftaddup4(u8::from_str_radix(&s[0..1], 16).unwrap_or(0)),
+            shiftaddup4(u8::from_str_radix(&s[1..2], 16).unwrap_or(0)),
+            shiftaddup4(u8::from_str_radix(&s[2..3], 16).unwrap_or(0)),
+            255
+        ),
+        _ => (255, 0, 255, 255),
+    }
 }
 
 fn vval2win(v: VVal) -> gui::Window {
@@ -485,7 +516,7 @@ fn vval2win(v: VVal) -> gui::Window {
     w.h     = v.get_key("h").unwrap_or(VVal::Int(500)).i() as u32;
     w.min_w = v.get_key("min_w").unwrap_or(VVal::Int(100)).i() as u32;
     w.min_h = v.get_key("min_h").unwrap_or(VVal::Int(100)).i() as u32;
-    w.title = v.get_key("title").unwrap_or(VVal::new_str("Unnamed")).s();
+    w.title = v.get_key("title").unwrap_or(VVal::new_str("Unnamed")).s_raw();
     if let Some(tc) = v.get_key("title_color") {
         w.title_color = color_hex24tpl(&tc.s_raw());
     }
@@ -516,11 +547,31 @@ impl VValUserData for WindowManagerWlWrapper {
                     let cb      = args[3].clone();
 
     // TODO XXX
+    let id0 = win.add_label(
+        gui::Size { w: 100, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("Some Text Field", (0, 0, 0, 255), (255, 128, 128, 255))
+        .right().editable().lblref("TXT"));
+    let id1 = win.add_label(
+        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("Right Btn", (0, 0, 0, 255), (255, 128, 128, 255))
+        .right().clickable().lblref("XX2"));
     let id2 = win.add_label(
         gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-        .center().wrap().lblref("XX2"));
-    win.child = id2;
+        gui::Label::new("Center Btn", (0, 0, 0, 255), (255, 128, 128, 255))
+        .center_no_decor().clickable().lblref("XX2"));
+    let id3 = win.add_label(
+        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("Left Btn", (0, 0, 0, 255), (255, 128, 128, 255))
+        .left().clickable().lblref("XX2"));
+    let id4 = win.add_label(
+        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("Center Decor Btn", (0, 0, 0, 255), (128, 128, 255, 255))
+        .center().clickable().lblref("XX2"));
+    let lay = win.add_layout(
+        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+        gui::BoxDir::Hori(3),
+        &vec![id0, id1, id2, id3, id4]);
+    win.child = lay;
                     self.0.borrow_mut().set(idx as usize, win, cb);
                 } else {
                     self.0.borrow_mut().delete(idx as usize);
