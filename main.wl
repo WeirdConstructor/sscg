@@ -11,6 +11,8 @@ init = {!(ship) = @;
     game :add_entity sys 200 100 ${ type = :asteroid_field };
     ship :set_system sys;
     win :set_window 0 ${
+        title = "Test Window",
+        title_color = "e8e",
         x = 0,
         y = 0,
         w = 1000,
