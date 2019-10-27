@@ -1,6 +1,8 @@
-
+!SHIP_PANEL_ID = 0;
+!STATUS_PANEL_ID = 1;
+!status_panel = ${ };
 !x = $&0;
-std:displayln "GAMESTATE: " game;
+
 ${
 
 init = {!(ship) = @;
@@ -10,14 +12,38 @@ init = {!(ship) = @;
     game :add_entity sys 300 300 ${ type = :station };
     game :add_entity sys 200 100 ${ type = :asteroid_field };
     ship :set_system sys;
-    win :set_window 0 ${
-        title = "Test Window",
+
+    win :set_window SHIP_PANEL_ID ${
+        title       = "Test Window",
         title_color = "e8e",
-        x = -481,
-        y = 0,
-        w = 1000,
-        h = 1000,
+        x           = -481,
+        y           = 0,
+        w           = 1000,
+        h           = 1000,
+        child       = ${
+            t    = "l_button",
+            text = "10",
+            fg   = "F0F",
+            bg   = "303",
+            h    = 0,
+        },
     } {|| std:displayln "FOO" @ };
+
+    win :set_window STATUS_PANEL_ID ${
+        title       = "Status",
+        title_color = "ee8",
+        x           = 0,
+        y           = -481,
+        w           = -481,
+        h           = 1000,
+        child       = ${
+            t    = "l_button",
+            text = "10",
+            fg   = "000",
+            bg   = "F0F",
+            h    = 0,
+        },
+    } {|| std:displayln "MO" @ };
 },
 
 ship_entity_tick = {
