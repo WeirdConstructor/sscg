@@ -80,32 +80,40 @@ impl Widget {
                 let txt = lbl.text.clone();
                 let (tw, th) = p.text_size(&txt);
 
+                if mh == 0 { mh = th; }
+                if mh < th { mh = th; }
+
                 if lbl.editable {
                     let border_pad = 4;
                     mw = mw + 2 * border_pad;
-                    mh = th;
                     p.draw_line(1, 0, 1, mh as i32 - 1, 2, bg_color);
                     p.draw_line(mw as i32 - 1, 0, mw as i32 - 1, mh as i32 - 1, 2, bg_color);
-                    p.draw_text(
+                    let text_field_width = mw - 2 * border_pad;
+                    p.draw_rect_filled(
                         border_pad as i32, 0,
-                        mw - 2 * border_pad, lbl.fg_color,
-                        Some(lbl.bg_color), lbl.align, &lbl.text);
+                        text_field_width, mh, lbl.bg_color);
+                    p.draw_text(
+                        border_pad as i32, ((mh - th) / 2) as i32,
+                        text_field_width, lbl.fg_color,
+                        None, lbl.align, &lbl.text);
 
                 } else if lbl.wrap && tw > mw {
                     let mut line = String::from("");
-                    let mut y = 0;
+                    let mut y : i32 = 0;
+
+                    let mut lines : std::vec::Vec<(i32, i32, String)> = vec![];
                     for c in txt.chars() {
                         line.push(c);
                         let (tw, th) = p.text_size(&line);
+                        if (y as u32 + th) > mh { line = String::from(""); break; }
                         if tw > mw {
                             if line.len() > 1 { line.pop(); }
-                            p.draw_text(
-                                0, y, mw,
-                                lbl.fg_color, Some(bg_color), lbl.align, &line);
                             if line.len() > 1 {
+                                lines.push((0, y, line));
                                 line = String::from("");
                                 line.push(c);
                             } else {
+                                lines.push((0, y, line));
                                 line = String::from("");
                             }
                             y += th as i32;
@@ -113,19 +121,32 @@ impl Widget {
                     }
 
                     if line.len() > 0 {
-                        p.draw_text(
-                            0, y, mw,
-                            lbl.fg_color, Some(bg_color), lbl.align, &line);
+                        lines.push((0, y, line));
                     }
 
-                    mh += y as u32 + th;
+                    let text_lines_h = y as u32;
+
+                    let yo = if text_lines_h < mh { (mh - text_lines_h) / 2 }
+                             else { 0 };
+                    p.draw_rect_filled(
+                        0, 0, mw, mh, bg_color);
+                    for (x, y, l) in lines.iter() {
+                        p.draw_text(
+                            *x, *y + yo as i32, mw,
+                            lbl.fg_color, None, lbl.align, &l);
+                    }
                 } else {
-                    let th = if th % 2 == 0 {th + 1 } else { th };
-                    let corner_radius : u32 = th / 2;
-                    let mut text_pad = (corner_radius * 3) / 4;
-                    let needed_width = text_pad + tw + 2 * corner_radius;
-                    if mw >= needed_width && lbl.clickable {
-                        let mut text_width : u32 = mw;
+                    if lbl.clickable {
+                        let mut corner_radius : u32 = if mw < mh { mw / 4 } else { mh / 4 };
+                        if corner_radius < (th / 2) { corner_radius = th / 2; }
+
+                        mh = corner_radius * 2;
+                        if mh < th { mh = th; }
+                        if mh % 2 == 0 { mh += 1; }
+
+                        let text_pad = 4;
+
+                        let mut text_width : i32 = mw as i32;
                         let mut xo         : i32 = 0;
                         match lbl.align {
                             -1 => {
@@ -134,11 +155,13 @@ impl Widget {
                                     corner_radius as i32,
                                     corner_radius,
                                     bg_color);
-                                p.draw_rect_filled(
-                                    (mw - text_pad) as i32, 0, text_pad, th,
-                                    bg_color);
+                                if text_pad > 0 {
+                                    p.draw_rect_filled(
+                                        (mw - text_pad) as i32, 0,
+                                        text_pad, mh, bg_color);
+                                }
                                 xo = corner_radius as i32;
-                                text_width = mw - (text_pad + corner_radius);
+                                text_width = mw as i32 - (text_pad + corner_radius) as i32;
                             },
                             1 => {
                                 p.draw_dot(
@@ -147,9 +170,9 @@ impl Widget {
                                     corner_radius,
                                     bg_color);
                                 p.draw_rect_filled(
-                                    0, 0, text_pad, th, bg_color);
+                                    0, 0, text_pad, mh, bg_color);
                                 xo = text_pad as i32;
-                                text_width = mw - (text_pad + corner_radius);
+                                text_width = mw as i32 - (text_pad + corner_radius) as i32;
                             },
                             2 => { },
                             _ => {
@@ -164,23 +187,26 @@ impl Widget {
                                     corner_radius,
                                     bg_color);
                                 xo = corner_radius as i32;
-                                text_width = mw - 2 * corner_radius;
+                                text_width = mw as i32 - 2 * corner_radius as i32;
                             },
                         }
 
+                        let text_width : u32 =
+                            if text_width < 0 { 0 } else { text_width as u32 };
+
                         p.draw_rect_filled(
-                            xo, 0, text_width, th, bg_color);
+                            xo, 0, text_width, mh, bg_color);
                         p.draw_text(
-                            xo, 0, text_width,
-                            lbl.fg_color,
-                            None, lbl.align, &lbl.text);
-                        mh += th;
+                            xo, ((mh - th) / 2) as i32, text_width as u32,
+                            lbl.fg_color, None, lbl.align, &lbl.text);
                     } else {
+                        let text_field_width = mw;
+                        p.draw_rect_filled(
+                            0, 0, text_field_width, mh, lbl.bg_color);
                         p.draw_text(
-                            0, 0,
-                            mw, lbl.fg_color, Some(bg_color), lbl.align,
-                            &lbl.text);
-                        mh += th;
+                            0, ((mh - th) / 2) as i32,
+                            text_field_width, lbl.fg_color,
+                            None, lbl.align, &lbl.text);
                     }
                 }
             },
@@ -297,7 +323,7 @@ impl Window {
 
         // calculate min window size
         let min_size_due_to_decor =
-            ((4 * padding as u32) + (3 * corner_radius)) as u32
+            ((4 * padding as u32) + (4 * corner_radius)) as u32
             + (2 * text_lr_pad) as u32
             + min_text_width;
         if w_fb.w <= min_size_due_to_decor {
@@ -349,12 +375,12 @@ impl Window {
         // rectangle from text end to right circle
         p.draw_rect_filled(
             after_text, 0,
-            (after_text_to_win_max_x - corner_radius as i32) as u32,
+            (after_text_to_win_max_x - 2 * corner_radius as i32) as u32,
             2 * corner_radius + 1,
             title_color);
         // right circle
         let right_dot_x =
-            after_text + after_text_to_win_max_x - corner_radius as i32;
+            after_text + after_text_to_win_max_x - 2 * corner_radius as i32;
         p.draw_dot(
             right_dot_x,
             corner_radius as i32,
@@ -367,8 +393,8 @@ impl Window {
             w_fb.h - (corner_radius + padding as u32),
             title_color);
 
-        let ww = w_fb.w - ((2 * padding) as u32);
-        let wh = w_fb.h - ((3 * padding) as u32);
+        let ww = w_fb.w - (1 * corner_radius + (3 * padding) as u32);
+        let wh = w_fb.h - (2 * corner_radius + (3 * padding) as u32);
 
         p.push_add_offs(0, padding as i32 + 2 * corner_radius as i32);
 
