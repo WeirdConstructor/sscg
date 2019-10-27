@@ -13,7 +13,7 @@ init = {!(ship) = @;
     win :set_window 0 ${
         title = "Test Window",
         title_color = "e8e",
-        x = 0,
+        x = -481,
         y = 0,
         w = 1000,
         h = 1000,
