@@ -255,20 +255,19 @@ pub struct Window {
     focus_child:  Option<usize>,
     hover_child:  Option<usize>,
     activ_child:  Option<usize>,
-    pub x:        u32,
-    pub y:        u32,
-    pub w:        u32,
-    pub h:        u32,
-    pub min_w:    u32,
-    pub min_h:    u32,
+    pub x:        i32,
+    pub y:        i32,
+    pub w:        i32,
+    pub h:        i32,
     needs_redraw: bool,
     win_feedback: WidgetFeedback,
 }
 
 /// All values are in 0.1% scale. that means, to represent 100% you have to
 /// supply 1000 to ratio to get the full value.
-fn p2r(value: u32, ratio: u32) -> u32 {
-    (value * ratio) / 1000
+fn p2r(value: u32, ratio: i32) -> u32 {
+    if ratio < 0 { (-ratio) as u32 }
+    else { (value * ratio as u32) / 1000 }
 }
 
 pub enum WindowEvent {
@@ -293,8 +292,6 @@ impl Window {
             y: 0,
             w: 0,
             h: 0,
-            min_w: 0,
-            min_h: 0,
             needs_redraw: false,
             win_feedback: WidgetFeedback::new(),
         }
@@ -311,8 +308,16 @@ impl Window {
 
         w_fb.x = p2r(max_w, self.x);
         w_fb.y = p2r(max_h, self.y);
-        w_fb.w = p2r(max_w, self.w);
-        w_fb.h = p2r(max_h, self.h);
+        if self.x >= 0 {
+            w_fb.w = p2r(max_w, self.w);
+        } else {
+            w_fb.w = p2r(max_w - w_fb.x, self.h);
+        }
+        if self.y >= 0 {
+            w_fb.h = p2r(max_h, self.h);
+        } else {
+            w_fb.h = p2r(max_h - w_fb.y, self.h);
+        }
 
         let mut ts = p.text_size(&self.title);
         let corner_radius   : u32 = ts.1 / 2;
@@ -584,8 +589,8 @@ pub struct Size {
 impl Size {
     pub fn size(&self, max_w: u32, max_h: u32) -> (u32, u32) {
         let margin2 = self.margin * 2;
-        let rw = p2r(max_w, self.w) + margin2;
-        let rh = p2r(max_h, self.h) + margin2;
+        let rw = p2r(max_w, self.w as i32) + margin2;
+        let rh = p2r(max_h, self.h as i32) + margin2;
         (
             if rw < (self.min_w + margin2) { self.min_w + margin2 }
             else { rw },

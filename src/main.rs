@@ -516,12 +516,10 @@ fn color_hex24tpl(s: &str) -> (u8, u8, u8, u8) {
 
 fn vval2win(v: VVal) -> gui::Window {
     let mut w = gui::Window::new();
-    w.x     = v.get_key("x").unwrap_or(VVal::Int(0)).i() as u32;
-    w.y     = v.get_key("y").unwrap_or(VVal::Int(0)).i() as u32;
-    w.w     = v.get_key("w").unwrap_or(VVal::Int(500)).i() as u32;
-    w.h     = v.get_key("h").unwrap_or(VVal::Int(500)).i() as u32;
-    w.min_w = v.get_key("min_w").unwrap_or(VVal::Int(100)).i() as u32;
-    w.min_h = v.get_key("min_h").unwrap_or(VVal::Int(100)).i() as u32;
+    w.x     = v.get_key("x").unwrap_or(VVal::Int(0)).i() as i32;
+    w.y     = v.get_key("y").unwrap_or(VVal::Int(0)).i() as i32;
+    w.w     = v.get_key("w").unwrap_or(VVal::Int(500)).i() as i32;
+    w.h     = v.get_key("h").unwrap_or(VVal::Int(500)).i() as i32;
     w.title = v.get_key("title").unwrap_or(VVal::new_str("Unnamed")).s_raw();
     if let Some(tc) = v.get_key("title_color") {
         w.title_color = color_hex24tpl(&tc.s_raw());
