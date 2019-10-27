@@ -554,9 +554,13 @@ impl VValUserData for WindowManagerWlWrapper {
 
     // TODO XXX
     let id0 = win.add_label(
-        gui::Size { w: 100, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Size { w: 100, h: 200, min_w: 0, min_h: 30, margin: 0 },
         gui::Label::new("A", (0, 0, 0, 255), (255, 128, 128, 255))
         .left().editable("^\\d+(\\.|\\.\\d+)?$").lblref("TXT"));
+    let id1t = win.add_label(
+        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("fi feiow fjwif wejofi ewjfoi wejf oweifj woeif jweof jweof ewijf owei fjweof weif begrizu8 43h8932h239nf289f823h 329f j2398 f23j 923jf 238ewiofjewo", (0, 0, 0, 255), (255, 128, 128, 255))
+        .right().wrap());
     let id1 = win.add_label(
         gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
         gui::Label::new("Right Btn", (0, 0, 0, 255), (255, 128, 128, 255))
@@ -570,14 +574,27 @@ impl VValUserData for WindowManagerWlWrapper {
         gui::Label::new("Left Btn", (0, 0, 0, 255), (255, 128, 128, 255))
         .left().clickable().lblref("XX2"));
     let id4 = win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+        gui::Size { w: 100, h: 0, min_w: 0, min_h: 0, margin: 0 },
         gui::Label::new("Center Decor Btn", (0, 0, 0, 255), (128, 128, 255, 255))
         .center().clickable().lblref("XX2"));
     let lay = win.add_layout(
-        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+        gui::Size { w: 1000, h: 500, min_w: 0, min_h: 0, margin: 0 },
         gui::BoxDir::Hori(3),
-        &vec![id0, id1, id2, id3, id4]);
-    win.child = lay;
+        &vec![id0, id1, id2, id3, id1t, id4]);
+
+    let id4tfw = win.add_label(
+        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+        gui::Label::new("Filling stuff", (0, 0, 0, 255), (128, 128, 255, 255))
+        .center());
+    let lay3 = win.add_layout(
+        gui::Size { w: 1000, h: 500, min_w: 0, min_h: 0, margin: 0 },
+        gui::BoxDir::Hori(0),
+        &vec![id4tfw]);
+    let lay2 = win.add_layout(
+        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+        gui::BoxDir::Vert(1),
+        &vec![lay, lay3]);
+    win.child = lay2;
                     self.0.borrow_mut().set(idx as usize, win, cb);
                 } else {
                     self.0.borrow_mut().delete(idx as usize);
