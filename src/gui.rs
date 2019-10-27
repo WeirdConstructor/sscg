@@ -80,6 +80,7 @@ impl Widget {
                 let txt = lbl.text.clone();
                 let (tw, th) = p.text_size(&txt);
 
+                if mw == 0 { mw = max_w; }
                 if mh == 0 { mh = th; }
                 if mh < th { mh = th; }
 
@@ -352,28 +353,19 @@ impl Window {
 
         // window background rect
         p.draw_rect_filled(
-            -padding,
-            -padding,
-            w_fb.w + 2 * (padding as u32),
-            w_fb.h + 2 * (padding as u32),
-            (0, 0, 0, 255));
+            -padding, -padding, w_fb.w, w_fb.h, (0, 0, 0, 255));
         // left round circle
         p.draw_dot(
-            corner_radius as i32,
-            corner_radius as i32,
-            corner_radius,
+            corner_radius as i32, corner_radius as i32, corner_radius,
             title_color);
         // extension of left circle to text
         p.draw_rect_filled(
             corner_radius as i32, 0,
-            2 * corner_radius + 1, 2 * corner_radius + 1,
-            title_color);
+            2 * corner_radius + 1, 2 * corner_radius + 1, title_color);
         // title text
         let text_pos = 3 * corner_radius as i32 + text_lr_pad;
         p.draw_text(
-            text_pos,
-            0,
-            ts.0,
+            text_pos, 0, ts.0,
             title_color, None, 1, &self.title);
         let after_text = text_pos + text_lr_pad + ts.0 as i32;
         let after_text_to_win_max_x = w_fb.w as i32 - after_text;

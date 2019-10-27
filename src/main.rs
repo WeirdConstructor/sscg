@@ -514,6 +514,85 @@ fn color_hex24tpl(s: &str) -> (u8, u8, u8, u8) {
     }
 }
 
+fn vval2size(v: VVal) -> gui::Size {
+    let mut s = gui::Size {
+        min_w: 0,
+        min_h: 0,
+        w:     1000,
+        h:     1000,
+        margin: 0,
+    };
+
+    s.min_w  = v.get_key("min_w") .unwrap_or(VVal::Int(0)).i() as u32;
+    s.min_h  = v.get_key("min_h") .unwrap_or(VVal::Int(0)).i() as u32;
+    s.w      = v.get_key("w")     .unwrap_or(VVal::Int(1000)).i() as u32;
+    s.h      = v.get_key("h")     .unwrap_or(VVal::Int(1000)).i() as u32;
+    s.margin = v.get_key("margin").unwrap_or(VVal::Int(0)).i() as u32;
+
+    s
+}
+
+fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
+    let mut childs = vec![];
+    if let Some(VVal::Lst(l)) = v.get_key("childs") {
+        for w in l.borrow().iter() {
+            childs.push(vval2widget(w.clone(), win));
+        }
+    }
+
+    match &v.get_key("t").unwrap_or(VVal::Nul).s_raw()[..] {
+        "vbox" => {
+            win.add_layout(
+                vval2size(v.clone()),
+                gui::BoxDir::Vert(
+                    v.get_key("spacing").unwrap_or(VVal::Int(0)).i() as u32),
+                &childs)
+        },
+        "hbox" => {
+            win.add_layout(
+                vval2size(v.clone()),
+                gui::BoxDir::Hori(
+                    v.get_key("spacing").unwrap_or(VVal::Int(0)).i() as u32),
+                &childs)
+        },
+        "l_button" => {
+            win.add_label(
+                vval2size(v.clone()),
+                gui::Label::new(
+                    &v.get_key("text").unwrap_or(VVal::new_str("")).s_raw(),
+                    color_hex24tpl(
+                        &v.get_key("fg").unwrap_or(VVal::new_str("")).s_raw()),
+                    color_hex24tpl(
+                        &v.get_key("bg").unwrap_or(VVal::new_str("")).s_raw()))
+                    .right()
+                    .clickable()
+                    .lblref(
+                        &v.get_key("ref").unwrap_or(VVal::new_str("")).s_raw()))
+        },
+        "r_button" => {
+            0
+        },
+        "c_button" => {
+            0
+        },
+        "field" => {
+            0
+        },
+        "c_label" => {
+            0
+        },
+        "l_label" => {
+            0
+        },
+        "r_label" => {
+            0
+        },
+        _ => {
+            0
+        },
+    }
+}
+
 fn vval2win(v: VVal) -> gui::Window {
     let mut w = gui::Window::new();
     w.x     = v.get_key("x").unwrap_or(VVal::Int(0)).i() as i32;
@@ -524,6 +603,8 @@ fn vval2win(v: VVal) -> gui::Window {
     if let Some(tc) = v.get_key("title_color") {
         w.title_color = color_hex24tpl(&tc.s_raw());
     }
+    let id = vval2widget(v.get_key("child").unwrap_or(VVal::Nul), &mut w);
+    w.child = id;
 
     w
 }
@@ -550,49 +631,49 @@ impl VValUserData for WindowManagerWlWrapper {
                     let mut win = vval2win(args[2].clone());
                     let cb      = args[3].clone();
 
-    // TODO XXX
-    let id0 = win.add_label(
-        gui::Size { w: 100, h: 200, min_w: 0, min_h: 30, margin: 0 },
-        gui::Label::new("A", (0, 0, 0, 255), (255, 128, 128, 255))
-        .left().editable("^\\d+(\\.|\\.\\d+)?$").lblref("TXT"));
-    let id1t = win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("fi feiow fjwif wejofi ewjfoi wejf oweifj woeif jweof jweof ewijf owei fjweof weif begrizu8 43h8932h239nf289f823h 329f j2398 f23j 923jf 238ewiofjewo", (0, 0, 0, 255), (255, 128, 128, 255))
-        .right().wrap());
-    let id1 = win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("Right Btn", (0, 0, 0, 255), (255, 128, 128, 255))
-        .right().clickable().lblref("XX2"));
-    let id2 = win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("Center Btn", (0, 0, 0, 255), (255, 128, 128, 255))
-        .center_no_decor().clickable().lblref("XX2"));
-    let id3 = win.add_label(
-        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("Left Btn", (0, 0, 0, 255), (255, 128, 128, 255))
-        .left().clickable().lblref("XX2"));
-    let id4 = win.add_label(
-        gui::Size { w: 100, h: 0, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("Center Decor Btn", (0, 0, 0, 255), (128, 128, 255, 255))
-        .center().clickable().lblref("XX2"));
-    let lay = win.add_layout(
-        gui::Size { w: 1000, h: 500, min_w: 0, min_h: 0, margin: 0 },
-        gui::BoxDir::Hori(3),
-        &vec![id0, id1, id2, id3, id1t, id4]);
-
-    let id4tfw = win.add_label(
-        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
-        gui::Label::new("Filling stuff", (0, 0, 0, 255), (128, 128, 255, 255))
-        .center());
-    let lay3 = win.add_layout(
-        gui::Size { w: 1000, h: 500, min_w: 0, min_h: 0, margin: 0 },
-        gui::BoxDir::Hori(0),
-        &vec![id4tfw]);
-    let lay2 = win.add_layout(
-        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
-        gui::BoxDir::Vert(1),
-        &vec![lay, lay3]);
-    win.child = lay2;
+//    // TODO XXX
+//    let id0 = win.add_label(
+//        gui::Size { w: 100, h: 200, min_w: 0, min_h: 30, margin: 0 },
+//        gui::Label::new("A", (0, 0, 0, 255), (255, 128, 128, 255))
+//        .left().editable("^\\d+(\\.|\\.\\d+)?$").lblref("TXT"));
+//    let id1t = win.add_label(
+//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("fi feiow fjwif wejofi ewjfoi wejf oweifj woeif jweof jweof ewijf owei fjweof weif begrizu8 43h8932h239nf289f823h 329f j2398 f23j 923jf 238ewiofjewo", (0, 0, 0, 255), (255, 128, 128, 255))
+//        .right().wrap());
+//    let id1 = win.add_label(
+//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("Right Btn", (0, 0, 0, 255), (255, 128, 128, 255))
+//        .right().clickable().lblref("XX2"));
+//    let id2 = win.add_label(
+//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("Center Btn", (0, 0, 0, 255), (255, 128, 128, 255))
+//        .center_no_decor().clickable().lblref("XX2"));
+//    let id3 = win.add_label(
+//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("Left Btn", (0, 0, 0, 255), (255, 128, 128, 255))
+//        .left().clickable().lblref("XX2"));
+//    let id4 = win.add_label(
+//        gui::Size { w: 100, h: 0, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("Center Decor Btn", (0, 0, 0, 255), (128, 128, 255, 255))
+//        .center().clickable().lblref("XX2"));
+//    let lay = win.add_layout(
+//        gui::Size { w: 1000, h: 500, min_w: 0, min_h: 0, margin: 0 },
+//        gui::BoxDir::Hori(3),
+//        &vec![id0, id1, id2, id3, id1t, id4]);
+//
+//    let id4tfw = win.add_label(
+//        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+//        gui::Label::new("Filling stuff", (0, 0, 0, 255), (128, 128, 255, 255))
+//        .center());
+//    let lay3 = win.add_layout(
+//        gui::Size { w: 1000, h: 500, min_w: 0, min_h: 0, margin: 0 },
+//        gui::BoxDir::Hori(0),
+//        &vec![id4tfw]);
+//    let lay2 = win.add_layout(
+//        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
+//        gui::BoxDir::Vert(1),
+//        &vec![lay, lay3]);
+//    win.child = lay2;
                     self.0.borrow_mut().set(idx as usize, win, cb);
                 } else {
                     self.0.borrow_mut().delete(idx as usize);
