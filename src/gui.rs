@@ -313,12 +313,20 @@ impl Window {
         if self.x >= 0 {
             w_fb.w = p2r(max_w, self.w);
         } else {
-            w_fb.w = p2r(max_w - w_fb.x, self.h);
+            if w_fb.x > max_w {
+                w_fb.w = 10;
+            } else {
+                w_fb.w = p2r(max_w - w_fb.x, self.w);
+            }
         }
         if self.y >= 0 {
             w_fb.h = p2r(max_h, self.h);
         } else {
-            w_fb.h = p2r(max_h - w_fb.y, self.h);
+            if w_fb.y > max_h {
+                w_fb.h = 10;
+            } else {
+                w_fb.h = p2r(max_h - w_fb.y, self.h);
+            }
         }
 
         let mut ts = p.text_size(&self.title);
