@@ -58,6 +58,9 @@ init = {!(ship) = @;
     } {|| std:displayln "MO" @ };
 },
 
+game_tick = {
+    std:displayln "GAME TICK";
+},
 ship_tick = {
     !(ship, system) = _;
     std:displayln "SHIP TICK" @;

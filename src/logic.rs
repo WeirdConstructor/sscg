@@ -123,6 +123,7 @@ impl Object {
 #[derive(Debug, Clone)]
 pub struct ObjectRegistry {
     objects:            std::vec::Vec<Object>,
+    tick_count:         i32,
     tick_time_ms:       f64,
 }
 
@@ -130,6 +131,7 @@ impl ObjectRegistry {
     pub fn new() -> Self {
         ObjectRegistry {
             objects: std::vec::Vec::new(),
+            tick_count:   0,
             tick_time_ms: 0.0,
         }
     }
@@ -195,6 +197,12 @@ impl ObjectRegistry {
     }
 
     pub fn tick(&mut self, er: &mut EventRouter) {
+        self.tick_count += 1;
+        if self.tick_count > 5 {
+            self.tick_count = 0;
+            er.emit("tick".to_string(), VVal::Nul);
+        }
+
         for o in self.objects.iter() {
             match o {
                 Object::Ship(s)   => s.borrow_mut().tick(er),
