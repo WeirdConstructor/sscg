@@ -58,7 +58,7 @@ init = {!(ship) = @;
     } {|| std:displayln "MO" @ };
 },
 
-game_tick = {
+game_tick = {||
     std:displayln "GAME TICK";
 },
 ship_tick = {
