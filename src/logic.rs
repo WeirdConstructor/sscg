@@ -448,17 +448,20 @@ impl Ship {
             if self.course_progress >= d {
                 self.pos = self.course.unwrap().to;
                 self.course = None;
-                er.emit("ship_arrived".to_string(),
-                    VVal::Int(self.id as i64));
+                self.state.set_map_key(
+                    "_state".to_string(), VVal::new_str("arrived"));
 
             } else {
                 self.pos = self.course.unwrap().interpolate(
                     self.course_progress as f64 / d as f64);
-                er.emit("ship_travel".to_string(),
-                    VVal::Int(self.id as i64));
+                self.state.set_map_key(
+                    "_state".to_string(), VVal::new_str("flying"));
             }
 
             println!("SHIP: pos={:?} dis={} cp={}", self.pos, d, self.course_progress);
+        } else {
+            self.state.set_map_key(
+                "_state".to_string(), VVal::new_str("stopped"));
         }
 
         self.tick_count += 1;
@@ -667,7 +670,7 @@ impl System {
             }
         }
 
-        if last_dist < 10_i32.pow(2) {
+        if last_dist < 2_i32.pow(2) {
             return self.objects.get(closest_i as usize).cloned();
         }
         return None;
