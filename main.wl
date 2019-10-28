@@ -32,9 +32,9 @@ init = {!(ship) = @;
                     h    = 1,
                 },
                 ${ t = "hbox", childs = $[
-                    ${ t = "l_button", text = "Status:",
+                    ${ t = "r_button", text = "Status:",
                        fg = "FFF", bg = "000", w = 300, h = 0},
-                    ${ t = "l_button", ref = "SHIP_STATE",
+                    ${ t = "l_label", ref = "SHIP_STATE",
                        fg = "FFF", bg = "F00", w = 700, h = 0},
                 ]},
             ],

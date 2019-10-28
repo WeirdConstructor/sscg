@@ -452,55 +452,46 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
 
     match &v.get_key("t").unwrap_or(VVal::Nul).s_raw()[..] {
         "vbox" => {
-            win.add_layout(
+            return win.add_layout(
                 vval2size(v.clone()),
                 gui::BoxDir::Vert(
                     v.get_key("spacing").unwrap_or(VVal::Int(0)).i() as u32),
-                &childs)
+                &childs);
         },
         "hbox" => {
-            win.add_layout(
+            return win.add_layout(
                 vval2size(v.clone()),
                 gui::BoxDir::Hori(
                     v.get_key("spacing").unwrap_or(VVal::Int(0)).i() as u32),
-                &childs)
+                &childs);
         },
-        "l_button" => {
-            win.add_label(
-                vval2size(v.clone()),
-                gui::Label::new(
-                    &v.get_key("text").unwrap_or(VVal::new_str("")).s_raw(),
-                    color_hex24tpl(
-                        &v.get_key("fg").unwrap_or(VVal::new_str("")).s_raw()),
-                    color_hex24tpl(
-                        &v.get_key("bg").unwrap_or(VVal::new_str("")).s_raw()))
-                    .right()
-                    .clickable()
-                    .lblref(
-                        &v.get_key("ref").unwrap_or(VVal::new_str("")).s_raw()))
-        },
-        "r_button" => {
-            0
-        },
-        "c_button" => {
-            0
-        },
-        "field" => {
-            0
-        },
-        "c_label" => {
-            0
-        },
-        "l_label" => {
-            0
-        },
-        "r_label" => {
-            0
-        },
-        _ => {
-            0
-        },
+        _ => ()
     }
+
+    let lbl =
+        gui::Label::new(
+            &v.get_key("text").unwrap_or(VVal::new_str("")).s_raw(),
+            color_hex24tpl(
+                &v.get_key("fg").unwrap_or(VVal::new_str("")).s_raw()),
+            color_hex24tpl(
+                &v.get_key("bg").unwrap_or(VVal::new_str("")).s_raw()))
+        .lblref(&v.get_key("ref").unwrap_or(VVal::new_str("")).s_raw());
+
+    let lbl = match &v.get_key("t").unwrap_or(VVal::Nul).s_raw()[..] {
+        "l_button" => lbl.left().clickable(),
+        "r_button" => lbl.right().clickable(),
+        "c_button" => lbl.center().clickable(),
+        "field" => {
+            lbl.left().editable(
+                &v.get_key("regex").unwrap_or(VVal::new_str(".*")).s_raw())
+        },
+        "c_label" => lbl.center(),
+        "l_label" => lbl.left(),
+        "r_label" => lbl.right(),
+        _ => lbl,
+    };
+
+    win.add_label(vval2size(v.clone()), lbl)
 }
 
 fn vval2win(v: VVal) -> gui::Window {
