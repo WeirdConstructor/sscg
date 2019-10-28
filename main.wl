@@ -22,6 +22,7 @@ init = {!(ship) = @;
         h           = 1000,
         child       = ${
             t    = "l_button",
+            ref  = "REF1",
             text = "10",
             fg   = "F0F",
             bg   = "303",
@@ -49,7 +50,10 @@ init = {!(ship) = @;
 ship_entity_tick = {
     std:displayln "SHIP ENT TICK" @ game;
     .x = x + 1;
-    _ :set_notification ~ std:str:cat "ARR" $*x;
+    !ars = std:str:cat "ARR" $*x;
+    win :set_label SHIP_PANEL_ID "REF1" ars;
+    std:displayln "STATE: " ~ win :get_state SHIP_PANEL_ID;
+    _ :set_notification ~ ars;
 },
 ship_tick = {
     _ :set_notification "";

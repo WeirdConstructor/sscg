@@ -436,6 +436,21 @@ impl Window {
         None
     }
 
+    pub fn collect_label_texts(&self) -> std::vec::Vec<(String, String)> {
+        let mut ret = vec![];
+        for c in self.widgets.iter() {
+            match c {
+                Widget::Label(_, _, lbl) => {
+                    ret.push((
+                        lbl.lblref.to_string(),
+                        lbl.text.to_string()));
+                },
+                _ => (),
+            }
+        }
+        ret
+    }
+
     pub fn set_label_text(&mut self, lblref: &str, text: String) {
         for c in self.widgets.iter_mut() {
             match c {
