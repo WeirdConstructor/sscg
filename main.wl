@@ -1,7 +1,18 @@
-!SHIP_PANEL_ID = 0;
+!SHIP_PANEL_ID   = 0;
 !STATUS_PANEL_ID = 1;
-!status_panel = ${ };
-!x = $&0;
+!status_panel    = ${ };
+!x               = $&0;
+
+!g_ship = $&&$n;
+
+
+!info_label = { !(lbl, ref) = @;
+    ${ t = "hbox", w = 1000, childs = $[
+        ${ t = "r_button", text = lbl, fg = "FFF", bg = "000", w = 300 },
+        ${ t = "l_label",  ref = ref,  fg = "FFF", bg = "F00", w = 700 },
+    ]}
+};
+
 
 ${
 
@@ -22,6 +33,8 @@ init = {!(ship) = @;
         h           = 1000,
         child       = ${
             t = "vbox",
+            w = 1000,
+            spacing = 3,
             childs = $[
                 ${
                     t    = "l_button",
@@ -29,14 +42,10 @@ init = {!(ship) = @;
                     text = "10",
                     fg   = "F0F",
                     bg   = "303",
-                    h    = 1,
                 },
-                ${ t = "hbox", childs = $[
-                    ${ t = "r_button", text = "Status:",
-                       fg = "FFF", bg = "000", w = 300, h = 0},
-                    ${ t = "l_label", ref = "SHIP_STATE",
-                       fg = "FFF", bg = "F00", w = 700, h = 0},
-                ]},
+                info_label "Status:"   "SHIP_STATE",
+                info_label "Cargo:"    "SHIP_CARGO_COUNT",
+                info_label "Credits:"  "SHIP_CREDITS",
             ],
         },
     } {|| std:displayln "FOO" @ };
@@ -53,23 +62,44 @@ init = {!(ship) = @;
             text = "10",
             fg   = "000",
             bg   = "F0F",
-            h    = 0,
         },
     } {|| std:displayln "MO" @ };
 },
 
 game_load = {||
     std:displayln "GAME LLLLLLLLLLLLLLLLLLLLOOOOOOAAAAAD";
-    std:displayln ~ game :list_by_type :ship;
-
+    !ship = (game :list_by_type :ship).0;
+    (is_none ship.cargo) {
+        ship.cargo        = $[];
+        ship.max_capacity = 10;
+        ship.credits      = 0;
+    };
+    .*g_ship = ship;
 },
 game_tick = {||
-    std:displayln "GAME TICK";
+    std:displayln "GAME TICK" $*g_ship;
 },
 ship_tick = {
-    !(ship, system) = _;
-    std:displayln "SHIP TICK" @;
+    !(ship, system, entity) = _;
     win :set_label SHIP_PANEL_ID "SHIP_STATE" ship._state;
+
+    match entity.typ
+        "asteroid_field" {||
+            ((len ship.cargo) < ship.max_capacity) {
+                std:push ship.cargo "rock";
+            };
+        }
+        "station" {||
+            while { (len ship.cargo) > 0 } {
+                match (std:pop ship.cargo)
+                    "rock" {||
+                        ship.credits = ship.credits + 1;
+                    };
+            };
+        };
+
+    win :set_label SHIP_PANEL_ID "SHIP_CARGO_COUNT" (len ship.cargo);
+    win :set_label SHIP_PANEL_ID "SHIP_CREDITS"     ship.credits;
 },
 system_tick = {
     std:displayln "SYS TICK" @;

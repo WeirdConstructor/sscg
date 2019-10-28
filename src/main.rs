@@ -229,7 +229,7 @@ impl VValUserData for ShipWlWrapper {
         self.0.borrow_mut().state.set_key(key, val);
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
-        println!("GET KEY: {} : STTE: {}", key, self.0.borrow().state.s());
+        // println!("GET KEY: {} : STTE: {}", key, self.0.borrow().state.s());
         match key {
             "id"        => Some(VVal::Int(self.0.borrow().id as i64)),
             "system_id" => Some(VVal::Int(self.0.borrow().system as i64)),
@@ -465,8 +465,8 @@ fn vval2size(v: VVal) -> gui::Size {
 
     s.min_w  = v.get_key("min_w") .unwrap_or(VVal::Int(0)).i() as u32;
     s.min_h  = v.get_key("min_h") .unwrap_or(VVal::Int(0)).i() as u32;
-    s.w      = v.get_key("w")     .unwrap_or(VVal::Int(1000)).i() as u32;
-    s.h      = v.get_key("h")     .unwrap_or(VVal::Int(1000)).i() as u32;
+    s.w      = v.get_key("w")     .unwrap_or(VVal::Int(0)).i() as u32;
+    s.h      = v.get_key("h")     .unwrap_or(VVal::Int(0)).i() as u32;
     s.margin = v.get_key("margin").unwrap_or(VVal::Int(0)).i() as u32;
 
     s

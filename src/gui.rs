@@ -246,6 +246,7 @@ impl Widget {
                 let (tw, th) = p.text_size(&txt);
 
                 if mw == 0 { mw = max_w; }
+                if mw == 0 { mw = th; }
                 if mh == 0 { mh = th; }
                 if mh < th { mh = th; }
 
