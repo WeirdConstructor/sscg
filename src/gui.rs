@@ -278,6 +278,7 @@ pub enum WindowEvent {
     Backspace,
 }
 
+#[allow(dead_code)]
 impl Window {
     pub fn new() -> Self {
         Self {
@@ -567,23 +568,6 @@ pub struct Layout {
     childs:     std::vec::Vec<usize>,
 }
 
-#[derive(Debug, Copy, Clone)]
-enum HAlign {
-    Left,
-    Center,
-    Right,
-}
-
-impl HAlign {
-    fn xoffs(&self, tw: u32, mw: u32) -> i32 {
-        (match self {
-            HAlign::Left   => 0,
-            HAlign::Right  => mw - tw,
-            HAlign::Center => (mw - tw) / 2,
-        }) as i32
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Size {
     pub min_w: u32,
@@ -626,6 +610,7 @@ pub struct Label {
     bg_color:   (u8, u8, u8, u8),
 }
 
+#[allow(dead_code)]
 impl Label {
     pub fn new(txt: &str, fg: (u8, u8, u8, u8), bg: (u8, u8, u8, u8)) -> Self {
         Self {

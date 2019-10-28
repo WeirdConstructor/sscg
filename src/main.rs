@@ -1,10 +1,6 @@
-use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::event::WindowEvent;
 use sdl2::keyboard::Keycode;
-use sdl2::rect::Rect;
-//use sdl2::rect::Point;
-use sdl2::gfx::primitives::{DrawRenderer};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::time::{Instant, Duration};
@@ -13,192 +9,11 @@ use std::time::{Instant, Duration};
 mod logic;
 mod util;
 mod gui;
+mod sdl_painter;
 use logic::*;
+use sdl_painter::SDLPainter;
 
 use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext};
-
-struct GUIPainter<'a, 'b> {
-    canvas: sdl2::render::Canvas<sdl2::video::Window>,
-    font: Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
-    font_h: i32,
-    offs_stack: std::vec::Vec<(i32, i32)>,
-    offs: (i32, i32),
-}
-
-impl<'a, 'b> GUIPainter<'a, 'b> {
-    fn clear(&mut self) {
-        self.canvas.set_draw_color(Color::RGB(255, 255, 255));
-        self.canvas.clear();
-    }
-
-    fn get_font_h(&mut self) -> i32 {
-        if self.font_h == 0 {
-            let (w, h) = self.text_size("M");
-            self.font_h = h as i32;
-        }
-        self.font_h
-    }
-
-    fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        if txt.is_empty() {
-            (0, self.get_font_h() as u32)
-        } else {
-            self.font.borrow().size_of(txt).unwrap_or((0, 0))
-        }
-    }
-
-    fn done(&mut self) {
-        self.canvas.present();
-    }
-}
-
-impl<'a, 'b> GamePainter for GUIPainter<'a, 'b> {
-    fn push_offs(&mut self, xo: i32, yo: i32) {
-        self.offs_stack.push(self.offs);
-        self.offs = (xo, yo);
-    }
-
-    fn push_add_offs(&mut self, xo: i32, yo: i32) {
-        self.push_offs(xo + self.offs.0, yo + self.offs.1);
-    }
-
-    fn pop_offs(&mut self) {
-        if !self.offs_stack.is_empty() {
-            self.offs = self.offs_stack.pop().unwrap();
-        }
-    }
-
-    fn get_screen_pos(&self, xo: i32, yo: i32) -> (i32, i32) {
-        ((self.offs.0 + xo) as i32,
-         (self.offs.1 + yo) as i32)
-    }
-
-    fn get_sprite_size(&self, _id: usize) -> (u32, u32) {
-        (0, 0)
-    }
-    fn draw_sprite_ex(&mut self, _xo: i32, _yo: i32, _w: u32, _h: u32,
-                      _id: usize, _angle: f64, _flip_h: bool, _flip_v: bool) {
-    }
-
-    fn draw_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
-        self.canvas.set_draw_color(Color::from(color));
-        self.canvas.draw_rect(Rect::new(xo + self.offs.0, yo + self.offs.1, w, h))
-            .expect("drawing rectangle");
-    }
-
-    fn disable_clip_rect(&mut self) {
-        self.canvas.set_clip_rect(None);
-    }
-    fn set_clip_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32) {
-        self.canvas.set_clip_rect(
-            Rect::new(xo + self.offs.0, yo + self.offs.1, w, h));
-    }
-
-    fn draw_rect_filled(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
-        self.canvas.set_draw_color(Color::from(color));
-        self.canvas.fill_rect(Rect::new(xo + self.offs.0, yo + self.offs.1, w, h))
-            .expect("filling rectangle");
-    }
-
-    fn draw_dot(&mut self, xo: i32, yo: i32, r: u32, color: (u8, u8, u8, u8)) {
-        self.canvas.filled_circle(
-            (self.offs.0 + xo ) as i16,
-            (self.offs.1 + yo ) as i16,
-            r as i16,
-            Color::from(color));
-    }
-    fn draw_circle(&mut self, xo: i32, yo: i32, r: u32, color: (u8, u8, u8, u8)) {
-        self.canvas.circle(
-            (self.offs.0 + xo ) as i16,
-            (self.offs.1 + yo ) as i16,
-            r as i16,
-            Color::from(color));
-    }
-    fn draw_line(&mut self, xo: i32, yo: i32, x2o: i32, y2o: i32, t: u32, color: (u8, u8, u8, u8)) {
-        self.canvas.thick_line(
-            (self.offs.0 + xo ) as i16,
-            (self.offs.1 + yo ) as i16,
-            (self.offs.0 + x2o) as i16,
-            (self.offs.1 + y2o) as i16,
-            t as u8,
-            Color::from(color));
-    }
-    fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        self.text_size(txt)
-    }
-
-    fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32, fg: (u8, u8, u8, u8),
-                 bg: Option<(u8, u8, u8, u8)>, align: i32, txt: &str) {
-        if let Some(c) = bg {
-            let h = self.get_font_h();
-            draw_bg_text(
-                &mut self.canvas,
-                &mut *self.font.borrow_mut(),
-                fg.into(),
-                c.into(),
-                self.offs.0 + xo,
-                self.offs.1 + yo,
-                max_w as i32,
-                h,
-                align,
-                txt);
-        } else {
-            draw_text(
-                &mut *self.font.borrow_mut(),
-                fg.into(),
-                &mut self.canvas,
-                self.offs.0 + xo,
-                self.offs.1 + yo,
-                max_w as i32,
-                align,
-                txt);
-        }
-    }
-}
-
-fn draw_text(font: &mut sdl2::ttf::Font, color: Color,
-             canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-             x: i32, y: i32, max_w: i32, align: i32, txt: &str) {
-    if txt.is_empty() { return; }
-
-    let txt_crt = canvas.texture_creator();
-
-    let sf  = font.render(txt).blended(color).map_err(|e| e.to_string()).unwrap();
-    let txt = txt_crt.create_texture_from_surface(&sf).map_err(|e| e.to_string()).unwrap();
-    let tq  = txt.query();
-
-    let xo = if align == 2
-             || align == 0 { (max_w - (tq.width as i32)) / 2 }
-        else if align < 0  { max_w - (tq.width as i32) }
-        else { 0 };
-
-    let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
-
-    let xo = if xo < 0 { 0 } else { xo };
-
-    canvas.copy(
-        &txt,
-        Some(Rect::new(0,      0, w as u32, tq.height)),
-        Some(Rect::new(x + xo, y, w as u32, tq.height))
-    ).map_err(|e| e.to_string()).unwrap();
-}
-
-fn draw_bg_text(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-                font: &mut sdl2::ttf::Font,
-                color: Color,
-                bg_color: Color,
-                x: i32,
-                y: i32,
-                max_w: i32,
-                h: i32,
-                align: i32,
-                txt: &str) {
-
-    canvas.set_draw_color(bg_color);
-    canvas.fill_rect(Rect::new(x, y, max_w as u32, h as u32))
-        .expect("filling rectangle");
-    draw_text(font, color, canvas, x, y, max_w, align, txt);
-}
 
 fn vval_to_system(v: VVal) -> Result<Rc<RefCell<System>>, StackAction> {
     match v {
@@ -216,6 +31,36 @@ fn vval_to_system(v: VVal) -> Result<Rc<RefCell<System>>, StackAction> {
         }
     }
 }
+
+pub fn get_system_state(gs: &GameState, id: ObjectID) -> Option<VVal> {
+    let system : Rc<RefCell<System>> = gs.get_system(id)?;
+
+    let ret = VVal::vec();
+    ret.push(SystemWlWrapper::vval_from(system));
+
+    Some(ret)
+}
+
+pub fn get_ship_state(gs: &GameState, id: ObjectID) -> Option<VVal> {
+    let ship   : Rc<RefCell<Ship>>   = gs.get_ship(id)?;
+    let system : Rc<RefCell<System>> = gs.get_system(ship.borrow().system)?;
+
+    let entity =
+        system.borrow_mut().get_entity_close_to(
+            ship.borrow().pos.0,
+            ship.borrow().pos.1);
+
+    let ret = VVal::vec();
+    ret.push(ShipWlWrapper::vval_from(ship));
+    ret.push(SystemWlWrapper::vval_from(system));
+
+    if let Some(ent) = entity {
+        ret.push(EntityWlWrapper::vval_from(ent));
+    }
+
+    Some(ret)
+}
+
 
 #[derive(Clone)]
 struct GameStateWlWrapper(Rc<RefCell<GameState>>);
@@ -314,6 +159,13 @@ impl VValUserData for EntityWlWrapper {
     fn get_key(&self, key: &str) -> Option<VVal> {
         match key {
             "id" => Some(VVal::Int(self.0.borrow().id as i64)),
+            "typ" => {
+                Some(VVal::new_str(
+                    match self.0.borrow().typ {
+                        SystemObject::Station       => "station",
+                        SystemObject::AsteroidField => "asteroid_field",
+                    }))
+            },
             _    => self.0.borrow().state.get_key(key),
         }
     }
@@ -347,6 +199,7 @@ impl VValUserData for ShipWlWrapper {
         self.0.borrow_mut().state.set_key(key, val);
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
+        println!("GET KEY: {} : STTE: {}", key, self.0.borrow().state.s());
         match key {
             "id"        => Some(VVal::Int(self.0.borrow().id as i64)),
             "system_id" => Some(VVal::Int(self.0.borrow().system as i64)),
@@ -446,7 +299,9 @@ impl WindowManager {
             if let Some(w) = w {
                 if let Some(lblref) = w.collect_activated_child() {
                     let args = vec![VVal::new_str_mv(lblref.to_string())];
-                    wl_ctx.clone().call(cb, &args);
+                    if let Err(e) = wl_ctx.clone().call(cb, &args) {
+                        println!("ERROR IN WM CB: {}", e);
+                    }
                 }
             }
         }
@@ -683,8 +538,8 @@ impl VValUserData for WindowManagerWlWrapper {
 
                 let idx = args[1].i();
                 if !args[2].is_none() {
-                    let mut win = vval2win(args[2].clone());
-                    let cb      = args[3].clone();
+                    let win = vval2win(args[2].clone());
+                    let cb  = args[3].clone();
 
                     self.0.borrow_mut().set(idx as usize, win, cb);
                 } else {
@@ -760,7 +615,7 @@ pub fn main() -> Result<(), String> {
 //    font.set_outline_width(0.1);
     font.set_kerning(true);
 
-    let mut gui_painter = GUIPainter {
+    let mut sdl_painter = SDLPainter {
         canvas: canvas,
         font: Rc::new(RefCell::new(font)),
         font_h: 0,
@@ -768,14 +623,14 @@ pub fn main() -> Result<(), String> {
         offs: (0, 0),
     };
 
-    let WM = WindowManager::new_ref();
-    let GS = GameState::new_ref();
+    let s_wm = WindowManager::new_ref();
+    let s_gs = GameState::new_ref();
 
     let genv = GlobalEnv::new_default();
-    let mut wl_ctx = EvalContext::new_with_user(genv, GS.clone());
+    let mut wl_ctx = EvalContext::new_with_user(genv, s_gs.clone());
 
-    wl_ctx.set_global_var("game", &GameStateWlWrapper::vval_from(GS.clone()));
-    wl_ctx.set_global_var("win", &WindowManagerWlWrapper::vval_from(WM.clone()));
+    wl_ctx.set_global_var("game", &GameStateWlWrapper::vval_from(s_gs.clone()));
+    wl_ctx.set_global_var("win", &WindowManagerWlWrapper::vval_from(s_wm.clone()));
 
     let callbacks : VVal =
         match wl_ctx.eval_file("main.wl") {
@@ -790,67 +645,37 @@ pub fn main() -> Result<(), String> {
             Err(e) => { panic!(format!("'main.wl' SCRIPT ERROR: {}", e)); }
         };
 
-    let wlcb_ship_ent_tick =
-        callbacks.get_key("ship_entity_tick")
-                 .expect("ship_entity_tick key");
     let wlcb_ship_tick =
         callbacks.get_key("ship_tick")
                  .expect("ship_tick key");
-//    let wlcb_system_tick   = callbacks.get_key("system_tick");
-//    let wlcb_ship_arrived  = callbacks.get_key("ship_arrived");
+    let wlcb_system_tick =
+        callbacks.get_key("system_tick")
+                 .expect("system_tick key");
     let wlcb_init = callbacks.get_key("init").expect("init key");
 
     let wl_ctx_st = wl_ctx.clone();
-    GS.borrow_mut().reg_cb("ship_tick".to_string(),
+    s_gs.borrow_mut().reg_cb("ship_tick".to_string(),
         move |gs: &Rc<RefCell<GameState>>, v: VVal| {
-            let ship   : Rc<RefCell<Ship>>   = gs.borrow().get_ship(v.i() as ObjectID).unwrap();
-            let system : Rc<RefCell<System>> = gs.borrow().get_system(ship.borrow().system).unwrap();
-
-            let v_ship = ShipWlWrapper::vval_from(ship.clone());
-            let v_sys_id  = VVal::Int(ship.borrow().system as i64);
-            {
-                let args = vec![v_ship.clone().into(), v_sys_id.clone()];
-                wl_ctx_st.clone().call(&wlcb_ship_tick, &args);
-            }
-
-            let e = system.borrow_mut().get_entity_close_to(
-                        ship.borrow().pos.0, ship.borrow().pos.1);
-            if let Some(ent) = e {
-                println!("SHIP ARRIVED: {} AT SYS {} ENT: {:?}",
-                    v.s(), system.borrow().id, *(ent.borrow()));
-                let typ = VVal::new_str(
-                    match ent.borrow().typ {
-                        SystemObject::Station       => "station",
-                        SystemObject::AsteroidField => "asteroid_field",
-                    }
-                );
-                let v_ent = EntityWlWrapper::vval_from(ent.clone());
-                let args : Vec<VVal> = vec![
-                    v_ship.into(),
-                    v_sys_id,
-                    v_ent.into(),
-                    typ,
-                ];
-                wl_ctx_st.clone().call(&wlcb_ship_ent_tick, &args);
+            let s = get_ship_state(&*gs.borrow(), v.i() as ObjectID).unwrap();
+            let args = vec![s];
+            if let Err(e) = wl_ctx_st.clone().call(&wlcb_ship_tick, &args) {
+                println!("ERROR IN ship_tick: {}", e);
             }
         });
 
-    GS.borrow_mut().reg_cb("ship_arrived".to_string(),
-        |gs: &Rc<RefCell<GameState>>, v: VVal| {
-            let ship   : Rc<RefCell<Ship>>   =
-                gs.borrow().get_ship(v.i() as ObjectID).unwrap();
-            let system : Rc<RefCell<System>> =
-                gs.borrow().get_system(ship.borrow().system).unwrap();
-            let e = system.borrow_mut().get_entity_close_to(
-                        ship.borrow().pos.0, ship.borrow().pos.1);
-            if let Some(ent) = e {
-                println!("SHIP ARRIVED: {} AT SYS {} ENT: {:?}", v.s(), system.borrow().id, *(ent.borrow()));
+    let wl_ctx_st2 = wl_ctx.clone();
+    s_gs.borrow_mut().reg_cb("system_tick".to_string(),
+        move |gs: &Rc<RefCell<GameState>>, v: VVal| {
+            let s = get_system_state(&*gs.borrow(), v.i() as ObjectID).unwrap();
+            let args = vec![s];
+            if let Err(e) = wl_ctx_st2.clone().call(&wlcb_system_tick, &args) {
+                println!("ERROR IN system_tick: {}", e);
             }
         });
 
     {
         let ship = {
-            let mut gs = GS.borrow_mut();
+            let mut gs = s_gs.borrow_mut();
             let s = {
                 let mut os = gs.object_registry.borrow_mut();
                 os.add_ship(Ship::new("Cocky".to_string()))
@@ -859,7 +684,9 @@ pub fn main() -> Result<(), String> {
             s
         };
         let args = vec![ShipWlWrapper::vval_from(ship.clone())];
-        wl_ctx.call(&wlcb_init, &args);
+        if let Err(e) = wl_ctx.call(&wlcb_init, &args) {
+            println!("ERROR IN init: {}", e);
+        }
     }
 
 //    let mut test_win = gui::Window::new();
@@ -895,11 +722,11 @@ pub fn main() -> Result<(), String> {
 
     let mut last_frame = Instant::now();
     'running: loop {
-        let active_ship_id = GS.borrow().active_ship_id;
-        let active_ship    = GS.borrow().get_ship(active_ship_id)
+        let active_ship_id = s_gs.borrow().active_ship_id;
+        let active_ship    = s_gs.borrow().get_ship(active_ship_id)
                                .expect("active ship is present");
         let system_of_ship =
-            GS.borrow_mut().get_system(active_ship.borrow().system);
+            s_gs.borrow_mut().get_system(active_ship.borrow().system);
 
         let mouse_state = event_pump.mouse_state();
         for event in event_pump.poll_iter() {
@@ -908,12 +735,15 @@ pub fn main() -> Result<(), String> {
                     break 'running
                 },
                 Event::KeyDown { keycode: Some(Keycode::F2), .. } => {
-                    let ser = GS.borrow().serialize();
-                    util::write_file_safely("sscg_save.json", &ser.to_json(false).unwrap());
+                    let ser = s_gs.borrow().serialize();
+                    if let Err(e) = util::write_file_safely(
+                            "sscg_save.json", &ser.to_json(false).unwrap()) {
+                        println!("FAILED TO WRITE SAVEFILE: {}", e);
+                    }
                 },
                 Event::KeyDown { keycode: Some(Keycode::F3), .. } => {
                     let ser = util::read_vval_json_file("sscg_save.json");
-                    GS.borrow_mut().deserialize(ser);
+                    s_gs.borrow_mut().deserialize(ser);
                 },
 //                Event::KeyDown { keycode: Some(Keycode::J), .. } => {
 //                    fm.process_page_control(PageControl::CursorDown, None);
@@ -925,14 +755,14 @@ pub fn main() -> Result<(), String> {
 //                    fm.process_page_control(PageControl::Access, None);
 //                },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
-                    for w in WM.borrow_mut().windows.iter_mut() {
+                    for w in s_wm.borrow_mut().windows.iter_mut() {
                         if let Some(w) = w {
                             w.handle_event(gui::WindowEvent::Backspace);
                         }
                     }
                 },
                 Event::MouseMotion { x, y, .. } => {
-                    for w in WM.borrow_mut().windows.iter_mut() {
+                    for w in s_wm.borrow_mut().windows.iter_mut() {
                         if let Some(w) = w {
                             w.handle_event(gui::WindowEvent::MousePos(x, y));
                         }
@@ -940,21 +770,21 @@ pub fn main() -> Result<(), String> {
                 },
                 Event::MouseButtonDown { x, y, .. } => {
                     if let Some(sys) = system_of_ship.clone() {
-                        if let Some(e) = sys.borrow_mut().get_entity_close_to(x, y) {
+                        if let Some(e) = sys.borrow_mut().get_entity_close_to_screen(x, y) {
                             let x = e.borrow().x;
                             let y = e.borrow().y;
                             active_ship.borrow_mut().set_course_to(x, y);
                         }
                     }
 
-                    for w in WM.borrow_mut().windows.iter_mut() {
+                    for w in s_wm.borrow_mut().windows.iter_mut() {
                         if let Some(w) = w {
                             w.handle_event(gui::WindowEvent::Click(x, y));
                         }
                     }
                 },
                 Event::TextInput { text, .. } => {
-                    for w in WM.borrow_mut().windows.iter_mut() {
+                    for w in s_wm.borrow_mut().windows.iter_mut() {
                         if let Some(w) = w {
                             w.handle_event(gui::WindowEvent::TextInput(text.clone()));
                         }
@@ -981,42 +811,42 @@ pub fn main() -> Result<(), String> {
             }
         }
 
-        WM.borrow_mut().handle_activated_childs(&mut wl_ctx);
+        s_wm.borrow_mut().handle_activated_childs(&mut wl_ctx);
 
-        let active_ship_id = GS.borrow().active_ship_id;
-        let active_ship    = GS.borrow().get_ship(active_ship_id)
+        let active_ship_id = s_gs.borrow().active_ship_id;
+        let active_ship    = s_gs.borrow().get_ship(active_ship_id)
                                .expect("active ship is present");
         let system_of_ship =
-            GS.borrow_mut().get_system(active_ship.borrow().system);
+            s_gs.borrow_mut().get_system(active_ship.borrow().system);
 
         let frame_time_ms = last_frame.elapsed().as_micros() as f64 / 1000.0_f64;
-        GS.borrow_mut().update(frame_time_ms);
-        GS.borrow_mut().event_router.borrow_mut().get_events(&mut cb_queue);
+        s_gs.borrow_mut().update(frame_time_ms);
+        s_gs.borrow_mut().event_router.borrow_mut().get_events(&mut cb_queue);
 
         while !cb_queue.is_empty() {
             let c = cb_queue.pop().unwrap();
-            c.0(&GS, c.1);
+            c.0(&s_gs, c.1);
         }
 
-        gui_painter.clear();
+        sdl_painter.clear();
         {
             if let Some(sys) = system_of_ship {
                 sys.borrow_mut().draw(
                     &mut *active_ship.borrow_mut(),
-                    &mut gui_painter);
+                    &mut sdl_painter);
                 sys.borrow_mut()
                    .try_highlight_entity_close_to(
                         mouse_state.x(),
                         mouse_state.y());
             }
         }
-        let win_size = gui_painter.canvas.window().size();
-        for w in WM.borrow_mut().windows.iter_mut() {
+        let win_size = sdl_painter.canvas.window().size();
+        for w in s_wm.borrow_mut().windows.iter_mut() {
             if let Some(w) = w {
-                w.draw(win_size.0, win_size.1, &mut gui_painter);
+                w.draw(win_size.0, win_size.1, &mut sdl_painter);
             }
         }
-        gui_painter.done();
+        sdl_painter.done();
         last_frame = Instant::now();
 
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));

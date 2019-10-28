@@ -21,12 +21,23 @@ init = {!(ship) = @;
         w           = 1000,
         h           = 1000,
         child       = ${
-            t    = "l_button",
-            ref  = "REF1",
-            text = "10",
-            fg   = "F0F",
-            bg   = "303",
-            h    = 0,
+            t = "vbox",
+            childs = $[
+                ${
+                    t    = "l_button",
+                    ref  = "REF1",
+                    text = "10",
+                    fg   = "F0F",
+                    bg   = "303",
+                    h    = 1,
+                },
+                ${ t = "hbox", childs = $[
+                    ${ t = "l_button", text = "Status:",
+                       fg = "FFF", bg = "000", w = 300, h = 0},
+                    ${ t = "l_button", ref = "SHIP_STATE",
+                       fg = "FFF", bg = "F00", w = 700, h = 0},
+                ]},
+            ],
         },
     } {|| std:displayln "FOO" @ };
 
@@ -47,24 +58,10 @@ init = {!(ship) = @;
     } {|| std:displayln "MO" @ };
 },
 
-ship_entity_tick = {
-    std:displayln "SHIP ENT TICK" @ game;
-    .x = x + 1;
-    !ars = std:str:cat "ARR" $*x;
-    win :set_label SHIP_PANEL_ID "REF1" ars;
-    std:displayln "STATE: " ~ win :get_state SHIP_PANEL_ID;
-    _ :set_notification ~ ars;
-},
 ship_tick = {
-    _ :set_notification "";
+    !(ship, system) = _;
     std:displayln "SHIP TICK" @;
-#    std:displayln "SHIP TICK" _;
-#    std:displayln "SHIP TICK" (_ "foo");
-#    _.ticky = 1 + _.ticky;
-#    std:displayln "SHIP SYS " (:system_id _) "; " (_.ticky);
-},
-ship_arrived = {
-    std:displayln "ARRIVED " @;
+    win :set_label SHIP_PANEL_ID "SHIP_STATE" ship._state;
 },
 system_tick = {
     std:displayln "SYS TICK" @;
