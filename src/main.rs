@@ -642,6 +642,9 @@ pub fn main() -> Result<(), String> {
     let wlcb_system_tick =
         callbacks.get_key("system_tick")
                  .expect("system_tick key");
+    let wlcb_game_tick =
+        callbacks.get_key("game_tick")
+                 .expect("game_tick key");
     let wlcb_init = callbacks.get_key("init").expect("init key");
 
     let wl_ctx_st = wl_ctx.clone();
@@ -661,6 +664,16 @@ pub fn main() -> Result<(), String> {
             let args = vec![s];
             if let Err(e) = wl_ctx_st2.clone().call(&wlcb_system_tick, &args) {
                 println!("ERROR IN system_tick: {}", e);
+            }
+        });
+
+    let wl_ctx_st3 = wl_ctx.clone();
+    s_gs.borrow_mut().reg_cb("system_tick".to_string(),
+        move |gs: &Rc<RefCell<GameState>>, v: VVal| {
+            let s = get_system_state(&*gs.borrow(), v.i() as ObjectID).unwrap();
+            let args = vec![s];
+            if let Err(e) = wl_ctx_st3.clone().call(&wlcb_game_tick, &args) {
+                println!("ERROR IN game_tick: {}", e);
             }
         });
 
