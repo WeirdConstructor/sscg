@@ -122,7 +122,7 @@ impl Object {
 
 #[derive(Debug, Clone)]
 pub struct ObjectRegistry {
-    objects:            std::vec::Vec<Object>,
+    pub objects:        std::vec::Vec<Object>,
     tick_count:         i32,
     tick_time_ms:       f64,
 }

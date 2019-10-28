@@ -112,6 +112,36 @@ impl VValUserData for GameStateWlWrapper {
                         args[2].i() as i32,
                         args[3].clone())))
             },
+            "list_by_type" => {
+                if args.len() < 2 {
+                    return Err(StackAction::panic_msg(
+                        format!("`{} :list_systems` called with too few arguments",
+                                self.s())));
+                }
+                let typ = args[1].s_raw();
+                let out = VVal::vec();
+                for o in self.0.borrow_mut().object_registry.borrow_mut().objects.iter() {
+                    match o {
+                        Object::Entity(e) => {
+                            if typ == "entity" {
+                                out.push(EntityWlWrapper::vval_from(e.clone()));
+                            }
+                        },
+                        Object::System(s) => {
+                            if typ == "system" {
+                                out.push(SystemWlWrapper::vval_from(s.clone()));
+                            }
+                        },
+                        Object::Ship(s)   => {
+                            if typ == "ship" {
+                                out.push(ShipWlWrapper::vval_from(s.clone()));
+                            }
+                        },
+                        _ => ()
+                    }
+                }
+                Ok(out)
+            },
             "object_by_id" => {
                 if args.len() < 2 {
                     return Err(StackAction::panic_msg(
@@ -645,6 +675,9 @@ pub fn main() -> Result<(), String> {
     let wlcb_game_tick =
         callbacks.get_key("game_tick")
                  .expect("game_tick key");
+    let wlcb_load =
+        callbacks.get_key("game_load")
+                 .expect("game_load key");
     let wlcb_init = callbacks.get_key("init").expect("init key");
 
     let wl_ctx_st = wl_ctx.clone();
@@ -693,33 +726,10 @@ pub fn main() -> Result<(), String> {
         }
     }
 
-//    let mut test_win = gui::Window::new();
-//    test_win.x = 0;
-//    test_win.y = 500;
-//    test_win.w = 250;
-//    test_win.h = 500;
-//    test_win.title = String::from("Test 123");
-//    let id = test_win.add_label(
-//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-//        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-//        .center().wrap().lblref("XX1"));
-//    let id2 = test_win.add_label(
-//        gui::Size { w: 200, h: 0, min_w: 0, min_h: 0, margin: 0 },
-//        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-//        .center().wrap().lblref("XX2"));
-//    let lay = test_win.add_layout(
-//        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
-//        gui::BoxDir::Vert(10),
-//        &vec![id, id2]);
-//    let id3 = test_win.add_label(
-//        gui::Size { w: 200, h: 0, min_w: 200, min_h: 0, margin: 0 },
-//        gui::Label::new("TextLabel", (255, 255, 0, 255), (0, 128, 0, 255))
-//        .center().wrap().lblref("OF"));
-//    let lay2 = test_win.add_layout(
-//        gui::Size { w: 1000, h: 1000, min_w: 0, min_h: 0, margin: 0 },
-//        gui::BoxDir::Vert(0),
-//        &vec![lay, id3]);
-//    test_win.child = lay2;
+    let args = vec![];
+    if let Err(e) = wl_ctx.clone().call(&wlcb_load, &args) {
+        println!("ERROR IN game_load: {}", e);
+    }
 
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> =
         std::vec::Vec::new();
@@ -748,6 +758,11 @@ pub fn main() -> Result<(), String> {
                 Event::KeyDown { keycode: Some(Keycode::F3), .. } => {
                     let ser = util::read_vval_json_file("sscg_save.json");
                     s_gs.borrow_mut().deserialize(ser);
+
+                    let args = vec![];
+                    if let Err(e) = wl_ctx.clone().call(&wlcb_load, &args) {
+                        println!("ERROR IN game_load: {}", e);
+                    }
                 },
 //                Event::KeyDown { keycode: Some(Keycode::J), .. } => {
 //                    fm.process_page_control(PageControl::CursorDown, None);

@@ -58,6 +58,11 @@ init = {!(ship) = @;
     } {|| std:displayln "MO" @ };
 },
 
+game_load = {||
+    std:displayln "GAME LLLLLLLLLLLLLLLLLLLLOOOOOOAAAAAD";
+    std:displayln ~ game :list_by_type :ship;
+
+},
 game_tick = {||
     std:displayln "GAME TICK";
 },
