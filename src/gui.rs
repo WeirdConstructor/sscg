@@ -14,12 +14,21 @@ impl Widget {
             Widget::Label(id, _, _)  => *id,
         }
     }
-    pub fn calc_feedback<P>(&self, max_w: u32, max_h: u32, p: &mut P) -> WidgetFeedback where P: GamePainter {
+    pub fn calc_feedback<P>(&self, max_w: u32, max_h: u32, p: &mut P)
+        -> WidgetFeedback where P: GamePainter {
+
         let pos = p.get_screen_pos(0, 0);
         let (id, (mw, mh)) = match self {
-            Widget::Layout(id, l, _) => { p.push_add_offs(l.margin as i32, l.margin as i32); (*id, l.size(max_w, max_h)) },
-            Widget::Label(id, l, _)  => { p.push_add_offs(l.margin as i32, l.margin as i32); (*id, l.size(max_w, max_h)) },
+            Widget::Layout(id, l, _) => {
+                p.push_add_offs(l.margin as i32, l.margin as i32);
+                (*id, l.size(max_w, max_h))
+            },
+            Widget::Label(id, l, _)  => {
+                p.push_add_offs(l.margin as i32, l.margin as i32);
+                (*id, l.size(max_w, max_h))
+            },
         };
+
         WidgetFeedback {
             id,
             x: pos.0 as u32,
@@ -52,6 +61,137 @@ impl Widget {
             border_pad as i32, ((*mh - th) / 2) as i32,
             text_field_width, lbl.fg_color,
             None, lbl.align, &lbl.text);
+    }
+
+    pub fn draw_label_multiline<P>(
+        &self,
+        lbl: &Label,
+        bg_color: (u8, u8, u8, u8),
+        _tw: u32, _th: u32,
+        mw: &mut u32, mh: &mut u32, p: &mut P)
+        where P: GamePainter {
+
+        let txt = &lbl.text;
+        let mut line = String::from("");
+        let mut y : i32 = 0;
+
+        let mut lines : std::vec::Vec<(i32, i32, String)> = vec![];
+        for c in txt.chars() {
+            line.push(c);
+            let (tw, th) = p.text_size(&line);
+            if (y as u32 + th) > *mh { line = String::from(""); break; }
+            if tw > *mw {
+                if line.len() > 1 { line.pop(); }
+                if line.len() > 1 {
+                    lines.push((0, y, line));
+                    line = String::from("");
+                    line.push(c);
+                } else {
+                    lines.push((0, y, line));
+                    line = String::from("");
+                }
+                y += th as i32;
+            }
+        }
+
+        if line.len() > 0 {
+            lines.push((0, y, line));
+        }
+
+        let text_lines_h = y as u32;
+
+        let yo = if text_lines_h < *mh { (*mh - text_lines_h) / 2 }
+                 else { 0 };
+        p.draw_rect_filled(
+            0, 0, *mw, *mh, bg_color);
+        for (x, y, l) in lines.iter() {
+            p.draw_text(
+                *x, *y + yo as i32, *mw,
+                lbl.fg_color, None, lbl.align, &l);
+        }
+    }
+
+    pub fn draw_label<P>(
+        &self,
+        lbl: &Label,
+        bg_color: (u8, u8, u8, u8),
+        _tw: u32, th: u32,
+        mw: &mut u32, mh: &mut u32, p: &mut P)
+        where P: GamePainter {
+
+        if lbl.clickable {
+            let mut corner_radius : u32 = if *mw < *mh { *mw / 4 } else { *mh / 4 };
+            if corner_radius < (th / 2) { corner_radius = th / 2; }
+
+            *mh = corner_radius * 2;
+            if *mh < th { *mh = th; }
+            if *mh % 2 == 0 { *mh += 1; }
+
+            let text_pad = 4;
+
+            let mut text_width : i32 = *mw as i32;
+            let mut xo         : i32 = 0;
+            match lbl.align {
+                -1 => {
+                    p.draw_dot(
+                        corner_radius as i32,
+                        corner_radius as i32,
+                        corner_radius,
+                        bg_color);
+                    if text_pad > 0 {
+                        p.draw_rect_filled(
+                            (*mw - text_pad) as i32, 0,
+                            text_pad, *mh, bg_color);
+                    }
+                    xo = corner_radius as i32;
+                    text_width = *mw as i32 - (text_pad + corner_radius) as i32;
+                },
+                1 => {
+                    p.draw_dot(
+                        *mw as i32 - corner_radius as i32,
+                        corner_radius as i32,
+                        corner_radius,
+                        bg_color);
+                    p.draw_rect_filled(
+                        0, 0, text_pad, *mh, bg_color);
+                    xo = text_pad as i32;
+                    text_width = *mw as i32 - (text_pad + corner_radius) as i32;
+                },
+                2 => { },
+                _ => {
+                    p.draw_dot(
+                        corner_radius as i32,
+                        corner_radius as i32,
+                        corner_radius,
+                        bg_color);
+                    p.draw_dot(
+                        *mw as i32 - corner_radius as i32,
+                        corner_radius as i32,
+                        corner_radius,
+                        bg_color);
+                    xo = corner_radius as i32;
+                    text_width = *mw as i32 - 2 * corner_radius as i32;
+                },
+            }
+
+            let text_width : u32 =
+                if text_width < 0 { 0 } else { text_width as u32 };
+
+            p.draw_rect_filled(
+                xo, 0, text_width, *mh, bg_color);
+            p.draw_text(
+                xo, ((*mh - th) / 2) as i32, text_width as u32,
+                lbl.fg_color, None, lbl.align, &lbl.text);
+        } else {
+            let text_field_width = *mw;
+            p.draw_rect_filled(
+                0, 0, text_field_width, *mh, lbl.bg_color);
+            p.draw_text(
+                0, ((*mh - th) / 2) as i32,
+                text_field_width, lbl.fg_color,
+                None, lbl.align, &lbl.text);
+        }
+
     }
 
     pub fn draw<P>(&self, win: &Window, fb: &mut [WidgetFeedback],
@@ -114,116 +254,11 @@ impl Widget {
                         lbl, bg_color, th, &mut mw, &mut mh, p);
 
                 } else if lbl.wrap && tw > mw {
-                    let mut line = String::from("");
-                    let mut y : i32 = 0;
+                    self.draw_label_multiline(
+                        lbl, bg_color, tw, th, &mut mw, &mut mh, p);
 
-                    let mut lines : std::vec::Vec<(i32, i32, String)> = vec![];
-                    for c in txt.chars() {
-                        line.push(c);
-                        let (tw, th) = p.text_size(&line);
-                        if (y as u32 + th) > mh { line = String::from(""); break; }
-                        if tw > mw {
-                            if line.len() > 1 { line.pop(); }
-                            if line.len() > 1 {
-                                lines.push((0, y, line));
-                                line = String::from("");
-                                line.push(c);
-                            } else {
-                                lines.push((0, y, line));
-                                line = String::from("");
-                            }
-                            y += th as i32;
-                        }
-                    }
-
-                    if line.len() > 0 {
-                        lines.push((0, y, line));
-                    }
-
-                    let text_lines_h = y as u32;
-
-                    let yo = if text_lines_h < mh { (mh - text_lines_h) / 2 }
-                             else { 0 };
-                    p.draw_rect_filled(
-                        0, 0, mw, mh, bg_color);
-                    for (x, y, l) in lines.iter() {
-                        p.draw_text(
-                            *x, *y + yo as i32, mw,
-                            lbl.fg_color, None, lbl.align, &l);
-                    }
                 } else {
-                    if lbl.clickable {
-                        let mut corner_radius : u32 = if mw < mh { mw / 4 } else { mh / 4 };
-                        if corner_radius < (th / 2) { corner_radius = th / 2; }
-
-                        mh = corner_radius * 2;
-                        if mh < th { mh = th; }
-                        if mh % 2 == 0 { mh += 1; }
-
-                        let text_pad = 4;
-
-                        let mut text_width : i32 = mw as i32;
-                        let mut xo         : i32 = 0;
-                        match lbl.align {
-                            -1 => {
-                                p.draw_dot(
-                                    corner_radius as i32,
-                                    corner_radius as i32,
-                                    corner_radius,
-                                    bg_color);
-                                if text_pad > 0 {
-                                    p.draw_rect_filled(
-                                        (mw - text_pad) as i32, 0,
-                                        text_pad, mh, bg_color);
-                                }
-                                xo = corner_radius as i32;
-                                text_width = mw as i32 - (text_pad + corner_radius) as i32;
-                            },
-                            1 => {
-                                p.draw_dot(
-                                    mw as i32 - corner_radius as i32,
-                                    corner_radius as i32,
-                                    corner_radius,
-                                    bg_color);
-                                p.draw_rect_filled(
-                                    0, 0, text_pad, mh, bg_color);
-                                xo = text_pad as i32;
-                                text_width = mw as i32 - (text_pad + corner_radius) as i32;
-                            },
-                            2 => { },
-                            _ => {
-                                p.draw_dot(
-                                    corner_radius as i32,
-                                    corner_radius as i32,
-                                    corner_radius,
-                                    bg_color);
-                                p.draw_dot(
-                                    w_fb.w as i32 - corner_radius as i32,
-                                    corner_radius as i32,
-                                    corner_radius,
-                                    bg_color);
-                                xo = corner_radius as i32;
-                                text_width = mw as i32 - 2 * corner_radius as i32;
-                            },
-                        }
-
-                        let text_width : u32 =
-                            if text_width < 0 { 0 } else { text_width as u32 };
-
-                        p.draw_rect_filled(
-                            xo, 0, text_width, mh, bg_color);
-                        p.draw_text(
-                            xo, ((mh - th) / 2) as i32, text_width as u32,
-                            lbl.fg_color, None, lbl.align, &lbl.text);
-                    } else {
-                        let text_field_width = mw;
-                        p.draw_rect_filled(
-                            0, 0, text_field_width, mh, lbl.bg_color);
-                        p.draw_text(
-                            0, ((mh - th) / 2) as i32,
-                            text_field_width, lbl.fg_color,
-                            None, lbl.align, &lbl.text);
-                    }
+                    self.draw_label(lbl, bg_color, tw, th, &mut mw, &mut mh, p);
                 }
             },
         }
