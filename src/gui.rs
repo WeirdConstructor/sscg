@@ -29,6 +29,31 @@ impl Widget {
         }
     }
 
+    pub fn draw_label_editable<P>(
+        &self,
+        lbl: &Label,
+        bg_color: (u8, u8, u8, u8),
+        th: u32,
+        mw: &mut u32, mh: &mut u32, p: &mut P)
+        where P: GamePainter {
+
+        let border_pad = 4;
+        *mw = *mw + 2 * border_pad;
+        p.draw_line(1, 0, 1, *mh as i32 - 1, 2, bg_color);
+        p.draw_line(
+            *mw as i32 - 1, 0,
+            *mw as i32 - 1,
+            *mh as i32 - 1, 2, bg_color);
+        let text_field_width = *mw - 2 * border_pad;
+        p.draw_rect_filled(
+            border_pad as i32, 0,
+            text_field_width, *mh, lbl.bg_color);
+        p.draw_text(
+            border_pad as i32, ((*mh - th) / 2) as i32,
+            text_field_width, lbl.fg_color,
+            None, lbl.align, &lbl.text);
+    }
+
     pub fn draw<P>(&self, win: &Window, fb: &mut [WidgetFeedback],
                    max_w: u32, max_h: u32, p: &mut P) -> (u32, u32)
         where P: GamePainter {
@@ -85,18 +110,8 @@ impl Widget {
                 if mh < th { mh = th; }
 
                 if lbl.editable {
-                    let border_pad = 4;
-                    mw = mw + 2 * border_pad;
-                    p.draw_line(1, 0, 1, mh as i32 - 1, 2, bg_color);
-                    p.draw_line(mw as i32 - 1, 0, mw as i32 - 1, mh as i32 - 1, 2, bg_color);
-                    let text_field_width = mw - 2 * border_pad;
-                    p.draw_rect_filled(
-                        border_pad as i32, 0,
-                        text_field_width, mh, lbl.bg_color);
-                    p.draw_text(
-                        border_pad as i32, ((mh - th) / 2) as i32,
-                        text_field_width, lbl.fg_color,
-                        None, lbl.align, &lbl.text);
+                    self.draw_label_editable(
+                        lbl, bg_color, th, &mut mw, &mut mh, p);
 
                 } else if lbl.wrap && tw > mw {
                     let mut line = String::from("");
