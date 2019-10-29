@@ -1,3 +1,6 @@
+!@import clock gamelib:clock;
+!@import sscg sscg;
+
 !SHIP_PANEL_ID   = 0;
 !STATUS_PANEL_ID = 1;
 !status_panel    = ${ };
@@ -18,13 +21,13 @@ ${
 
 init = {!(ship) = @;
     std:displayln "INIT GAME";
-    !sys = game :add_system 0 0 ${};
-    game :add_entity sys 20  20  ${ type = :station };
-    game :add_entity sys 300 300 ${ type = :station };
-    game :add_entity sys 200 100 ${ type = :asteroid_field };
+    !sys = sscg:game :add_system 0 0 ${};
+    sscg:game :add_entity sys 20  20  ${ type = :station };
+    sscg:game :add_entity sys 300 300 ${ type = :station };
+    sscg:game :add_entity sys 200 100 ${ type = :asteroid_field };
     ship :set_system sys;
 
-    win :set_window SHIP_PANEL_ID ${
+    sscg:win :set_window SHIP_PANEL_ID ${
         title       = "Test Window",
         title_color = "e8e",
         x           = -481,
@@ -32,10 +35,10 @@ init = {!(ship) = @;
         w           = 1000,
         h           = 1000,
         child       = ${
-            t = "vbox",
-            w = 1000,
+            t       = "vbox",
+            w       = 1000,
             spacing = 3,
-            childs = $[
+            childs  = $[
                 ${
                     t    = "l_button",
                     ref  = "REF1",
@@ -50,7 +53,7 @@ init = {!(ship) = @;
         },
     } {|| std:displayln "FOO" @ };
 
-    win :set_window STATUS_PANEL_ID ${
+    sscg:win :set_window STATUS_PANEL_ID ${
         title       = "Status",
         title_color = "ee8",
         x           = 0,
@@ -58,17 +61,19 @@ init = {!(ship) = @;
         w           = -481,
         h           = 1000,
         child       = ${
-            t    = "l_button",
-            text = "10",
-            fg   = "000",
-            bg   = "F0F",
+            t       = "vbox",
+            w       = 1000,
+            spacing = 3,
+            childs  = $[
+                info_label "Time:" "STATUS_TIME",
+            ],
         },
     } {|| std:displayln "MO" @ };
 },
 
 game_load = {||
     std:displayln "GAME LLLLLLLLLLLLLLLLLLLLOOOOOOAAAAAD";
-    !ship = (game :list_by_type :ship).0;
+    !ship = (sscg:game :list_by_type :ship).0;
     (is_none ship.cargo) {
         ship.cargo        = $[];
         ship.max_capacity = 10;
@@ -77,11 +82,12 @@ game_load = {||
     .*g_ship = ship;
 },
 game_tick = {||
-    std:displayln "GAME TICK" $*g_ship;
+    clock:tick[];
+    sscg:win :set_label STATUS_PANEL_ID "STATUS_TIME" clock:now_str[];
 },
 ship_tick = {
     !(ship, system, entity) = _;
-    win :set_label SHIP_PANEL_ID "SHIP_STATE" ship._state;
+    sscg:win :set_label SHIP_PANEL_ID "SHIP_STATE" ship._state;
 
     match entity.typ
         "asteroid_field" {||
@@ -98,11 +104,10 @@ ship_tick = {
             };
         };
 
-    win :set_label SHIP_PANEL_ID "SHIP_CARGO_COUNT" (len ship.cargo);
-    win :set_label SHIP_PANEL_ID "SHIP_CREDITS"     ship.credits;
+    sscg:win :set_label SHIP_PANEL_ID "SHIP_CARGO_COUNT" (len ship.cargo);
+    sscg:win :set_label SHIP_PANEL_ID "SHIP_CREDITS"     ship.credits;
 },
-system_tick = {
-    std:displayln "SYS TICK" @;
+system_tick = {||
 },
 
 }

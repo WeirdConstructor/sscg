@@ -13,7 +13,7 @@ mod sdl_painter;
 use logic::*;
 use sdl_painter::SDLPainter;
 
-use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext};
+use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext, SymbolTable};
 
 fn vval_to_system(v: VVal) -> Result<Rc<RefCell<System>>, StackAction> {
     match v {
@@ -72,12 +72,12 @@ impl GameStateWlWrapper {
 
 impl VValUserData for GameStateWlWrapper {
     fn s(&self) -> String { format!("$<GameState>") }
-    fn set_key(&self, _key: &VVal, _val: VVal) {
-//        self.0.borrow_mut().state.set_key(key, val);
+    fn set_key(&self, key: &VVal, val: VVal) {
+        self.0.borrow_mut().state.set_key(key, val);
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
         match key {
-            _    => None,
+            _  => self.0.borrow().state.get_key(key),
         }
     }
     fn call(&self, args: &[VVal]) -> Result<VVal, StackAction> {
@@ -648,10 +648,13 @@ pub fn main() -> Result<(), String> {
     let s_gs = GameState::new_ref();
 
     let genv = GlobalEnv::new_default();
+    let mut sscg_wl_mod = SymbolTable::new();
+    sscg_wl_mod.set("game", GameStateWlWrapper::vval_from(s_gs.clone()));
+    sscg_wl_mod.set("win",  WindowManagerWlWrapper::vval_from(s_wm.clone()));
+    genv.borrow_mut().set_module("sscg", sscg_wl_mod);
+
     let mut wl_ctx = EvalContext::new_with_user(genv, s_gs.clone());
 
-    wl_ctx.set_global_var("game", &GameStateWlWrapper::vval_from(s_gs.clone()));
-    wl_ctx.set_global_var("win", &WindowManagerWlWrapper::vval_from(s_wm.clone()));
 
     let callbacks : VVal =
         match wl_ctx.eval_file("main.wl") {
