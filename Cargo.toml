@@ -18,7 +18,8 @@ regex   = "1.1.9"
 vecmath = "1.0.0"
 
 [dependencies.sdl2]
-version="0.32"
+#;version="0.32"
+path="../other/rust-sdl2"
 default-features=false
 features=["ttf","bundled","gfx","image"]
 #,"image","gfx","ttf"]

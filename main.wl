@@ -1,8 +1,7 @@
 !@import clock gamelib:clock;
 !@import sscg sscg;
 
-!SHIP_PANEL_ID   = 0;
-!STATUS_PANEL_ID = 1;
+!STATUS_PANEL_ID = 0;
 !status_panel    = ${ };
 !x               = $&0;
 
@@ -22,36 +21,17 @@ ${
 init = {!(ship) = @;
     std:displayln "INIT GAME";
     !sys = sscg:game :add_system 0 0 ${};
-    sscg:game :add_entity sys 20  20  ${ type = :station };
-    sscg:game :add_entity sys 300 300 ${ type = :station };
-    sscg:game :add_entity sys 200 100 ${ type = :asteroid_field };
+    sscg:game :add_entity sys 1000 1000  ${ type = :station };
+    sscg:game :add_entity sys 5000 5000  ${ type = :station };
+    sscg:game :add_entity sys 6000 4800  ${ type = :asteroid_field };
     ship :set_system sys;
-
-    sscg:win :set_window SHIP_PANEL_ID ${
-        title       = "Test Window",
-        title_color = "e8e",
-        x           = -481,
-        y           = 0,
-        w           = 1000,
-        h           = 1000,
-        child       = ${
-            t       = "vbox",
-            w       = 1000,
-            spacing = 3,
-            childs  = $[
-                info_label "Status:"   "SHIP_STATE",
-                info_label "Cargo:"    "SHIP_CARGO_COUNT",
-                info_label "Credits:"  "SHIP_CREDITS",
-            ],
-        },
-    } {|| std:displayln "FOO" @ };
 
     sscg:win :set_window STATUS_PANEL_ID ${
         title       = "Status",
         title_color = "ee8",
         x           = 0,
-        y           = -481,
-        w           = -481,
+        y           = -700,
+        w           = 500,
         h           = 1000,
         child       = ${
             t       = "vbox",
@@ -59,6 +39,9 @@ init = {!(ship) = @;
             spacing = 3,
             childs  = $[
                 info_label "Time:" "STATUS_TIME",
+                info_label "Status:"   "SHIP_STATE",
+                info_label "Cargo:"    "SHIP_CARGO_COUNT",
+                info_label "Credits:"  "SHIP_CREDITS",
             ],
         },
     } {|| std:displayln "MO" @ };
@@ -66,7 +49,7 @@ init = {!(ship) = @;
 
 ship_tick = {
     !(ship, system, entity) = _;
-    sscg:win :set_label SHIP_PANEL_ID "SHIP_STATE" ship._state;
+    sscg:win :set_label STATUS_PANEL_ID "SHIP_STATE" ship._state;
 
     match entity.typ
         "asteroid_field" {||
@@ -83,8 +66,8 @@ ship_tick = {
             };
         };
 
-    sscg:win :set_label SHIP_PANEL_ID "SHIP_CARGO_COUNT" (len ship.cargo);
-    sscg:win :set_label SHIP_PANEL_ID "SHIP_CREDITS"     ship.credits;
+    sscg:win :set_label STATUS_PANEL_ID "SHIP_CARGO_COUNT" (len ship.cargo);
+    sscg:win :set_label STATUS_PANEL_ID "SHIP_CREDITS"     ship.credits;
 },
 game_tick = {||
     clock:tick[];

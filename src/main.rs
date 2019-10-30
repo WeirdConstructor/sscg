@@ -621,9 +621,10 @@ pub fn main() -> Result<(), String> {
     let window = video_subsystem.window("rust-sdl2 demo: Video", 800, 600)
         .position_centered()
         .resizable()
-//        .opengl()
+        .opengl()
         .build()
         .map_err(|e| e.to_string())?;
+
 
     let canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
@@ -631,8 +632,9 @@ pub fn main() -> Result<(), String> {
 
     let ttf_ctx = sdl2::ttf::init().map_err(|e| e.to_string())?;
 
-    let mut font = ttf_ctx.load_font("DejaVuSansMono.ttf", 14).map_err(|e| e.to_string())?;
-//    font.set_style(sdl2::ttf::FontStyle::BOLD | sdl2::ttf::FontStyle::UNDERLINE);
+//    let mut font = ttf_ctx.load_font("DejaVuSansMono.ttf", 14).map_err(|e| e.to_string())?;
+    let mut font = ttf_ctx.load_font("DejaVuSans-Bold.ttf", 14).map_err(|e| e.to_string())?;
+    font.set_style(sdl2::ttf::FontStyle::BOLD);// | sdl2::ttf::FontStyle::UNDERLINE);
     font.set_hinting(sdl2::ttf::Hinting::Normal);
 //    font.set_outline_width(0.1);
     font.set_kerning(true);
@@ -647,11 +649,19 @@ pub fn main() -> Result<(), String> {
     }
     textures.borrow_mut().push(t.unwrap());
 
+    let t = tc.load_texture(std::path::Path::new("assets/images/Orion_Nebula_-_Hubble_2006_mosaic_1280.jpg"));
+    if let Err(e) = t {
+        eprintln!("Couldn't load texture: {}", "test.png");
+        return Err(String::from("failed textures"));
+    }
+    textures.borrow_mut().push(t.unwrap());
+
     let cls = |idx: usize, xo: i32, yo: i32, w: u32, h: u32| {
     };
 
     let mut sdl_painter = SDLPainter {
         canvas:     canvas,
+        text_cache: std::collections::HashMap::new(),
         img_ctx:    sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?,
         font:       Rc::new(RefCell::new(font)),
         font_h:     0,
@@ -867,7 +877,13 @@ pub fn main() -> Result<(), String> {
         }
 
         sdl_painter.clear();
+        let win_size = sdl_painter.canvas.window().size();
         {
+            if win_size.0 > 1280 {
+                sdl_painter.push_offs(((win_size.0 - 1280) / 2) as i32, 0);
+            } else {
+                sdl_painter.push_offs(0, 0);
+            }
             if let Some(sys) = system_of_ship {
                 sys.borrow_mut().draw(
                     &mut *active_ship.borrow_mut(),
@@ -877,14 +893,13 @@ pub fn main() -> Result<(), String> {
                         mouse_state.x(),
                         mouse_state.y());
             }
+            sdl_painter.pop_offs();
         }
-        let win_size = sdl_painter.canvas.window().size();
         for w in s_wm.borrow_mut().windows.iter_mut() {
             if let Some(w) = w {
                 w.draw(win_size.0, win_size.1, &mut sdl_painter);
             }
         }
-        sdl_painter.texture(0, 0, 0, 100, 100);
         sdl_painter.done();
         last_frame = Instant::now();
 

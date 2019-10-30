@@ -6,6 +6,8 @@ pub type ObjectID = usize;
 
 pub type EventCallback = Fn(&Rc<RefCell<GameState>>, VVal);
 
+pub fn sys2screen(v: i32) -> i32 { (v * 1280) / 10000 }
+
 #[derive(Clone)]
 pub struct GameState {
     pub object_registry:    Rc<RefCell<ObjectRegistry>>,
@@ -318,6 +320,8 @@ pub trait GamePainter {
     fn draw_line(&mut self, xo: i32, yo: i32, x2o: i32, y2o: i32, t: u32,
                  color: (u8, u8, u8, u8));
     fn text_size(&mut self, txt: &str) -> (u32, u32);
+    fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, mut w: u32, mut h: u32);
+    fn texture(&mut self, idx: usize, xo: i32, yo: i32);
     fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32,
                  fg: (u8, u8, u8, u8),
                  bg: Option<(u8, u8, u8, u8)>,
@@ -377,7 +381,7 @@ impl Ship {
         Ship {
             name,
             course_progress:    0,
-            speed_t:            200,
+            speed_t:            10000,
             course:             None,
             pos:                (0, 0),
             system:             0,
@@ -481,25 +485,21 @@ impl Ship {
     }
 
     pub fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
+        let x = sys2screen(self.pos.0);
+        let y = sys2screen(self.pos.1);
+
         if let Some(c) = self.course {
             p.draw_line(
-                self.pos.0,
-                self.pos.1,
-                c.to.0,
-                c.to.1,
-                1,
-                (190, 190, 190, 255));
+                x, y, sys2screen(c.to.0), sys2screen(c.to.1),
+                1, (190, 190, 190, 255));
         }
 
         p.draw_dot(
-            self.pos.0,
-            self.pos.1,
-            3,
-            (160, 160, 255, 255));
+            x, y, 3, (160, 160, 255, 255));
 
         if self.notify_txt.len() > 0 {
             p.draw_text(
-                self.pos.0 - 100, self.pos.1 + 10, 200,
+                x - 100, y + 10, 200,
                 (255, 0, 255, 255), None,
                 0, &self.notify_txt);
         }
@@ -560,14 +560,14 @@ impl Entity {
 
     fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
         if self.is_highlighted {
-            p.draw_circle(0, 0, 8, (255, 0, 0, 255));
+            p.draw_circle(0, 0, 30, (255, 0, 0, 255));
         }
         match self.typ {
             SystemObject::Station => {
-                p.draw_dot(0, 0, 4, (0, 190, 0, 255));
+                p.draw_dot(0, 0, 20, (0, 190, 0, 255));
             },
             SystemObject::AsteroidField => {
-                p.draw_dot(0, 0, 2, (190, 190, 190, 255));
+                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
             },
         }
         self.draw_pos = p.get_screen_pos(0, 0);
@@ -708,19 +708,22 @@ impl System {
         let cell_count = 10;
         let cell_size  = 48;
         let w = cell_count * cell_size;
-        p.draw_rect_filled(
-            0, 0,
-            cell_size * cell_count, cell_size * cell_count,
-            (0, 0, 50, 255));
-        for h_line_y in 0..11 {
-            p.draw_line(0, h_line_y * 48, (w - 1) as i32, h_line_y * 48, 1, (200, 0, 0, 255));
-        }
-        for v_line_x in 0..11 {
-            p.draw_line(v_line_x * 48, 0, v_line_x * 48, (w - 1) as i32, 1, (200, 0, 0, 255));
-        }
+//        p.draw_rect_filled(
+//            0, 0,
+//            cell_size * cell_count, cell_size * cell_count,
+//            (0, 0, 50, 255));
+        p.texture_crop(1, 0, 0, 1280, 720);
+//        for h_line_y in 0..11 {
+//            p.draw_line(0, h_line_y * 48, (w - 1) as i32, h_line_y * 48, 1, (200, 0, 0, 255));
+//        }
+//        for v_line_x in 0..11 {
+//            p.draw_line(v_line_x * 48, 0, v_line_x * 48, (w - 1) as i32, 1, (200, 0, 0, 255));
+//        }
 
         for ent in self.objects.iter_mut() {
-            p.push_add_offs(ent.borrow().x, ent.borrow().y);
+            p.push_add_offs(
+                sys2screen(ent.borrow().x),
+                sys2screen(ent.borrow().y));
             ent.borrow_mut().draw(p);
             p.pop_offs();
         }

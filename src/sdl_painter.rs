@@ -1,21 +1,24 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
+use sdl2::surface::SurfaceRef;
+use sdl2::surface::Surface;
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::logic::GamePainter;
 use sdl2::gfx::primitives::{DrawRenderer};
 
-pub struct SDLPainter<'a, 'b, 'c> {
+pub struct SDLPainter<'a, 'b, 'c, 'd> {
     pub canvas: sdl2::render::Canvas<sdl2::video::Window>,
     pub img_ctx: sdl2::image::Sdl2ImageContext,
     pub font: Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
     pub font_h: i32,
+    pub text_cache: std::collections::HashMap<String, Surface<'d>>,
     pub offs_stack: std::vec::Vec<(i32, i32)>,
     pub offs: (i32, i32),
     pub textures: Rc<RefCell<std::vec::Vec<sdl2::render::Texture<'c>>>>,
 }
 
-impl<'a, 'b, 'c> SDLPainter<'a, 'b, 'c> {
+impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
     pub fn clear(&mut self) {
         self.canvas.set_draw_color(Color::RGB(255, 255, 255));
         self.canvas.clear();
@@ -34,18 +37,31 @@ impl<'a, 'b, 'c> SDLPainter<'a, 'b, 'c> {
 //        self.textures[idx] = Some(Rc::new(RefCell::new(t.unwrap())));
 //    }
 //
-    pub fn texture(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32) {
-        if idx >= self.textures.borrow().len() { return; }
-        if let Some(t) = self.textures.borrow().get(idx) {
-            self.canvas.copy(
-                t,
-                None,
-                Some(Rect::new(
-                    self.offs.0 + xo,
-                    self.offs.1 + yo,
-                    w, h)));
-        }
-    }
+//    pub fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, mut w: u32, mut h: u32) {
+//        if idx >= self.textures.borrow().len() { return; }
+//        if let Some(t) = self.textures.borrow().get(idx) {
+//            let q = t.query();
+//            if q.width < w { w = q.width; }
+//            if q.height < h { h = q.height; }
+//            self.canvas.copy(
+//                t,
+//                Some(Rect::new(0, 0, w, h)),
+//                Some(Rect::new(
+//                    self.offs.0 + xo, self.offs.1 + yo, w, h)));
+//        }
+//    }
+//
+//    pub fn texture(&mut self, idx: usize, xo: i32, yo: i32) {
+//        if idx >= self.textures.borrow().len() { return; }
+//        if let Some(t) = self.textures.borrow().get(idx) {
+//            let q = t.query();
+//            self.canvas.copy(
+//                t,
+//                Some(Rect::new(0, 0, q.width, q.height)),
+//                Some(Rect::new(
+//                    self.offs.0 + xo, self.offs.1 + yo, q.width, q.height)));
+//        }
+//    }
 //    canvas.copy(
 //        &txt,
 //        Some(Rect::new(0,      0, w as u32, tq.height)),
@@ -68,12 +84,70 @@ impl<'a, 'b, 'c> SDLPainter<'a, 'b, 'c> {
         }
     }
 
+    fn _draw_text(
+        &mut self, color: Color,
+        x: i32, y: i32, max_w: i32, align: i32, txt: &str) {
+
+        if txt.is_empty() { return; }
+
+        let txt_crt = self.canvas.texture_creator();
+
+        let sf =
+            if let Some(sf) = self.text_cache.get(txt) {
+                sf
+            } else {
+                let f =
+                    self.font.borrow().render(txt).blended(color).map_err(|e| e.to_string()).unwrap();
+                self.text_cache.insert(txt.to_string(), f);
+                self.text_cache.get(txt).unwrap()
+            };
+
+        let txt = txt_crt.create_texture_from_surface(&sf).map_err(|e| e.to_string()).unwrap();
+        let tq  = txt.query();
+
+        let xo = if align == 2
+                 || align == 0 { (max_w - (tq.width as i32)) / 2 }
+            else if align < 0  { max_w - (tq.width as i32) }
+            else { 0 };
+
+        let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
+
+        let xo = if xo < 0 { 0 } else { xo };
+
+        self.canvas.copy(
+            &txt,
+            Some(Rect::new(0,      0, w as u32, tq.height)),
+            Some(Rect::new(x + xo, y, w as u32, tq.height))
+        ).map_err(|e| e.to_string()).unwrap();
+//        sdl2::hint::set_with_priority(
+//            "SDL_HINT_RENDER_SCALE_QUALITY",
+//            "linear",
+//            &sdl2::hint::Hint::Override);
+    }
+
+    fn _draw_bg_text(&mut self,
+                    color: Color,
+                    bg_color: Color,
+                    x: i32,
+                    y: i32,
+                    max_w: i32,
+                    h: i32,
+                    align: i32,
+                    txt: &str) {
+
+        self.canvas.set_draw_color(bg_color);
+        self.canvas.fill_rect(Rect::new(x, y, max_w as u32, h as u32))
+            .expect("filling rectangle");
+        self._draw_text(color, x, y, max_w, align, txt);
+    }
+
+
     pub fn done(&mut self) {
         self.canvas.present();
     }
 }
 
-impl<'a, 'b, 'c> GamePainter for SDLPainter<'a, 'b, 'c> {
+impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
     fn push_offs(&mut self, xo: i32, yo: i32) {
         self.offs_stack.push(self.offs);
         self.offs = (xo, yo);
@@ -148,13 +222,37 @@ impl<'a, 'b, 'c> GamePainter for SDLPainter<'a, 'b, 'c> {
         self.text_size(txt)
     }
 
+    fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, mut w: u32, mut h: u32) {
+        if idx >= self.textures.borrow().len() { return; }
+        if let Some(t) = self.textures.borrow().get(idx) {
+            let q = t.query();
+            if q.width < w { w = q.width; }
+            if q.height < h { h = q.height; }
+            self.canvas.copy(
+                t,
+                Some(Rect::new(0, 0, w, h)),
+                Some(Rect::new(
+                    self.offs.0 + xo, self.offs.1 + yo, w, h)));
+        }
+    }
+
+    fn texture(&mut self, idx: usize, xo: i32, yo: i32) {
+        if idx >= self.textures.borrow().len() { return; }
+        if let Some(t) = self.textures.borrow().get(idx) {
+            let q = t.query();
+            self.canvas.copy(
+                t,
+                Some(Rect::new(0, 0, q.width, q.height)),
+                Some(Rect::new(
+                    self.offs.0 + xo, self.offs.1 + yo, q.width, q.height)));
+        }
+    }
+
     fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32, fg: (u8, u8, u8, u8),
                  bg: Option<(u8, u8, u8, u8)>, align: i32, txt: &str) {
         if let Some(c) = bg {
             let h = self.get_font_h();
-            draw_bg_text(
-                &mut self.canvas,
-                &mut *self.font.borrow_mut(),
+            self._draw_bg_text(
                 fg.into(),
                 c.into(),
                 self.offs.0 + xo,
@@ -164,10 +262,8 @@ impl<'a, 'b, 'c> GamePainter for SDLPainter<'a, 'b, 'c> {
                 align,
                 txt);
         } else {
-            draw_text(
-                &mut *self.font.borrow_mut(),
+            self._draw_text(
                 fg.into(),
-                &mut self.canvas,
                 self.offs.0 + xo,
                 self.offs.1 + yo,
                 max_w as i32,
@@ -175,49 +271,5 @@ impl<'a, 'b, 'c> GamePainter for SDLPainter<'a, 'b, 'c> {
                 txt);
         }
     }
-}
-
-fn draw_text(font: &mut sdl2::ttf::Font, color: Color,
-             canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-             x: i32, y: i32, max_w: i32, align: i32, txt: &str) {
-    if txt.is_empty() { return; }
-
-    let txt_crt = canvas.texture_creator();
-
-    let sf  = font.render(txt).blended(color).map_err(|e| e.to_string()).unwrap();
-    let txt = txt_crt.create_texture_from_surface(&sf).map_err(|e| e.to_string()).unwrap();
-    let tq  = txt.query();
-
-    let xo = if align == 2
-             || align == 0 { (max_w - (tq.width as i32)) / 2 }
-        else if align < 0  { max_w - (tq.width as i32) }
-        else { 0 };
-
-    let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
-
-    let xo = if xo < 0 { 0 } else { xo };
-
-    canvas.copy(
-        &txt,
-        Some(Rect::new(0,      0, w as u32, tq.height)),
-        Some(Rect::new(x + xo, y, w as u32, tq.height))
-    ).map_err(|e| e.to_string()).unwrap();
-}
-
-fn draw_bg_text(canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-                font: &mut sdl2::ttf::Font,
-                color: Color,
-                bg_color: Color,
-                x: i32,
-                y: i32,
-                max_w: i32,
-                h: i32,
-                align: i32,
-                txt: &str) {
-
-    canvas.set_draw_color(bg_color);
-    canvas.fill_rect(Rect::new(x, y, max_w as u32, h as u32))
-        .expect("filling rectangle");
-    draw_text(font, color, canvas, x, y, max_w, align, txt);
 }
 
