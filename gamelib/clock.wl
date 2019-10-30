@@ -2,7 +2,7 @@
 !@import wlambda;
 !@import std std;
 
-!ticks_per_hour  = 1;
+!ticks_per_hour  = 6;
 !ticks_per_day   = ticks_per_hour * 24;
 !ticks_per_month = ticks_per_day * 30;
 !ticks_per_year  = ticks_per_day * 365;

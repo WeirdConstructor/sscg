@@ -5,19 +5,52 @@ use std::cell::RefCell;
 use crate::logic::GamePainter;
 use sdl2::gfx::primitives::{DrawRenderer};
 
-pub struct SDLPainter<'a, 'b> {
+pub struct SDLPainter<'a, 'b, 'c> {
     pub canvas: sdl2::render::Canvas<sdl2::video::Window>,
+    pub img_ctx: sdl2::image::Sdl2ImageContext,
     pub font: Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
     pub font_h: i32,
     pub offs_stack: std::vec::Vec<(i32, i32)>,
     pub offs: (i32, i32),
+    pub textures: Rc<RefCell<std::vec::Vec<sdl2::render::Texture<'c>>>>,
 }
 
-impl<'a, 'b> SDLPainter<'a, 'b> {
+impl<'a, 'b, 'c> SDLPainter<'a, 'b, 'c> {
     pub fn clear(&mut self) {
         self.canvas.set_draw_color(Color::RGB(255, 255, 255));
         self.canvas.clear();
     }
+
+//    pub fn load_texture(&mut self, idx: usize, filename: &str) {
+//        let t = self.tc.load_texture(std::path::Path::new(filename));
+//        if let Err(e) = t {
+//            eprintln!("Couldn't load texture: {}", filename);
+//            return;
+//        }
+//
+//        if idx >= self.textures.len() {
+//            self.textures.resize(idx + 1, None);
+//        }
+//        self.textures[idx] = Some(Rc::new(RefCell::new(t.unwrap())));
+//    }
+//
+    pub fn texture(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32) {
+        if idx >= self.textures.borrow().len() { return; }
+        if let Some(t) = self.textures.borrow().get(idx) {
+            self.canvas.copy(
+                t,
+                None,
+                Some(Rect::new(
+                    self.offs.0 + xo,
+                    self.offs.1 + yo,
+                    w, h)));
+        }
+    }
+//    canvas.copy(
+//        &txt,
+//        Some(Rect::new(0,      0, w as u32, tq.height)),
+//        Some(Rect::new(x + xo, y, w as u32, tq.height))
+//    ).map_err(|e| e.to_string()).unwrap();
 
     pub fn get_font_h(&mut self) -> i32 {
         if self.font_h == 0 {
@@ -40,7 +73,7 @@ impl<'a, 'b> SDLPainter<'a, 'b> {
     }
 }
 
-impl<'a, 'b> GamePainter for SDLPainter<'a, 'b> {
+impl<'a, 'b, 'c> GamePainter for SDLPainter<'a, 'b, 'c> {
     fn push_offs(&mut self, xo: i32, yo: i32) {
         self.offs_stack.push(self.offs);
         self.offs = (xo, yo);

@@ -1,5 +1,6 @@
 use sdl2::event::Event;
 use sdl2::event::WindowEvent;
+use sdl2::image::{LoadTexture, InitFlag};
 use sdl2::keyboard::Keycode;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -636,12 +637,27 @@ pub fn main() -> Result<(), String> {
 //    font.set_outline_width(0.1);
     font.set_kerning(true);
 
+    let tc = canvas.texture_creator();
+    let textures = std::rc::Rc::new(std::cell::RefCell::new(std::vec::Vec::new()));
+
+    let t = tc.load_texture(std::path::Path::new("test.png"));
+    if let Err(e) = t {
+        eprintln!("Couldn't load texture: {}", "test.png");
+        return Err(String::from("failed textures"));
+    }
+    textures.borrow_mut().push(t.unwrap());
+
+    let cls = |idx: usize, xo: i32, yo: i32, w: u32, h: u32| {
+    };
+
     let mut sdl_painter = SDLPainter {
-        canvas: canvas,
-        font: Rc::new(RefCell::new(font)),
-        font_h: 0,
+        canvas:     canvas,
+        img_ctx:    sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?,
+        font:       Rc::new(RefCell::new(font)),
+        font_h:     0,
         offs_stack: std::vec::Vec::new(),
-        offs: (0, 0),
+        offs:       (0, 0),
+        textures,
     };
 
     let s_wm = WindowManager::new_ref();
@@ -868,6 +884,7 @@ pub fn main() -> Result<(), String> {
                 w.draw(win_size.0, win_size.1, &mut sdl_painter);
             }
         }
+        sdl_painter.texture(0, 0, 0, 100, 100);
         sdl_painter.done();
         last_frame = Instant::now();
 
