@@ -12,7 +12,7 @@
 !info_label = { !(lbl, ref) = @;
     ${ t = "hbox", w = 1000, childs = $[
         ${ t = "r_button", text = lbl, fg = "FFF", bg = "000", w = 300 },
-        ${ t = "l_label",  ref = ref,  fg = "FFF", bg = "F00", w = 700 },
+        ${ t = "l_label",  ref = ref,  fg = "FFF", bg = "000", w = 700 },
     ]}
 };
 
@@ -39,13 +39,6 @@ init = {!(ship) = @;
             w       = 1000,
             spacing = 3,
             childs  = $[
-                ${
-                    t    = "l_button",
-                    ref  = "REF1",
-                    text = "10",
-                    fg   = "F0F",
-                    bg   = "303",
-                },
                 info_label "Status:"   "SHIP_STATE",
                 info_label "Cargo:"    "SHIP_CARGO_COUNT",
                 info_label "Credits:"  "SHIP_CREDITS",
@@ -71,20 +64,6 @@ init = {!(ship) = @;
     } {|| std:displayln "MO" @ };
 },
 
-game_load = {||
-    std:displayln "GAME LLLLLLLLLLLLLLLLLLLLOOOOOOAAAAAD";
-    !ship = (sscg:game :list_by_type :ship).0;
-    (is_none ship.cargo) {
-        ship.cargo        = $[];
-        ship.max_capacity = 10;
-        ship.credits      = 0;
-    };
-    .*g_ship = ship;
-},
-game_tick = {||
-    clock:tick[];
-    sscg:win :set_label STATUS_PANEL_ID "STATUS_TIME" clock:now_str[];
-},
 ship_tick = {
     !(ship, system, entity) = _;
     sscg:win :set_label SHIP_PANEL_ID "SHIP_STATE" ship._state;
@@ -106,6 +85,20 @@ ship_tick = {
 
     sscg:win :set_label SHIP_PANEL_ID "SHIP_CARGO_COUNT" (len ship.cargo);
     sscg:win :set_label SHIP_PANEL_ID "SHIP_CREDITS"     ship.credits;
+},
+game_tick = {||
+    clock:tick[];
+    sscg:win :set_label STATUS_PANEL_ID "STATUS_TIME" clock:now_str[];
+},
+game_load = {||
+    std:displayln "GAME LOAD";
+    !ship = (sscg:game :list_by_type :ship).0;
+    (is_none ship.cargo) {
+        ship.cargo        = $[];
+        ship.max_capacity = 10;
+        ship.credits      = 0;
+    };
+    .*g_ship = ship;
 },
 system_tick = {||
 },

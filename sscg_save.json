@@ -2,7 +2,7 @@
   "sscg_savegame",
   0,
   {
-    "clock": 140
+    "clock": 508
   },
   0,
   [
@@ -14,28 +14,17 @@
         0,
         1,
         "Cocky",
+        300,
+        300,
         200,
-        100,
-        200,
-        17800,
+        22400,
         null,
-        0,
+        1,
         {
-          "credits": 20,
-          "_state": "stopped",
+          "cargo": [],
           "max_capacity": 10,
-          "cargo": [
-            "rock",
-            "rock",
-            "rock",
-            "rock",
-            "rock",
-            "rock",
-            "rock",
-            "rock",
-            "rock",
-            "rock"
-          ]
+          "credits": 59,
+          "_state": "stopped"
         }
       ],
       [
@@ -44,7 +33,7 @@
         1,
         0,
         0,
-        8,
+        5,
         {},
         [
           [
