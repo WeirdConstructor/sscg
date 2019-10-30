@@ -323,7 +323,7 @@ pub trait GamePainter {
                  color: (u8, u8, u8, u8));
     fn text_size(&mut self, txt: &str) -> (u32, u32);
     fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, mut w: u32, mut h: u32);
-    fn texture(&mut self, idx: usize, xo: i32, yo: i32);
+    fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool);
     fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32,
                  fg: (u8, u8, u8, u8),
                  bg: Option<(u8, u8, u8, u8)>,
@@ -383,7 +383,7 @@ impl Ship {
         Ship {
             name,
             course_progress:    0,
-            speed_t:            10000,
+            speed_t:            1000,
             course:             None,
             pos:                (0, 0),
             system:             0,
@@ -561,16 +561,17 @@ impl Entity {
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
 
     fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
-        if self.is_highlighted {
-            p.draw_circle(0, 0, 30, (255, 0, 0, 255));
-        }
         match self.typ {
             SystemObject::Station => {
                 p.draw_dot(0, 0, 20, (0, 190, 0, 255));
             },
             SystemObject::AsteroidField => {
-                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
+                p.texture(0, 0, 0, true);
+//                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
             },
+        }
+        if self.is_highlighted {
+            p.draw_circle(0, 0, 30, (255, 0, 0, 255));
         }
         self.draw_pos = p.get_screen_pos(0, 0);
     }

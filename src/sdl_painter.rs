@@ -236,15 +236,21 @@ impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
         }
     }
 
-    fn texture(&mut self, idx: usize, xo: i32, yo: i32) {
+    fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool) {
         if idx >= self.textures.borrow().len() { return; }
         if let Some(t) = self.textures.borrow().get(idx) {
             let q = t.query();
+            let mut x : i32 = 0;
+            let mut y : i32 = 0;
+            if centered {
+                x = -(q.width as i32 / 2);
+                y = -(q.height as i32 / 2);
+            }
             self.canvas.copy(
                 t,
                 Some(Rect::new(0, 0, q.width, q.height)),
                 Some(Rect::new(
-                    self.offs.0 + xo, self.offs.1 + yo, q.width, q.height)));
+                    self.offs.0 + xo + x, self.offs.1 + yo + y, q.width, q.height)));
         }
     }
 
