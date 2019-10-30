@@ -618,7 +618,7 @@ pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
-    let window = video_subsystem.window("sscg", 1280, 720)
+    let window = video_subsystem.window("SSCG - Game", 1280, 720)
         .position_centered()
         .resizable()
         .opengl()
@@ -642,7 +642,7 @@ pub fn main() -> Result<(), String> {
     let tc = canvas.texture_creator();
     let textures = std::rc::Rc::new(std::cell::RefCell::new(std::vec::Vec::new()));
 
-    let t = tc.load_texture(std::path::Path::new("test.png"));
+    let t = tc.load_texture(std::path::Path::new("assets/images/models/rocks/asteroid_1_0001.png"));
     if let Err(e) = t {
         eprintln!("Couldn't load texture: {}", "test.png");
         return Err(String::from("failed textures"));
