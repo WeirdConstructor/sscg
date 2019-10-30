@@ -22,15 +22,15 @@ init = {!(ship) = @;
     std:displayln "INIT GAME";
     !sys = sscg:game :add_system 0 0 ${};
     sscg:game :add_entity sys 1000 1000  ${ type = :station };
-    sscg:game :add_entity sys 5000 5000  ${ type = :station };
-    sscg:game :add_entity sys 6000 4800  ${ type = :asteroid_field };
+    sscg:game :add_entity sys 2000 3000  ${ type = :station };
+    sscg:game :add_entity sys 5000 2800  ${ type = :asteroid_field };
     ship :set_system sys;
 
     sscg:win :set_window STATUS_PANEL_ID ${
         title       = "Status",
         title_color = "ee8",
         x           = 0,
-        y           = -700,
+        y           = -600,
         w           = 500,
         h           = 1000,
         child       = ${

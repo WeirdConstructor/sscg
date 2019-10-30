@@ -20,7 +20,7 @@ pub struct SDLPainter<'a, 'b, 'c, 'd> {
 
 impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
     pub fn clear(&mut self) {
-        self.canvas.set_draw_color(Color::RGB(255, 255, 255));
+        self.canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.canvas.clear();
     }
 

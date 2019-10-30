@@ -2,6 +2,8 @@ use wlambda::VVal;
 use std::rc::Rc;
 use std::cell::RefCell;
 
+const TICK_RES : i32 = 1000 / 25;
+
 pub type ObjectID = usize;
 
 pub type EventCallback = Fn(&Rc<RefCell<GameState>>, VVal);
@@ -192,15 +194,15 @@ impl ObjectRegistry {
     pub fn update(&mut self, dt: f64, er: &mut EventRouter) {
         self.tick_time_ms += dt;
         //d// println!("UPD: {} {}", dt, self.tick_time_ms);
-        while self.tick_time_ms > 100.0 {
+        while self.tick_time_ms > 25.0 {
             self.tick(er);
-            self.tick_time_ms = self.tick_time_ms - 100.0;
+            self.tick_time_ms = self.tick_time_ms - 25.0;
         }
     }
 
     pub fn tick(&mut self, er: &mut EventRouter) {
         self.tick_count += 1;
-        if self.tick_count > 5 {
+        if self.tick_count > TICK_RES {
             self.tick_count = 0;
             er.emit("tick".to_string(), VVal::Nul);
         }
@@ -477,7 +479,7 @@ impl Ship {
         }
 
         self.tick_count += 1;
-        if self.tick_count > 5 {
+        if self.tick_count > TICK_RES {
             self.tick_count = 0;
             er.emit("ship_tick".to_string(),
                 VVal::Int(self.id as i64));
@@ -639,7 +641,7 @@ impl System {
 
     pub fn tick(&mut self, er: &mut EventRouter) {
         self.tick_count += 1;
-        if self.tick_count > 10 {
+        if self.tick_count > TICK_RES {
             self.tick_count = 0;
             er.emit("system_tick".to_string(), VVal::Int(self.id as i64));
         }
@@ -712,7 +714,7 @@ impl System {
 //            0, 0,
 //            cell_size * cell_count, cell_size * cell_count,
 //            (0, 0, 50, 255));
-        p.texture_crop(1, 0, 0, 1280, 720);
+        p.texture_crop(1, 0, 0, 1280, 600);
 //        for h_line_y in 0..11 {
 //            p.draw_line(0, h_line_y * 48, (w - 1) as i32, h_line_y * 48, 1, (200, 0, 0, 255));
 //        }
