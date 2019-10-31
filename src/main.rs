@@ -663,6 +663,16 @@ pub fn main() -> Result<(), String> {
     }
     textures.push(t.unwrap());
 
+    for i in 1..9 {
+        let path = String::from("assets/images/models/ships/ship_1_000") + &i.to_string() + ".png";
+        let t = tc.load_texture(std::path::Path::new(&path));
+        if let Err(e) = t {
+            eprintln!("Couldn't load texture: {}", "test.png");
+            return Err(String::from("failed textures"));
+        }
+        textures.push(t.unwrap());
+    }
+
     let cls = |idx: usize, xo: i32, yo: i32, w: u32, h: u32| {
     };
 
