@@ -563,7 +563,8 @@ impl Entity {
     fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
         match self.typ {
             SystemObject::Station => {
-                p.draw_dot(0, 0, 20, (0, 190, 0, 255));
+//                p.draw_dot(0, 0, 20, (0, 190, 0, 255));
+                p.texture(2, 0, 0, true);
             },
             SystemObject::AsteroidField => {
                 p.texture(0, 0, 0, true);

@@ -2,6 +2,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::surface::SurfaceRef;
 use sdl2::surface::Surface;
+use sdl2::image::{LoadTexture, InitFlag};
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::logic::GamePainter;
@@ -15,7 +16,7 @@ pub struct SDLPainter<'a, 'b, 'c, 'd> {
     pub text_cache: std::collections::HashMap<String, Surface<'d>>,
     pub offs_stack: std::vec::Vec<(i32, i32)>,
     pub offs: (i32, i32),
-    pub textures: Rc<RefCell<std::vec::Vec<sdl2::render::Texture<'c>>>>,
+    pub textures: std::vec::Vec<sdl2::render::Texture<'c>>,
 }
 
 impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
@@ -25,16 +26,18 @@ impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
     }
 
 //    pub fn load_texture(&mut self, idx: usize, filename: &str) {
-//        let t = self.tc.load_texture(std::path::Path::new(filename));
-//        if let Err(e) = t {
-//            eprintln!("Couldn't load texture: {}", filename);
-//            return;
-//        }
+////        let txt_crt = self.canvas.texture_creator();
+//        let t : sdl2::render::Texture<'c> = self.txt_crt.load_texture(std::path::Path::new(filename)).unwrap();
+////        if let Err(e) = t {
+////            eprintln!("Couldn't load texture: {}", filename);
+////            return;
+////        }
 //
 //        if idx >= self.textures.len() {
 //            self.textures.resize(idx + 1, None);
 //        }
-//        self.textures[idx] = Some(Rc::new(RefCell::new(t.unwrap())));
+////        self.textures[idx] = Some(Rc::new(RefCell::new(t.unwrap())));
+//        self.textures[idx] = Some(Rc::new(RefCell::new(t)));
 //    }
 //
 //    pub fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, mut w: u32, mut h: u32) {
@@ -223,8 +226,8 @@ impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
     }
 
     fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, mut w: u32, mut h: u32) {
-        if idx >= self.textures.borrow().len() { return; }
-        if let Some(t) = self.textures.borrow().get(idx) {
+        if idx >= self.textures.len() { return; }
+        if let Some(t) = self.textures.get(idx) {
             let q = t.query();
             if q.width < w { w = q.width; }
             if q.height < h { h = q.height; }
@@ -237,8 +240,8 @@ impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
     }
 
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool) {
-        if idx >= self.textures.borrow().len() { return; }
-        if let Some(t) = self.textures.borrow().get(idx) {
+        if idx >= self.textures.len() { return; }
+        if let Some(t) = self.textures.get(idx) {
             let q = t.query();
             let mut x : i32 = 0;
             let mut y : i32 = 0;

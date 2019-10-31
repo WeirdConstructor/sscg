@@ -640,21 +640,28 @@ pub fn main() -> Result<(), String> {
     font.set_kerning(true);
 
     let tc = canvas.texture_creator();
-    let textures = std::rc::Rc::new(std::cell::RefCell::new(std::vec::Vec::new()));
+    let mut textures = std::vec::Vec::new();
 
     let t = tc.load_texture(std::path::Path::new("assets/images/models/rocks/asteroid_1_0001.png"));
     if let Err(e) = t {
         eprintln!("Couldn't load texture: {}", "test.png");
         return Err(String::from("failed textures"));
     }
-    textures.borrow_mut().push(t.unwrap());
+    textures.push(t.unwrap());
 
     let t = tc.load_texture(std::path::Path::new("assets/images/Orion_Nebula_-_Hubble_2006_mosaic_1280.jpg"));
     if let Err(e) = t {
         eprintln!("Couldn't load texture: {}", "test.png");
         return Err(String::from("failed textures"));
     }
-    textures.borrow_mut().push(t.unwrap());
+    textures.push(t.unwrap());
+
+    let t = tc.load_texture(std::path::Path::new("assets/images/models/stations/station_1_0001.png"));
+    if let Err(e) = t {
+        eprintln!("Couldn't load texture: {}", "test.png");
+        return Err(String::from("failed textures"));
+    }
+    textures.push(t.unwrap());
 
     let cls = |idx: usize, xo: i32, yo: i32, w: u32, h: u32| {
     };
