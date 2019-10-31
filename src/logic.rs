@@ -1,6 +1,7 @@
 use wlambda::VVal;
 use std::rc::Rc;
 use std::cell::RefCell;
+use vector2d::Vector2D;
 
 const TICK_RES : i32 = 1000 / 25;
 
@@ -351,6 +352,16 @@ impl Course {
         }
     }
 
+    pub fn rotation_quadrant(&self) -> i32 {
+        let v = Vector2D::new(
+            (self.to.0 - self.from.0) as f32,
+            (self.to.1 - self.from.1) as f32).normalise();
+        let ang = v.angle();
+        let ang = if ang < 0.0 { ang + 2.0 * std::f32::consts::PI } else { ang };
+        let a = ang / (2.0 * std::f32::consts::PI);
+        (a * 8.0).round() as i32
+    }
+
     pub fn interpolate(&self, v: f64) -> (i32, i32) {
         let xd = ((self.to.0 as f64 * v) + (self.from.0 as f64 * (1.0 - v))) as i32;
         let yd = ((self.to.1 as f64 * v) + (self.from.1 as f64 * (1.0 - v))) as i32;
@@ -490,14 +501,19 @@ impl Ship {
         let x = sys2screen(self.pos.0);
         let y = sys2screen(self.pos.1);
 
-        if let Some(c) = self.course {
-            p.draw_line(
-                x, y, sys2screen(c.to.0), sys2screen(c.to.1),
-                1, (190, 190, 190, 255));
-        }
+        let a = 
+            if let Some(c) = self.course {
+                p.draw_line(
+                    x, y, sys2screen(c.to.0), sys2screen(c.to.1),
+                    1, (190, 190, 190, 255));
+                c.rotation_quadrant()
+            } else {
+                1
+            };
 
-        p.draw_dot(
-            x, y, 3, (160, 160, 255, 255));
+        p.texture(3 + ((8 - a) as usize + 3) % 8, x, y, true);
+//        p.draw_dot(
+//            x, y, 3, (160, 160, 255, 255));
 
         if self.notify_txt.len() > 0 {
             p.draw_text(
