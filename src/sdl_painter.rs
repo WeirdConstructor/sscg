@@ -8,10 +8,9 @@ use sdl2::gfx::primitives::{DrawRenderer};
 
 pub struct SDLPainter<'a, 'b, 'c, 'd> {
     pub canvas: sdl2::render::Canvas<sdl2::video::Window>,
-    pub img_ctx: sdl2::image::Sdl2ImageContext,
     pub font: Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
     pub font_h: i32,
-    pub text_cache: std::collections::HashMap<String, Surface<'d>>,
+    pub text_cache: std::collections::HashMap<((u8, u8, u8, u8), String), Surface<'d>>,
     pub offs_stack: std::vec::Vec<(i32, i32)>,
     pub offs: (i32, i32),
     pub textures: std::vec::Vec<sdl2::render::Texture<'c>>,
@@ -86,21 +85,23 @@ impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
     }
 
     fn _draw_text(
-        &mut self, color: Color,
+        &mut self, color: (u8, u8, u8, u8),
         x: i32, y: i32, max_w: i32, align: i32, txt: &str) {
 
         if txt.is_empty() { return; }
 
         let txt_crt = self.canvas.texture_creator();
 
+        let key = (color, txt.to_string());
         let sf =
-            if let Some(sf) = self.text_cache.get(txt) {
+            if let Some(sf) = self.text_cache.get(&key) {
                 sf
             } else {
+                let c : Color = color.into();
                 let f =
-                    self.font.borrow().render(txt).blended(color).map_err(|e| e.to_string()).unwrap();
-                self.text_cache.insert(txt.to_string(), f);
-                self.text_cache.get(txt).unwrap()
+                    self.font.borrow().render(txt).blended(c).map_err(|e| e.to_string()).unwrap();
+                self.text_cache.insert(key.clone(), f);
+                self.text_cache.get(&key).unwrap()
             };
 
         let txt = txt_crt.create_texture_from_surface(&sf).map_err(|e| e.to_string()).unwrap();
@@ -127,7 +128,7 @@ impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
     }
 
     fn _draw_bg_text(&mut self,
-                    color: Color,
+                    color: (u8, u8, u8, u8),
                     bg_color: Color,
                     x: i32,
                     y: i32,
@@ -260,7 +261,7 @@ impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
         if let Some(c) = bg {
             let h = self.get_font_h();
             self._draw_bg_text(
-                fg.into(),
+                fg,
                 c.into(),
                 self.offs.0 + xo,
                 self.offs.1 + yo,
@@ -270,7 +271,7 @@ impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
                 txt);
         } else {
             self._draw_text(
-                fg.into(),
+                fg,
                 self.offs.0 + xo,
                 self.offs.1 + yo,
                 max_w as i32,

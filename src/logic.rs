@@ -532,6 +532,7 @@ pub struct Entity {
     pub x:              i32,
     pub y:              i32,
     pub state:          VVal,
+    pub name:           String,
     draw_pos:           (i32, i32),
     is_highlighted:     bool,
 }
@@ -539,13 +540,14 @@ pub struct Entity {
 impl Entity {
     pub fn new(typ: SystemObject) -> Self {
         Entity {
-            id: 0,
             typ,
-            draw_pos: (0, 0),
-            x: 0,
-            y: 0,
-            state: VVal::map(),
-            is_highlighted: false
+            id:             0,
+            draw_pos:       (0, 0),
+            x:              0,
+            y:              0,
+            state:          VVal::map(),
+            is_highlighted: false,
+            name:           String::from(""),
         }
     }
 
@@ -559,7 +561,8 @@ impl Entity {
                           };
         s.x             = v.at(4).unwrap_or(VVal::Int(0)).i() as i32;
         s.y             = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
-        s.state         = v.at(6).unwrap_or(VVal::Nul);
+        s.name          = v.at(6).unwrap_or(VVal::new_str("")).s_raw();
+        s.state         = v.at(7).unwrap_or(VVal::Nul);
         s
     }
 
@@ -571,6 +574,7 @@ impl Entity {
         v.push(VVal::Int(self.typ as i64));
         v.push(VVal::Int(self.x   as i64));
         v.push(VVal::Int(self.y   as i64));
+        v.push(VVal::new_str(&self.name));
         v.push(self.state.clone());
         v
     }
@@ -588,6 +592,8 @@ impl Entity {
 //                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
             },
         }
+//        p.draw_text(1, 1, 100, (0, 0, 0, 255), None, 0, &self.name);
+//        p.draw_text(0, 0, 100, (255, 255, 255, 255), None, 0, &self.name);
         if self.is_highlighted {
             p.draw_circle(0, 0, 30, (255, 0, 0, 255));
         }
