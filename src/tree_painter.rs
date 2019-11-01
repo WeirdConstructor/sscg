@@ -24,6 +24,21 @@ pub struct TreePainter {
     offs:               (i32, i32),
 }
 
+impl TreePainter {
+    pub fn new(text_metrics_fn: Rc<RefCell<TextMetricCalcFn>>) -> Self {
+        Self {
+            cmds: std::vec::Vec::new(),
+            text_metrics_fn,
+            offs_stack: std::vec::Vec::new(),
+            offs: (0, 0)
+        }
+    }
+
+    pub fn consume_cmds(&mut self) -> std::vec::Vec<DrawCmd> {
+        std::mem::replace(&mut self.cmds, std::vec::Vec::new())
+    }
+}
+
 impl GamePainter for TreePainter {
     fn push_offs(&mut self, xo: i32, yo: i32) {
         self.offs_stack.push(self.offs);
