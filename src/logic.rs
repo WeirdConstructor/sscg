@@ -10,6 +10,7 @@ pub type ObjectID = usize;
 pub type EventCallback = dyn Fn(&Rc<RefCell<GameState>>, VVal);
 
 pub fn sys2screen(v: i32) -> i32 { (v * 1280) / 10000 }
+pub fn screen2sys(v: i32) -> i32 { (v * 10000) / 1280 }
 
 #[derive(Clone)]
 pub struct GameState {
@@ -483,7 +484,7 @@ impl Ship {
                     "_state".to_string(), VVal::new_str("flying"));
             }
 
-            println!("SHIP: pos={:?} dis={} cp={}", self.pos, d, self.course_progress);
+//            println!("SHIP: pos={:?} dis={} cp={}", self.pos, d, self.course_progress);
         } else {
             self.state.set_map_key(
                 "_state".to_string(), VVal::new_str("stopped"));
@@ -595,6 +596,57 @@ impl Entity {
 
     fn set_highlight(&mut self, h: bool) {
         self.is_highlighted = h;
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct MouseScreenSystemPos {
+    screen_x0:  i32,
+    screen_x1:  i32,
+    screen_y0:  i32,
+    screen_y1:  i32,
+    system_x0:  i32,
+    system_x1:  i32,
+    system_y0:  i32,
+    system_y1:  i32,
+}
+
+impl MouseScreenSystemPos {
+    pub fn new() -> Self {
+        Self {
+            screen_x0: 0,
+            screen_x1: 0,
+            screen_y0: 0,
+            screen_y1: 0,
+            system_x0: 0,
+            system_x1: 0,
+            system_y0: 0,
+            system_y1: 0,
+        }
+    }
+
+    pub fn mouse2system(&self, x: i32, y: i32) -> Option<(i32, i32)> {
+        if !(   x >= self.screen_x0
+             && x <= self.screen_x1
+             && y >= self.screen_y0
+             && y <= self.screen_y1) {
+            return None;
+        }
+
+        println!("CLICK {}:{} => {:?}", x, y, self);
+
+        let scr_w = self.screen_x1 - self.screen_x0;
+        let scr_h = self.screen_y1 - self.screen_y0;
+        let sys_w = self.system_x1 - self.system_x0;
+        let sys_h = self.system_y1 - self.system_y0;
+
+        if scr_w == 0 { return None; }
+        if scr_h == 0 { return None; }
+
+        let xsys = self.system_x0 + ((x - self.screen_x0) * sys_w) / scr_w;
+        let ysys = self.system_y0 + ((y - self.screen_y0) * sys_h) / scr_h;
+
+        Some((xsys, ysys))
     }
 }
 
@@ -724,11 +776,56 @@ impl System {
         return None;
     }
 
-    pub fn draw<P>(&mut self, ship: &mut Ship, scroll: &(i32, i32), p: &mut P) where P: GamePainter {
-        p.set_clip_rect(0, 0, 1280, 600);
-        p.texture_crop(1, 0, 0, 1280, 600);
+    pub fn draw<P>(&mut self, ship: &mut Ship, scroll: &(i32, i32), p: &mut P) -> MouseScreenSystemPos where P: GamePainter {
+        let mut mssp = MouseScreenSystemPos {
+            screen_x0:  0,
+            screen_x1:  1280,
+            screen_y0:  0,
+            screen_y1:  0,
+            system_x0:  0,
+            system_x1:  0,
+            system_y0:  0,
+            system_y1:  0,
+        };
 
-        p.push_add_offs(0, -(scroll.1 * 1280) / 1000);
+        p.set_clip_rect(0, 0, 1280, 600);
+
+//        p.push_add_offs(0, -(scroll.1 * (1280 - 600)) / 1000);
+//
+        let tex_y_size = 1800;
+        let tex_y_pad  = (tex_y_size - 1280) / 4;
+
+        let scroll =
+            if ship.system == self.id {
+                let y : i32 = sys2screen(ship.pos.1);
+                let mut scroll = y - (600 / 2);
+                if scroll < 0 { scroll = 0; }
+                if scroll > (1280 - 600) { scroll = 1280 - 600; }
+                scroll
+            } else {
+                0
+            };
+
+        let screen_0 = p.get_screen_pos(0, 0);
+        let screen_1 = p.get_screen_pos(1280, 600);
+        mssp.screen_x0 = screen_0.0;
+        mssp.screen_y0 = screen_0.1;
+        mssp.screen_x1 = screen_1.0;
+        mssp.screen_y1 = screen_1.1;
+        mssp.system_x0 = screen2sys(0);
+        mssp.system_y0 = screen2sys(scroll);
+        mssp.system_x1 = screen2sys(1280);
+        mssp.system_y1 = screen2sys(scroll + 600);
+
+        p.push_add_offs(0, -scroll);
+        p.texture_crop(1, 0, -(scroll * tex_y_pad) / (1280 - 300), 1280, 1800);
+
+
+        p.draw_line(0, 0, 1280, 0, 10,       (255, 0, 0, 255));
+        p.draw_line(0, 0, 0, 1280, 10,       (255, 0, 0, 255));
+        p.draw_line(1280, 0, 1280, 1280, 10, (255, 0, 0, 255));
+        p.draw_line(0, 1280, 1280, 1280, 10, (255, 0, 0, 255));
+
         for ent in self.objects.iter_mut() {
             p.push_add_offs(
                 sys2screen(ent.borrow().x),
@@ -742,5 +839,7 @@ impl System {
         }
         p.pop_offs();
         p.disable_clip_rect();
+
+        mssp
     }
 }

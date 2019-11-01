@@ -649,7 +649,7 @@ pub fn main() -> Result<(), String> {
     }
     textures.push(t.unwrap());
 
-    let t = tc.load_texture(std::path::Path::new("assets/images/Orion_Nebula_-_Hubble_2006_mosaic_1280.jpg"));
+    let t = tc.load_texture(std::path::Path::new("assets/images/Orion_Nebula_-_Hubble_2006_mosaic_1800.jpg"));
     if let Err(e) = t {
         eprintln!("Couldn't load texture: {}", "test.png");
         return Err(String::from("failed textures"));
@@ -781,6 +781,7 @@ pub fn main() -> Result<(), String> {
         std::vec::Vec::new();
 
     let mut system_scroll : (i32, i32) = (0, 0);
+    let mut last_mssp = MouseScreenSystemPos::new();
 
     let mut last_frame = Instant::now();
     'running: loop {
@@ -840,6 +841,10 @@ pub fn main() -> Result<(), String> {
                             let x = e.borrow().x;
                             let y = e.borrow().y;
                             active_ship.borrow_mut().set_course_to(x, y);
+                        } else {
+                            if let Some(p) = last_mssp.mouse2system(x, y) {
+                                active_ship.borrow_mut().set_course_to(p.0, p.1);
+                            }
                         }
                     }
 
@@ -889,10 +894,10 @@ pub fn main() -> Result<(), String> {
 
         for k in keys.iter() {
             match k {
-                Keycode::W => { y_speed = -1 },
-                Keycode::S => { y_speed = 1  },
-                Keycode::A => { x_speed = -1 },
-                Keycode::D => { x_speed = 1  },
+                Keycode::W => { y_speed = -2 },
+                Keycode::S => { y_speed = 2  },
+                Keycode::A => { x_speed = -2 },
+                Keycode::D => { x_speed = 2  },
                 _ => (),
             }
         }
@@ -915,7 +920,6 @@ pub fn main() -> Result<(), String> {
         if system_scroll.0 < 0    { system_scroll.0 = 0; }
         if system_scroll.1 > 1000 { system_scroll.1 = 1000; }
         if system_scroll.1 < 0    { system_scroll.1 = 0; }
-        println!("SYS: {:?}", system_scroll);
 
         while !cb_queue.is_empty() {
             let c = cb_queue.pop().unwrap();
@@ -932,10 +936,11 @@ pub fn main() -> Result<(), String> {
             }
 
             if let Some(sys) = system_of_ship {
-                sys.borrow_mut().draw(
-                    &mut *active_ship.borrow_mut(),
-                    &system_scroll,
-                    &mut sdl_painter);
+                last_mssp =
+                    sys.borrow_mut().draw(
+                        &mut *active_ship.borrow_mut(),
+                        &system_scroll,
+                        &mut sdl_painter);
                 sys.borrow_mut()
                    .try_highlight_entity_close_to(
                         mouse_state.x(),
