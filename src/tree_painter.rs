@@ -17,18 +17,18 @@ pub enum DrawCmd {
     Text         { txt: String, align: i32, color: (u8, u8, u8, u8), x: i32, y: i32, w: u32 },
 }
 
-pub struct TreePainter {
+pub struct TreePainter<P> where P: Fn(&str) -> (u32, u32) {
+    text_metrics_fn:    P,
     cmds:               std::vec::Vec<DrawCmd>,
-    text_metrics_fn:    Rc<RefCell<TextMetricCalcFn>>,
     offs_stack:         std::vec::Vec<(i32, i32)>,
     offs:               (i32, i32),
 }
 
-impl TreePainter {
-    pub fn new(text_metrics_fn: Rc<RefCell<TextMetricCalcFn>>) -> Self {
+impl<P> TreePainter<P> where P: Fn(&str) -> (u32, u32) {
+    pub fn new(text_metrics_fn: P) -> Self where P: Fn(&str) -> (u32, u32) {
         Self {
-            cmds: std::vec::Vec::new(),
             text_metrics_fn,
+            cmds: std::vec::Vec::new(),
             offs_stack: std::vec::Vec::new(),
             offs: (0, 0)
         }
@@ -39,7 +39,7 @@ impl TreePainter {
     }
 }
 
-impl GamePainter for TreePainter {
+impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
     fn push_offs(&mut self, xo: i32, yo: i32) {
         self.offs_stack.push(self.offs);
         self.offs = (xo, yo);
@@ -118,7 +118,7 @@ impl GamePainter for TreePainter {
         });
     }
     fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        (*self.text_metrics_fn.borrow())(txt)
+        (self.text_metrics_fn)(txt)
     }
     fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32) {
         self.cmds.push(DrawCmd::TextureCrop {
