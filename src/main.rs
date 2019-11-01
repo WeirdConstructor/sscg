@@ -11,6 +11,7 @@ mod logic;
 mod util;
 mod gui;
 mod sdl_painter;
+mod tree_painter;
 mod wlambda_api;
 use wlambda_api::*;
 use logic::*;

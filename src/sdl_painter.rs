@@ -170,13 +170,6 @@ impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
          (self.offs.1 + yo) as i32)
     }
 
-    fn get_sprite_size(&self, _id: usize) -> (u32, u32) {
-        (0, 0)
-    }
-    fn draw_sprite_ex(&mut self, _xo: i32, _yo: i32, _w: u32, _h: u32,
-                      _id: usize, _angle: f64, _flip_h: bool, _flip_v: bool) {
-    }
-
     fn draw_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32, color: (u8, u8, u8, u8)) {
         self.canvas.set_draw_color(Color::from(color));
         self.canvas.draw_rect(Rect::new(xo + self.offs.0, yo + self.offs.1, w, h))
