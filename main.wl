@@ -21,14 +21,14 @@ ${
 init = {!(ship) = @;
     std:displayln "INIT GAME";
     !sys = sscg:game :add_system 0 0 ${};
-    sscg:game :add_entity sys 1000 1000  ${ type = :station };
+    (sscg:game :add_entity sys 1000 1000  ${ type = :station }).name = "makmak";
     sscg:game :add_entity sys 2000 3000  ${ type = :station };
     sscg:game :add_entity sys 1000 2800  ${ type = :asteroid_field };
     sscg:game :add_entity sys 5000 1800  ${ type = :asteroid_field };
     sscg:game :add_entity sys 9000 9800  ${ type = :asteroid_field };
     sscg:game :add_entity sys 7000 9000  ${ type = :station };
     sscg:game :add_entity sys 7000 3800  ${ type = :station };
-    sscg:game :add_entity sys 2500 500  ${ type = :asteroid_field };
+    sscg:game :add_entity sys 2500 500   ${ type = :asteroid_field };
     sscg:game :add_entity sys 5000 2800  ${ type = :asteroid_field };
     ship :set_system sys;
 
