@@ -307,12 +307,6 @@ pub trait GamePainter {
     fn push_add_offs(&mut self, xo: i32, yo: i32);
     fn pop_offs(&mut self);
     fn get_screen_pos(&self, xo: i32, yo: i32) -> (i32, i32);
-    fn get_sprite_size(&self, id: usize) -> (u32, u32);
-    fn draw_sprite(&mut self, xo: i32, yo: i32, w: u32, h: u32, id: usize) {
-        self.draw_sprite_ex(xo, yo, w, h, id,  0.0, false, false);
-    }
-    fn draw_sprite_ex(&mut self, xo: i32, yo: i32, w: u32, h: u32,
-                      id: usize, angle: f64, flip_h: bool, flip_v: bool);
     fn disable_clip_rect(&mut self);
     fn set_clip_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32);
     fn draw_rect(&mut self, xo: i32, yo: i32, w: u32, h: u32,
