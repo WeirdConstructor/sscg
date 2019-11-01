@@ -2,6 +2,8 @@ use sdl2::event::Event;
 use sdl2::event::WindowEvent;
 use sdl2::image::{LoadTexture, InitFlag};
 use sdl2::keyboard::Keycode;
+use sdl2::rect::Rect;
+use sdl2::pixels::Color;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::time::{Instant, Duration};
@@ -20,8 +22,41 @@ use sdl_painter::SDLPainter;
 
 use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext, SymbolTable};
 
-pub fn draw_cmds(cmds: &[DrawCmd], canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
+pub fn draw_cmds(
+    cmds: &[DrawCmd],
+    canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
+    txt_crt: &sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+    font: &sdl2::ttf::Font) {
 
+    for c in cmds {
+        match c {
+            DrawCmd::Text { txt, align, color, x, y, w } => {
+                if txt.is_empty() { continue; }
+                let max_w = *w as i32;
+                let c : Color = (*color).into();
+                let f =
+                    font.render(txt).blended(c).map_err(|e| e.to_string()).unwrap();
+                let txt = txt_crt.create_texture_from_surface(&f).map_err(|e| e.to_string()).unwrap();
+                let tq  = txt.query();
+
+                let xo = if *align == 2
+                         || *align == 0 { (max_w - (tq.width as i32)) / 2 }
+                    else if *align < 0  { max_w - (tq.width as i32) }
+                    else { 0 };
+
+                let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
+
+                let xo = if xo < 0 { 0 } else { xo };
+
+                canvas.copy(
+                    &txt,
+                    Some(Rect::new(0,      0, w as u32, tq.height)),
+                    Some(Rect::new(*x + xo, *y, w as u32, tq.height))
+                ).map_err(|e| e.to_string()).unwrap();
+            },
+            _ => (),
+        }
+    }
 }
 
 pub fn main() -> Result<(), String> {
@@ -370,7 +405,7 @@ pub fn main() -> Result<(), String> {
                 if let Some(w) = w {
                     w.draw(win_size.0, win_size.1, &mut tree_painter);
                     let cmds = tree_painter.consume_cmds();
-                    draw_cmds(&cmds, &mut sdl_painter.canvas);
+                    draw_cmds(&cmds, &mut sdl_painter.canvas, &tc, &*font.borrow());
                 }
             }
             sdl_painter.done();
