@@ -780,6 +780,8 @@ pub fn main() -> Result<(), String> {
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> =
         std::vec::Vec::new();
 
+    let mut system_scroll : (i32, i32) = (0, 0);
+
     let mut last_frame = Instant::now();
     'running: loop {
         let active_ship_id = s_gs.borrow().active_ship_id;
@@ -810,14 +812,13 @@ pub fn main() -> Result<(), String> {
                         println!("ERROR IN game_load: {}", e);
                     }
                 },
-//                Event::KeyDown { keycode: Some(Keycode::J), .. } => {
-//                    fm.process_page_control(PageControl::CursorDown, None);
+//                Event::KeyDown { keycode: Some(Keycode::W), .. } => {
 //                },
-//                Event::KeyDown { keycode: Some(Keycode::K), .. } => {
-//                    fm.process_page_control(PageControl::CursorUp, None);
+//                Event::KeyDown { keycode: Some(Keycode::S), .. } => {
 //                },
-//                Event::KeyDown { keycode: Some(Keycode::L), .. } => {
-//                    fm.process_page_control(PageControl::Access, None);
+//                Event::KeyDown { keycode: Some(Keycode::A), .. } => {
+//                },
+//                Event::KeyDown { keycode: Some(Keycode::D), .. } => {
 //                },
                 Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => {
                     for w in s_wm.borrow_mut().windows.iter_mut() {
@@ -876,6 +877,26 @@ pub fn main() -> Result<(), String> {
             }
         }
 
+        let keys : Vec<Keycode>=
+            event_pump
+                .keyboard_state()
+                .pressed_scancodes()
+                .filter_map(Keycode::from_scancode)
+                .collect();
+
+        let mut x_speed = 0;
+        let mut y_speed = 0;
+
+        for k in keys.iter() {
+            match k {
+                Keycode::W => { y_speed = -1 },
+                Keycode::S => { y_speed = 1  },
+                Keycode::A => { x_speed = -1 },
+                Keycode::D => { x_speed = 1  },
+                _ => (),
+            }
+        }
+
         s_wm.borrow_mut().handle_activated_childs(&mut wl_ctx);
 
         let active_ship_id = s_gs.borrow().active_ship_id;
@@ -887,6 +908,14 @@ pub fn main() -> Result<(), String> {
         let frame_time_ms = last_frame.elapsed().as_micros() as f64 / 1000.0_f64;
         s_gs.borrow_mut().update(frame_time_ms);
         s_gs.borrow_mut().event_router.borrow_mut().get_events(&mut cb_queue);
+
+        system_scroll.0 += (x_speed as f64 * frame_time_ms).round() as i32;
+        system_scroll.1 += (y_speed as f64 * frame_time_ms).round() as i32;
+        if system_scroll.0 > 1000 { system_scroll.0 = 1000; }
+        if system_scroll.0 < 0    { system_scroll.0 = 0; }
+        if system_scroll.1 > 1000 { system_scroll.1 = 1000; }
+        if system_scroll.1 < 0    { system_scroll.1 = 0; }
+        println!("SYS: {:?}", system_scroll);
 
         while !cb_queue.is_empty() {
             let c = cb_queue.pop().unwrap();
@@ -901,9 +930,11 @@ pub fn main() -> Result<(), String> {
             } else {
                 sdl_painter.push_offs(0, 0);
             }
+
             if let Some(sys) = system_of_ship {
                 sys.borrow_mut().draw(
                     &mut *active_ship.borrow_mut(),
+                    &system_scroll,
                     &mut sdl_painter);
                 sys.borrow_mut()
                    .try_highlight_entity_close_to(

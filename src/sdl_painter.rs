@@ -1,8 +1,6 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::surface::SurfaceRef;
 use sdl2::surface::Surface;
-use sdl2::image::{LoadTexture, InitFlag};
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::logic::GamePainter;

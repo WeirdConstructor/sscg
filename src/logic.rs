@@ -7,7 +7,7 @@ const TICK_RES : i32 = 1000 / 25;
 
 pub type ObjectID = usize;
 
-pub type EventCallback = Fn(&Rc<RefCell<GameState>>, VVal);
+pub type EventCallback = dyn Fn(&Rc<RefCell<GameState>>, VVal);
 
 pub fn sys2screen(v: i32) -> i32 { (v * 1280) / 10000 }
 
@@ -323,7 +323,7 @@ pub trait GamePainter {
     fn draw_line(&mut self, xo: i32, yo: i32, x2o: i32, y2o: i32, t: u32,
                  color: (u8, u8, u8, u8));
     fn text_size(&mut self, txt: &str) -> (u32, u32);
-    fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, mut w: u32, mut h: u32);
+    fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32);
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool);
     fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32,
                  fg: (u8, u8, u8, u8),
@@ -724,22 +724,11 @@ impl System {
         return None;
     }
 
-    pub fn draw<P>(&mut self, ship: &mut Ship, p: &mut P) where P: GamePainter {
-        let cell_count = 10;
-        let cell_size  = 48;
-        let w = cell_count * cell_size;
-//        p.draw_rect_filled(
-//            0, 0,
-//            cell_size * cell_count, cell_size * cell_count,
-//            (0, 0, 50, 255));
+    pub fn draw<P>(&mut self, ship: &mut Ship, scroll: &(i32, i32), p: &mut P) where P: GamePainter {
+        p.set_clip_rect(0, 0, 1280, 600);
         p.texture_crop(1, 0, 0, 1280, 600);
-//        for h_line_y in 0..11 {
-//            p.draw_line(0, h_line_y * 48, (w - 1) as i32, h_line_y * 48, 1, (200, 0, 0, 255));
-//        }
-//        for v_line_x in 0..11 {
-//            p.draw_line(v_line_x * 48, 0, v_line_x * 48, (w - 1) as i32, 1, (200, 0, 0, 255));
-//        }
 
+        p.push_add_offs(0, -(scroll.1 * 1280) / 1000);
         for ent in self.objects.iter_mut() {
             p.push_add_offs(
                 sys2screen(ent.borrow().x),
@@ -751,5 +740,7 @@ impl System {
         if ship.system == self.id {
             ship.draw(p);
         }
+        p.pop_offs();
+        p.disable_clip_rect();
     }
 }
