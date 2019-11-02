@@ -4,6 +4,7 @@ use crate::logic::GamePainter;
 
 pub type TextMetricCalcFn = dyn Fn(&str) -> (u32, u32);
 
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub enum DrawCmd {
     ClipRectOff,
     ClipRect     { x: i32, y: i32, w: u32, h: u32 },
@@ -15,22 +16,24 @@ pub enum DrawCmd {
     TextureCrop  { txt_idx: usize, x: i32, y: i32, w: u32, h: u32, },
     Texture      { txt_idx: usize, x: i32, y: i32, centered: bool },
     Text         { txt: String, align: i32, color: (u8, u8, u8, u8), x: i32, y: i32, w: u32 },
-    CacheDraw    { x: i32, y: i32, w: u32, h: u32, id: usize, cmds: std::vec::Vec<DrawCmd> },
+    CacheDraw    { w: u32, h: u32, id: usize, cmds: std::vec::Vec<DrawCmd> },
     DrawCache    { x: i32, y: i32, w: u32, h: u32, id: usize },
 }
 
-pub struct TreePainter<P> where P: Fn(&str) -> (u32, u32) {
+pub struct TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
     text_metrics_fn:    P,
+    texture_size_fn:    T,
     cache_tmp_cmds:     Option<(i32, i32, u32, u32, usize, std::vec::Vec<DrawCmd>)>,
     cmds:               std::vec::Vec<DrawCmd>,
     offs_stack:         std::vec::Vec<(i32, i32)>,
     offs:               (i32, i32),
 }
 
-impl<P> TreePainter<P> where P: Fn(&str) -> (u32, u32) {
-    pub fn new(text_metrics_fn: P) -> Self where P: Fn(&str) -> (u32, u32) {
+impl<P, T> TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
+    pub fn new(text_metrics_fn: P, texture_size_fn: T) -> Self where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
         Self {
             text_metrics_fn,
+            texture_size_fn,
             cmds:           std::vec::Vec::new(),
             offs_stack:     std::vec::Vec::new(),
             offs:           (0, 0),
@@ -46,7 +49,7 @@ impl<P> TreePainter<P> where P: Fn(&str) -> (u32, u32) {
     }
 }
 
-impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
+impl<P, T> GamePainter for TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
     fn push_offs(&mut self, xo: i32, yo: i32) {
         self.offs_stack.push(self.offs);
         self.offs = (xo, yo);
@@ -72,9 +75,7 @@ impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
         let y = self.offs.1 + yo;
         if !repaint {
             self.cmds.push(DrawCmd::DrawCache {
-                x: x - (w / 2) as i32,
-                y: y - (h / 2) as i32,
-                w, h, id });
+                x, y, w, h, id });
             return;
         }
 
@@ -82,9 +83,7 @@ impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
             Some((x, y, w, h, id,
                   std::mem::replace(
                       &mut self.cmds, std::vec::Vec::new())));
-        self.push_offs(
-            (w / 2) as i32,
-            (h / 2) as i32);
+        self.push_offs(0, 0);
     }
 
     fn done_cache_draw(&mut self) {
@@ -98,12 +97,10 @@ impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
             let id = prev_cmds.4;
             let cached_cmds = std::mem::replace(&mut self.cmds, prev_cmds.5);
             self.cmds.push(DrawCmd::CacheDraw {
-                x, y, w, h, id, cmds: cached_cmds,
+                w, h, id, cmds: cached_cmds,
             });
             self.cmds.push(DrawCmd::DrawCache {
-                x: x - (w / 2) as i32,
-                y: y - (h / 2) as i32,
-                w, h, id });
+                x, y, w, h, id });
             self.pop_offs();
         }
     }
@@ -176,6 +173,9 @@ impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
             w,
             h,
         });
+    }
+    fn texture_size(&mut self, idx: usize) -> (u32, u32) {
+        (self.texture_size_fn)(idx)
     }
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool) {
         self.cmds.push(DrawCmd::Texture {

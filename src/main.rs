@@ -12,13 +12,11 @@ use std::time::{Instant, Duration};
 mod logic;
 mod util;
 mod gui;
-mod sdl_painter;
 mod tree_painter;
 mod wlambda_api;
 use wlambda_api::*;
 use logic::*;
 use tree_painter::*;
-use sdl_painter::SDLPainter;
 
 use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
 
@@ -33,8 +31,9 @@ pub fn draw_cmds<'a>(
     use sdl2::gfx::primitives::{DrawRenderer};
 
     for c in cmds {
+//        println!("CMD {:?}", c);
         match c {
-            DrawCmd::CacheDraw { x, y, w, h, id, cmds } => {
+            DrawCmd::CacheDraw { w, h, id, cmds } => {
                 if *id >= txt_cache.len() {
                     txt_cache.resize(*id + 1, None);
                 }
@@ -56,6 +55,7 @@ pub fn draw_cmds<'a>(
             },
             DrawCmd::DrawCache { x, y, w, h, id } => {
                 if let Some(t) = &txt_cache[*id] {
+//                    println!("DRAW {}, {}, {}, {}", *x, *y, *w, *h);
                     canvas.copy(
                         &t,
                         Some(Rect::new(0,   0, *w, *h)),
@@ -174,46 +174,12 @@ pub fn main() -> Result<(), String> {
 
 //    let mut font = ttf_ctx.load_font("DejaVuSansMono.ttf", 14).map_err(|e| e.to_string())?;
     let mut font = ttf_ctx.load_font("DejaVuSans-Bold.ttf", 14).map_err(|e| e.to_string())?;
-    let mut font2 = ttf_ctx.load_font("DejaVuSans-Bold.ttf", 14).map_err(|e| e.to_string())?;
     font.set_style(sdl2::ttf::FontStyle::BOLD);// | sdl2::ttf::FontStyle::UNDERLINE);
     font.set_hinting(sdl2::ttf::Hinting::Normal);
 //    font.set_outline_width(0.1);
     font.set_kerning(true);
 
     let tc = canvas.texture_creator();
-    let mut textures = std::vec::Vec::new();
-
-    let t = tc.load_texture(std::path::Path::new("assets/images/models/rocks/asteroid_1_0001.png"));
-    if let Err(e) = t {
-        eprintln!("Couldn't load texture: {}", "test.png");
-        return Err(String::from("failed textures"));
-    }
-    textures.push(t.unwrap());
-
-    let t = tc.load_texture(std::path::Path::new("assets/images/Orion_Nebula_-_Hubble_2006_mosaic_1800.jpg"));
-    if let Err(e) = t {
-        eprintln!("Couldn't load texture: {}", "test.png");
-        return Err(String::from("failed textures"));
-    }
-    textures.push(t.unwrap());
-
-    let t = tc.load_texture(std::path::Path::new("assets/images/models/stations/station_1_0001.png"));
-    if let Err(e) = t {
-        eprintln!("Couldn't load texture: {}", "test.png");
-        return Err(String::from("failed textures"));
-    }
-    textures.push(t.unwrap());
-
-    for i in 1..9 {
-        let path = String::from("assets/images/models/ships/ship_1_000") + &i.to_string() + ".png";
-        let t = tc.load_texture(std::path::Path::new(&path));
-        if let Err(e) = t {
-            eprintln!("Couldn't load texture: {}", "test.png");
-            return Err(String::from("failed textures"));
-        }
-        textures.push(t.unwrap());
-    }
-
 
     let mut asset_textures = std::vec::Vec::new();
     let t = tc.load_texture(std::path::Path::new("assets/images/models/rocks/asteroid_1_0001.png"));
@@ -253,16 +219,6 @@ pub fn main() -> Result<(), String> {
     let img_ctx = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
 
     let font = Rc::new(RefCell::new(font));
-
-    let mut sdl_painter = SDLPainter {
-        canvas:     canvas,
-        text_cache: std::collections::HashMap::new(),
-        font:       font.clone(),
-        font_h:     0,
-        offs_stack: std::vec::Vec::new(),
-        offs:       (0, 0),
-        textures,
-    };
 
     let s_wm = WindowManager::new_ref();
     let s_gs = GameState::new_ref();
@@ -357,10 +313,9 @@ pub fn main() -> Result<(), String> {
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> =
         std::vec::Vec::new();
 
-    let mut txts : std::vec::Vec<sdl2::render::Texture> = std::vec::Vec::new();
-    txts.push(tc.create_texture_target(sdl2::pixels::PixelFormatEnum::RGBA8888, 10, 10).unwrap());
-
-    let mut txts_cache : std::vec::Vec<Option<Rc<sdl2::render::Texture>>> =
+    let mut map_txt_cache : std::vec::Vec<Option<Rc<sdl2::render::Texture>>> =
+        std::vec::Vec::new();
+    let mut win_txt_cache : std::vec::Vec<Option<Rc<sdl2::render::Texture>>> =
         std::vec::Vec::new();
 
     let mut system_scroll : (i32, i32) = (0, 0);
@@ -368,14 +323,20 @@ pub fn main() -> Result<(), String> {
 
     {
         let font2 = font.clone();
-        let mut tree_painter =
+        let mut win_tree_painter =
             TreePainter::new(|txt: &str| {
                 font.borrow().size_of(txt).unwrap_or((0, 0))
+            }, |idx: usize| {
+                let tq = asset_textures[idx].query();
+                (tq.width, tq.height)
             });
 
         let mut map_tree_painter =
             TreePainter::new(|txt: &str| {
                 font2.borrow().size_of(txt).unwrap_or((0, 0))
+            }, |idx: usize| {
+                let tq = asset_textures[idx].query();
+                (tq.width, tq.height)
             });
 
         let mut last_frame = Instant::now();
@@ -523,8 +484,8 @@ pub fn main() -> Result<(), String> {
                 c.0(&s_gs, c.1);
             }
 
-            sdl_painter.clear();
-            let win_size = sdl_painter.canvas.window().size();
+            canvas.set_draw_color(Color::RGB(0, 0, 0));
+            let win_size = canvas.window().size();
             {
                 map_tree_painter.clear_cmds();
 
@@ -546,39 +507,24 @@ pub fn main() -> Result<(), String> {
                             mouse_state.y());
                 }
 
-                draw_cmds(map_tree_painter.ref_cmds(), &mut sdl_painter.canvas,
+                draw_cmds(map_tree_painter.ref_cmds(), &mut canvas,
                           &tc, &*font.borrow(),
-                          &mut txts_cache,
+                          &mut map_txt_cache,
                           &asset_textures);
                 map_tree_painter.pop_offs();
             }
-            txts[0] =
-                tc.create_texture_target(
-                    sdl2::pixels::PixelFormatEnum::RGBA8888,
-                    win_size.0,
-                    win_size.1).unwrap();
-            txts[0].set_blend_mode(sdl2::render::BlendMode::Blend);
-            for w in s_wm.borrow_mut().windows.iter_mut() {
+            win_tree_painter.clear_cmds();
+            for (i, w) in s_wm.borrow_mut().windows.iter_mut().enumerate() {
                 if let Some(w) = w {
-                    w.draw(win_size.0, win_size.1, &mut tree_painter);
+                    w.draw(i, win_size.0, win_size.1, &mut win_tree_painter);
                 }
             }
+            draw_cmds(win_tree_painter.ref_cmds(), &mut canvas,
+                      &tc, &*font.borrow(),
+                      &mut win_txt_cache,
+                      &asset_textures);
 
-            let cmds = tree_painter.consume_cmds();
-            sdl_painter.canvas.with_texture_canvas(&mut txts[0], |mut canvas| {
-                canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
-                canvas.clear();
-                draw_cmds(&cmds, &mut canvas, &tc, &*font.borrow(),
-                          &mut txts_cache,
-                          &asset_textures);
-            });
-            sdl_painter.canvas.copy(
-                &txts[0],
-                Some(Rect::new(0, 0, win_size.0, win_size.1)),
-                Some(Rect::new(0, 0, win_size.0, win_size.1))
-            ).map_err(|e| e.to_string()).unwrap();
-
-            sdl_painter.done();
+            canvas.present();
             last_frame = Instant::now();
 
             //d// println!("FRAME MS: {}", last_frame.elapsed().as_nanos() as f64 / 1000_f64);

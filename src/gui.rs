@@ -350,12 +350,12 @@ impl Window {
         }
     }
 
-    pub fn draw<P>(&mut self, max_w: u32, max_h: u32, p: &mut P)
+    pub fn draw<P>(&mut self, id: usize, max_w: u32, max_h: u32, p: &mut P)
         where P: GamePainter {
 
         let mut feedback = std::vec::Vec::new();
         feedback.resize(self.widgets.len(), WidgetFeedback::new());
-        let child    = &self.widgets[self.child];
+        let child = &self.widgets[self.child];
 
         let mut w_fb = WidgetFeedback::new();
 
@@ -407,13 +407,17 @@ impl Window {
             else if ts.0 > available_text_width { available_text_width }
             else { ts.0 };
 
-        p.push_offs(
-            padding + w_fb.x as i32,
-            padding + w_fb.y as i32);
+        p.declare_cache_draw(
+            w_fb.x as i32,
+            w_fb.y as i32,
+            padding as u32 + w_fb.w, padding as u32 + w_fb.h,
+            id, true);
 
         // window background rect
         p.draw_rect_filled(
-            -padding, -padding, w_fb.w, w_fb.h, (0, 0, 0, 255));
+            0, 0, padding as u32 + w_fb.w, padding as u32 + w_fb.h, (0, 0, 0, 255));
+        p.push_add_offs(padding, padding);
+
         // left round circle
         p.draw_dot(
             corner_radius as i32, corner_radius as i32, corner_radius,
@@ -459,6 +463,9 @@ impl Window {
         child.draw(&self, &mut feedback[..], ww, wh, p);
         p.disable_clip_rect();
         p.pop_offs();
+
+        p.done_cache_draw();
+
         p.pop_offs();
         self.feedback = feedback;
         self.win_feedback = w_fb;
