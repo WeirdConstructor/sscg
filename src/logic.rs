@@ -305,6 +305,10 @@ impl EventRouter {
 pub trait GamePainter {
     fn push_offs(&mut self, xo: i32, yo: i32);
     fn push_add_offs(&mut self, xo: i32, yo: i32);
+
+    fn declare_cache_draw(&mut self, xo: i32, yo: i32, id: usize, repaint: bool);
+    fn done_cache_draw(&mut self);
+
     fn pop_offs(&mut self);
     fn get_screen_pos(&self, xo: i32, yo: i32) -> (i32, i32);
     fn disable_clip_rect(&mut self);
@@ -529,6 +533,7 @@ pub struct Entity {
     pub name:           String,
     draw_pos:           (i32, i32),
     is_highlighted:     bool,
+    redraw:             bool,
 }
 
 impl Entity {
@@ -541,6 +546,7 @@ impl Entity {
             y:              0,
             state:          VVal::map(),
             is_highlighted: false,
+            redraw:         true,
             name:           String::from(""),
         }
     }
@@ -576,6 +582,7 @@ impl Entity {
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
 
     fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
+        p.declare_cache_draw(0, 0, self.id as usize, self.redraw);
         match self.typ {
             SystemObject::Station => {
 //                p.draw_dot(0, 0, 20, (0, 190, 0, 255));
@@ -586,16 +593,18 @@ impl Entity {
 //                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
             },
         }
-//        p.draw_text(1, 1, 100, (0, 0, 0, 255), None, 0, &self.name);
-//        p.draw_text(0, 0, 100, (255, 255, 255, 255), None, 0, &self.name);
+        p.draw_text(1, 1, 100, (0, 0, 0, 255), None, 0, &self.name);
+        p.draw_text(0, 0, 100, (255, 255, 255, 255), None, 0, &self.name);
         if self.is_highlighted {
             p.draw_circle(0, 0, 30, (255, 0, 0, 255));
         }
         self.draw_pos = p.get_screen_pos(0, 0);
+        p.done_cache_draw();
     }
 
     fn set_highlight(&mut self, h: bool) {
         self.is_highlighted = h;
+        self.redraw = true;
     }
 }
 
