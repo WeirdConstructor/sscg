@@ -22,16 +22,47 @@ use sdl_painter::SDLPainter;
 
 use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
 
-pub fn draw_cmds(
+pub fn draw_cmds<'a>(
     cmds:      &[DrawCmd],
     canvas:    &mut sdl2::render::Canvas<sdl2::video::Window>,
-    txt_crt:   &sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+    txt_crt:   &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
     font:      &sdl2::ttf::Font,
-    txt_cache: &mut std::vec::Vec<sdl2::render::Texture>,
+    txt_cache: &mut std::vec::Vec<Option<Rc<sdl2::render::Texture<'a>>>>,
     textures:  &std::vec::Vec<sdl2::render::Texture>) {
+
+    use sdl2::gfx::primitives::{DrawRenderer};
 
     for c in cmds {
         match c {
+            DrawCmd::CacheDraw { x, y, w, h, id, cmds } => {
+                if *id >= txt_cache.len() {
+                    txt_cache.resize(*id + 1, None);
+                }
+                let mut t =
+                    txt_crt.create_texture_target(
+                        sdl2::pixels::PixelFormatEnum::RGBA8888,
+                        *w, *h).unwrap();
+                t.set_blend_mode(sdl2::render::BlendMode::Blend);
+
+                canvas.with_texture_canvas(&mut t, |mut canvas| {
+                    canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
+                    canvas.clear();
+                    draw_cmds(&cmds, &mut canvas, txt_crt,
+                              font,
+                              txt_cache,
+                              textures);
+                });
+                txt_cache[*id] = Some(Rc::new(t));
+            },
+            DrawCmd::DrawCache { x, y, w, h, id } => {
+                if let Some(t) = &txt_cache[*id] {
+                    canvas.copy(
+                        &t,
+                        Some(Rect::new(0,   0, *w, *h)),
+                        Some(Rect::new(*x, *y, *w, *h))
+                    ).map_err(|e| e.to_string()).unwrap();
+                }
+            },
             DrawCmd::Text { txt, align, color, x, y, w } => {
                 if txt.is_empty() { continue; }
                 let max_w = *w as i32;
@@ -86,7 +117,40 @@ pub fn draw_cmds(
                         Some(Rect::new(x + rx, y + ry, q.width, q.height)));
                 }
             },
-            _ => (),
+            DrawCmd::Circle { x, y, r, color } => {
+                canvas.circle(*x as i16, *y as i16, *r as i16,
+                    Color::from(*color)).expect("drawing circle");
+            },
+            DrawCmd::FilledCircle { x, y, r, color } => {
+                canvas.filled_circle(*x as i16, *y as i16, *r as i16,
+                    Color::from(*color)).expect("drawing circle");
+            },
+            DrawCmd::Line { x, y, x2, y2, t, color } => {
+                canvas.thick_line(
+                    *x as i16,
+                    *y as i16,
+                    *x2 as i16,
+                    *y2 as i16,
+                    *t as u8,
+                    Color::from(*color))
+                    .expect("drawing thick_line");
+            },
+            DrawCmd::Rect { x, y, w, h, color } => {
+                canvas.set_draw_color(Color::from(*color));
+                canvas.draw_rect(Rect::new(*x, *y, *w, *h))
+                    .expect("drawing rectangle");
+            },
+            DrawCmd::FilledRect { x, y, w, h, color } => {
+                canvas.set_draw_color(Color::from(*color));
+                canvas.fill_rect(Rect::new(*x, *y, *w, *h))
+                    .expect("drawing rectangle");
+            },
+            DrawCmd::ClipRectOff => {
+                canvas.set_clip_rect(None);
+            },
+            DrawCmd::ClipRect { x, y, w, h } => {
+                canvas.set_clip_rect(Rect::new(*x, *y, *w, *h));
+            },
         }
     }
 }
@@ -296,7 +360,7 @@ pub fn main() -> Result<(), String> {
     let mut txts : std::vec::Vec<sdl2::render::Texture> = std::vec::Vec::new();
     txts.push(tc.create_texture_target(sdl2::pixels::PixelFormatEnum::RGBA8888, 10, 10).unwrap());
 
-    let mut txts_cache : std::vec::Vec<sdl2::render::Texture> =
+    let mut txts_cache : std::vec::Vec<Option<Rc<sdl2::render::Texture>>> =
         std::vec::Vec::new();
 
     let mut system_scroll : (i32, i32) = (0, 0);
@@ -316,6 +380,8 @@ pub fn main() -> Result<(), String> {
 
         let mut last_frame = Instant::now();
         'running: loop {
+            let mut frame_time = Instant::now();
+
             let active_ship_id = s_gs.borrow().active_ship_id;
             let active_ship    = s_gs.borrow().get_ship(active_ship_id)
                                    .expect("active ship is present");
@@ -413,7 +479,7 @@ pub fn main() -> Result<(), String> {
                 }
             }
 
-            let keys : Vec<Keycode>=
+            let keys : Vec<Keycode> =
                 event_pump
                     .keyboard_state()
                     .pressed_scancodes()
@@ -502,8 +568,6 @@ pub fn main() -> Result<(), String> {
             sdl_painter.canvas.with_texture_canvas(&mut txts[0], |mut canvas| {
                 canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
                 canvas.clear();
-//                        canvas.set_draw_color(Color::RGBA(255, 255, 0, 255));
-//                        canvas.fill_rect(Rect::new(0, 0, 400, 400)).unwrap();
                 draw_cmds(&cmds, &mut canvas, &tc, &*font.borrow(),
                           &mut txts_cache,
                           &asset_textures);
@@ -516,6 +580,8 @@ pub fn main() -> Result<(), String> {
 
             sdl_painter.done();
             last_frame = Instant::now();
+
+            //d// println!("FRAME MS: {}", last_frame.elapsed().as_nanos() as f64 / 1000_f64);
 
             std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
         }

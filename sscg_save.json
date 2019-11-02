@@ -2,11 +2,11 @@
   "sscg_savegame",
   0,
   {
-    "clock": 25
+    "clock": 157
   },
   0,
   [
-    5,
+    11,
     [
       [
         "ship",
@@ -14,24 +14,17 @@
         0,
         1,
         "Cocky",
-        4111,
-        2858,
+        2000,
+        3000,
         1000,
-        127000,
-        [
-          2844,
-          2943,
-          5000,
-          2800
-        ],
-        10,
+        507000,
+        null,
+        5,
         {
-          "cargo": [
-            "rock"
-          ],
-          "_state": "flying",
-          "credits": 0,
-          "max_capacity": 10
+          "_state": "stopped",
+          "credits": 18,
+          "max_capacity": 10,
+          "cargo": []
         }
       ],
       [
@@ -40,7 +33,7 @@
         1,
         0,
         0,
-        10,
+        5,
         {},
         [
           [
@@ -50,6 +43,7 @@
             0,
             1000,
             1000,
+            "makmak",
             {
               "type": "station"
             }
@@ -61,6 +55,7 @@
             0,
             2000,
             3000,
+            "",
             {
               "type": "station"
             }
@@ -70,8 +65,81 @@
             0,
             4,
             1,
+            1000,
+            2800,
+            "",
+            {
+              "type": "asteroid_field"
+            }
+          ],
+          [
+            "entity",
+            0,
+            5,
+            1,
+            5000,
+            1800,
+            "",
+            {
+              "type": "asteroid_field"
+            }
+          ],
+          [
+            "entity",
+            0,
+            6,
+            1,
+            9000,
+            9800,
+            "",
+            {
+              "type": "asteroid_field"
+            }
+          ],
+          [
+            "entity",
+            0,
+            7,
+            0,
+            7000,
+            9000,
+            "",
+            {
+              "type": "station"
+            }
+          ],
+          [
+            "entity",
+            0,
+            8,
+            0,
+            7000,
+            3800,
+            "",
+            {
+              "type": "station"
+            }
+          ],
+          [
+            "entity",
+            0,
+            9,
+            1,
+            2500,
+            500,
+            "",
+            {
+              "type": "asteroid_field"
+            }
+          ],
+          [
+            "entity",
+            0,
+            10,
+            1,
             5000,
             2800,
+            "",
             {
               "type": "asteroid_field"
             }
@@ -85,6 +153,7 @@
         0,
         1000,
         1000,
+        "makmak",
         {
           "type": "station"
         }
@@ -96,6 +165,7 @@
         0,
         2000,
         3000,
+        "",
         {
           "type": "station"
         }
@@ -105,8 +175,81 @@
         0,
         4,
         1,
+        1000,
+        2800,
+        "",
+        {
+          "type": "asteroid_field"
+        }
+      ],
+      [
+        "entity",
+        0,
+        5,
+        1,
+        5000,
+        1800,
+        "",
+        {
+          "type": "asteroid_field"
+        }
+      ],
+      [
+        "entity",
+        0,
+        6,
+        1,
+        9000,
+        9800,
+        "",
+        {
+          "type": "asteroid_field"
+        }
+      ],
+      [
+        "entity",
+        0,
+        7,
+        0,
+        7000,
+        9000,
+        "",
+        {
+          "type": "station"
+        }
+      ],
+      [
+        "entity",
+        0,
+        8,
+        0,
+        7000,
+        3800,
+        "",
+        {
+          "type": "station"
+        }
+      ],
+      [
+        "entity",
+        0,
+        9,
+        1,
+        2500,
+        500,
+        "",
+        {
+          "type": "asteroid_field"
+        }
+      ],
+      [
+        "entity",
+        0,
+        10,
+        1,
         5000,
         2800,
+        "",
         {
           "type": "asteroid_field"
         }
