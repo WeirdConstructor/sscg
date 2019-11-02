@@ -324,6 +324,7 @@ pub trait GamePainter {
     fn text_size(&mut self, txt: &str) -> (u32, u32);
     fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32);
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool);
+    fn texture_size(&mut self, idx: usize) -> (u32, u32);
     fn draw_text(&mut self, xo: i32, yo: i32, max_w: u32,
                  fg: (u8, u8, u8, u8),
                  bg: Option<(u8, u8, u8, u8)>,
@@ -582,25 +583,25 @@ impl Entity {
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
 
     fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
-        p.declare_cache_draw(0, 0, 256, 128, self.id as usize, self.redraw);
+        let t_id =
+            match self.typ {
+                SystemObject::Station       => 2,
+                SystemObject::AsteroidField => 0,
+            };
+        let q = p.texture_size(t_id);
+
+        // TODO: Offset rendering completely for fitting text.
+        let tw : i32 = (q.0 / 2) as i32;
+
+        p.declare_cache_draw(-tw, -tw, 256, 156, self.id as usize, self.redraw);
         if self.redraw {
             self.redraw = false;
-            match self.typ {
-                SystemObject::Station => {
-    //                p.draw_dot(0, 0, 20, (0, 190, 0, 255));
-                    p.texture(2, 0, 0, true);
-                },
-                SystemObject::AsteroidField => {
-                    p.texture(0, 0, 0, true);
-    //                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
-                },
-            }
-            p.draw_text(-101, 21, 200, (0, 0, 0, 255),       None, 0, &self.name);
-            p.draw_text(-100, 20, 200, (255, 255, 255, 255), None, 0, &self.name);
+            p.texture(t_id, 0, 0, false);
+            p.draw_text(1, tw + (tw / 2) + 20 + 2, 2 * tw as u32, (0, 0, 0, 255),       None, 0, &self.name);
+            p.draw_text(0, tw + (tw / 2) + 20,     2 * tw as u32, (255, 255, 255, 255), None, 0, &self.name);
             if self.is_highlighted {
-                p.draw_circle(0, 0, 30, (255, 0, 0, 255));
+                p.draw_circle(tw, tw, 30, (255, 0, 0, 255));
             }
-        } else {
         }
         p.done_cache_draw();
         self.draw_pos = p.get_screen_pos(0, 0);
@@ -837,7 +838,6 @@ impl System {
 
         p.push_add_offs(0, -scroll);
         p.texture_crop(1, 0, -(scroll * tex_y_pad) / (1280 - 300), 1280, 1800);
-
 
         p.draw_line(0, 0, 1280, 0, 10,       (255, 0, 0, 255));
         p.draw_line(0, 0, 0, 1280, 10,       (255, 0, 0, 255));
