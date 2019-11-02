@@ -404,30 +404,32 @@ pub fn main() -> Result<(), String> {
                 }
                 sdl_painter.pop_offs();
             }
+            txts[0] =
+                tc.create_texture_target(
+                    sdl2::pixels::PixelFormatEnum::RGBA8888,
+                    win_size.0,
+                    win_size.1).unwrap();
+            txts[0].set_blend_mode(sdl2::render::BlendMode::Blend);
             for w in s_wm.borrow_mut().windows.iter_mut() {
                 if let Some(w) = w {
                     w.draw(win_size.0, win_size.1, &mut tree_painter);
-                    txts[0] =
-                        tc.create_texture_target(
-                            sdl2::pixels::PixelFormatEnum::RGBA8888,
-                            win_size.0,
-                            win_size.1).unwrap();
-                    txts[0].set_blend_mode(sdl2::render::BlendMode::Blend);
-                    let cmds = tree_painter.consume_cmds();
-                    sdl_painter.canvas.with_texture_canvas(&mut txts[0], |mut canvas| {
-                        canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
-                        canvas.clear();
-//                        canvas.set_draw_color(Color::RGBA(255, 255, 0, 255));
-//                        canvas.fill_rect(Rect::new(0, 0, 400, 400)).unwrap();
-                        draw_cmds(&cmds, &mut canvas, &tc, &*font.borrow());
-                    });
-                    sdl_painter.canvas.copy(
-                        &txts[0],
-                        Some(Rect::new(0, 0, win_size.0, win_size.1)),
-                        Some(Rect::new(0, 0, win_size.0, win_size.1))
-                    ).map_err(|e| e.to_string()).unwrap();
                 }
             }
+
+            let cmds = tree_painter.consume_cmds();
+            sdl_painter.canvas.with_texture_canvas(&mut txts[0], |mut canvas| {
+                canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
+                canvas.clear();
+//                        canvas.set_draw_color(Color::RGBA(255, 255, 0, 255));
+//                        canvas.fill_rect(Rect::new(0, 0, 400, 400)).unwrap();
+                draw_cmds(&cmds, &mut canvas, &tc, &*font.borrow());
+            });
+            sdl_painter.canvas.copy(
+                &txts[0],
+                Some(Rect::new(0, 0, win_size.0, win_size.1)),
+                Some(Rect::new(0, 0, win_size.0, win_size.1))
+            ).map_err(|e| e.to_string()).unwrap();
+
             sdl_painter.done();
             last_frame = Instant::now();
 
