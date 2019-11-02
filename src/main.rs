@@ -529,9 +529,9 @@ pub fn main() -> Result<(), String> {
                 map_tree_painter.clear_cmds();
 
                 if win_size.0 > 1280 {
-                    sdl_painter.push_offs(((win_size.0 - 1280) / 2) as i32, 0);
+                    map_tree_painter.push_offs(((win_size.0 - 1280) / 2) as i32, 0);
                 } else {
-                    sdl_painter.push_offs(0, 0);
+                    map_tree_painter.push_offs(0, 0);
                 }
 
                 if let Some(sys) = system_of_ship {
@@ -550,7 +550,7 @@ pub fn main() -> Result<(), String> {
                           &tc, &*font.borrow(),
                           &mut txts_cache,
                           &asset_textures);
-                sdl_painter.pop_offs();
+                map_tree_painter.pop_offs();
             }
             txts[0] =
                 tc.create_texture_target(
