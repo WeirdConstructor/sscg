@@ -15,13 +15,13 @@ pub enum DrawCmd {
     TextureCrop  { txt_idx: usize, x: i32, y: i32, w: u32, h: u32, },
     Texture      { txt_idx: usize, x: i32, y: i32, centered: bool },
     Text         { txt: String, align: i32, color: (u8, u8, u8, u8), x: i32, y: i32, w: u32 },
-    CacheDraw    { x: i32, y: i32, id: usize, cmds: std::vec::Vec<DrawCmd> },
-    DrawCache    { x: i32, y: i32, id: usize },
+    CacheDraw    { x: i32, y: i32, w: u32, h: u32, id: usize, cmds: std::vec::Vec<DrawCmd> },
+    DrawCache    { x: i32, y: i32, w: u32, h: u32, id: usize },
 }
 
 pub struct TreePainter<P> where P: Fn(&str) -> (u32, u32) {
     text_metrics_fn:    P,
-    cache_tmp_cmds:     Option<(i32, i32, usize, std::vec::Vec<DrawCmd>)>,
+    cache_tmp_cmds:     Option<(i32, i32, u32, u32, usize, std::vec::Vec<DrawCmd>)>,
     cmds:               std::vec::Vec<DrawCmd>,
     offs_stack:         std::vec::Vec<(i32, i32)>,
     offs:               (i32, i32),
@@ -67,32 +67,45 @@ impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
          (self.offs.1 + yo) as i32)
     }
 
-    fn declare_cache_draw(&mut self, xo: i32, yo: i32, id: usize, repaint: bool) {
+    fn declare_cache_draw(&mut self, xo: i32, yo: i32, w: u32, h: u32, id: usize, repaint: bool) {
         let x = self.offs.0 + xo;
         let y = self.offs.1 + yo;
         if !repaint {
-            self.cmds.push(DrawCmd::DrawCache { x, y, id });
+            self.cmds.push(DrawCmd::DrawCache {
+                x: x - (w / 2) as i32,
+                y: y - (h / 2) as i32,
+                w, h, id });
             return;
         }
 
         self.cache_tmp_cmds =
-            Some((x, y, id, std::mem::replace(&mut self.cmds, std::vec::Vec::new())));
-        self.push_offs(0, 0);
+            Some((x, y, w, h, id,
+                  std::mem::replace(
+                      &mut self.cmds, std::vec::Vec::new())));
+        self.push_offs(
+            (w / 2) as i32,
+            (h / 2) as i32);
     }
 
     fn done_cache_draw(&mut self) {
-        let mut prev_cmds = std::mem::replace(&mut self.cache_tmp_cmds, None).unwrap();
-        let x  = prev_cmds.0;
-        let y  = prev_cmds.1;
-        let id = prev_cmds.2;
-        let cached_cmds = std::mem::replace(&mut self.cmds, prev_cmds.3);
-        self.cmds.push(DrawCmd::CacheDraw {
-            x:    prev_cmds.0,
-            y:    prev_cmds.1,
-            id:   prev_cmds.2,
-            cmds: cached_cmds,
-        });
-        self.pop_offs();
+        let mut prev_cmds =
+            std::mem::replace(&mut self.cache_tmp_cmds, None);
+        if let Some(prev_cmds) = prev_cmds {
+            let x  = prev_cmds.0;
+            let y  = prev_cmds.1;
+            let w  = prev_cmds.2;
+            let h  = prev_cmds.3;
+            let id = prev_cmds.4;
+            let cached_cmds = std::mem::replace(&mut self.cmds, prev_cmds.5);
+            self.cmds.push(DrawCmd::CacheDraw {
+                x, y, w, h, id, cmds: cached_cmds,
+            });
+            self.cmds.push(DrawCmd::DrawCache {
+                x: x - (w / 2) as i32,
+                y: y - (h / 2) as i32,
+                w, h, id });
+            self.pop_offs();
+        }
     }
 
     fn disable_clip_rect(&mut self) {

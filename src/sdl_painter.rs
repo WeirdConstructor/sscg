@@ -76,9 +76,6 @@ impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
         self.font_h
     }
 
-    fn declare_cache_draw(&mut self, id: usize, repaint: bool) { }
-    fn done_cache_draw(&mut self) { }
-
     pub fn text_size(&mut self, txt: &str) -> (u32, u32) {
         if txt.is_empty() {
             (0, self.get_font_h() as u32)
@@ -168,7 +165,7 @@ impl<'a, 'b, 'c, 'd> GamePainter for SDLPainter<'a, 'b, 'c, 'd> {
         }
     }
 
-    fn declare_cache_draw(&mut self, xo: i32, yo: i32, id: usize, repaint: bool) { }
+    fn declare_cache_draw(&mut self, xo: i32, yo: i32, w: u32, h: u32, id: usize, repaint: bool) { }
     fn done_cache_draw(&mut self) { }
 
     fn get_screen_pos(&self, xo: i32, yo: i32) -> (i32, i32) {

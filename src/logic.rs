@@ -306,7 +306,7 @@ pub trait GamePainter {
     fn push_offs(&mut self, xo: i32, yo: i32);
     fn push_add_offs(&mut self, xo: i32, yo: i32);
 
-    fn declare_cache_draw(&mut self, xo: i32, yo: i32, id: usize, repaint: bool);
+    fn declare_cache_draw(&mut self, xo: i32, yo: i32, w: u32, h: u32, id: usize, repaint: bool);
     fn done_cache_draw(&mut self);
 
     fn pop_offs(&mut self);
@@ -582,29 +582,39 @@ impl Entity {
     pub fn set_id(&mut self, id: ObjectID) { self.id = id; }
 
     fn draw<P>(&mut self, p: &mut P) where P: GamePainter {
-        p.declare_cache_draw(0, 0, self.id as usize, self.redraw);
-        match self.typ {
-            SystemObject::Station => {
-//                p.draw_dot(0, 0, 20, (0, 190, 0, 255));
-                p.texture(2, 0, 0, true);
-            },
-            SystemObject::AsteroidField => {
-                p.texture(0, 0, 0, true);
-//                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
-            },
+        p.declare_cache_draw(0, 0, 256, 128, self.id as usize, self.redraw);
+        if self.redraw {
+            self.redraw = false;
+            match self.typ {
+                SystemObject::Station => {
+    //                p.draw_dot(0, 0, 20, (0, 190, 0, 255));
+                    p.texture(2, 0, 0, true);
+                },
+                SystemObject::AsteroidField => {
+                    p.texture(0, 0, 0, true);
+    //                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
+                },
+            }
+            p.draw_text(1, 1, 100, (0, 0, 0, 255), None, 0, &self.name);
+            p.draw_text(0, 0, 100, (255, 255, 255, 255), None, 0, &self.name);
+            p.draw_text(1, 6, 100, (0, 0, 0, 255), None, 0, &format!("HIL {}", self.is_highlighted));
+            if self.is_highlighted {
+                p.draw_circle(0, 0, 30, (255, 0, 0, 255));
+            }
+        } else {
         }
-        p.draw_text(1, 1, 100, (0, 0, 0, 255), None, 0, &self.name);
-        p.draw_text(0, 0, 100, (255, 255, 255, 255), None, 0, &self.name);
-        if self.is_highlighted {
-            p.draw_circle(0, 0, 30, (255, 0, 0, 255));
-        }
-        self.draw_pos = p.get_screen_pos(0, 0);
         p.done_cache_draw();
+        self.draw_pos = p.get_screen_pos(0, 0);
     }
 
     fn set_highlight(&mut self, h: bool) {
+        if self.is_highlighted != h {
+            // TODO: FIXME: The entity is redrawn all the time, because
+            //              try_highlight_entity_close_to does set all highlights
+            //              to `false` before checking which entity is highlighted.
+            self.redraw = true;
+        }
         self.is_highlighted = h;
-        self.redraw = true;
     }
 }
 
