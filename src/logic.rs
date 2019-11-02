@@ -595,9 +595,8 @@ impl Entity {
     //                p.draw_dot(0, 0, 15, (190, 190, 190, 255));
                 },
             }
-            p.draw_text(1, 1, 100, (0, 0, 0, 255), None, 0, &self.name);
-            p.draw_text(0, 0, 100, (255, 255, 255, 255), None, 0, &self.name);
-            p.draw_text(1, 6, 100, (0, 0, 0, 255), None, 0, &format!("HIL {}", self.is_highlighted));
+            p.draw_text(-101, 21, 200, (0, 0, 0, 255),       None, 0, &self.name);
+            p.draw_text(-100, 20, 200, (255, 255, 255, 255), None, 0, &self.name);
             if self.is_highlighted {
                 p.draw_circle(0, 0, 30, (255, 0, 0, 255));
             }
