@@ -15,10 +15,13 @@ pub enum DrawCmd {
     TextureCrop  { txt_idx: usize, x: i32, y: i32, w: u32, h: u32, },
     Texture      { txt_idx: usize, x: i32, y: i32, centered: bool },
     Text         { txt: String, align: i32, color: (u8, u8, u8, u8), x: i32, y: i32, w: u32 },
+    CacheDraw    { x: i32, y: i32, id: usize, cmds: std::vec::Vec<DrawCmd> },
+    DrawCache    { x: i32, y: i32, id: usize },
 }
 
 pub struct TreePainter<P> where P: Fn(&str) -> (u32, u32) {
     text_metrics_fn:    P,
+    cache_tmp_cmds:     Option<(i32, i32, usize, std::vec::Vec<DrawCmd>)>,
     cmds:               std::vec::Vec<DrawCmd>,
     offs_stack:         std::vec::Vec<(i32, i32)>,
     offs:               (i32, i32),
@@ -28,11 +31,15 @@ impl<P> TreePainter<P> where P: Fn(&str) -> (u32, u32) {
     pub fn new(text_metrics_fn: P) -> Self where P: Fn(&str) -> (u32, u32) {
         Self {
             text_metrics_fn,
-            cmds: std::vec::Vec::new(),
-            offs_stack: std::vec::Vec::new(),
-            offs: (0, 0)
+            cmds:           std::vec::Vec::new(),
+            offs_stack:     std::vec::Vec::new(),
+            offs:           (0, 0),
+            cache_tmp_cmds: None,
         }
     }
+
+    pub fn clear_cmds(&mut self) { self.cmds.clear(); }
+    pub fn ref_cmds(&self) -> &[DrawCmd] { &self.cmds }
 
     pub fn consume_cmds(&mut self) -> std::vec::Vec<DrawCmd> {
         std::mem::replace(&mut self.cmds, std::vec::Vec::new())
@@ -58,6 +65,34 @@ impl<P> GamePainter for TreePainter<P> where P: Fn(&str) -> (u32, u32) {
     fn get_screen_pos(&self, xo: i32, yo: i32) -> (i32, i32) {
         ((self.offs.0 + xo) as i32,
          (self.offs.1 + yo) as i32)
+    }
+
+    fn declare_cache_draw(&mut self, xo: i32, yo: i32, id: usize, repaint: bool) {
+        let x = self.offs.0 + xo;
+        let y = self.offs.1 + yo;
+        if !repaint {
+            self.cmds.push(DrawCmd::DrawCache { x, y, id });
+            return;
+        }
+
+        self.cache_tmp_cmds =
+            Some((x, y, id, std::mem::replace(&mut self.cmds, std::vec::Vec::new())));
+        self.push_offs(0, 0);
+    }
+
+    fn done_cache_draw(&mut self) {
+        let mut prev_cmds = std::mem::replace(&mut self.cache_tmp_cmds, None).unwrap();
+        let x  = prev_cmds.0;
+        let y  = prev_cmds.1;
+        let id = prev_cmds.2;
+        let cached_cmds = std::mem::replace(&mut self.cmds, prev_cmds.3);
+        self.cmds.push(DrawCmd::CacheDraw {
+            x:    prev_cmds.0,
+            y:    prev_cmds.1,
+            id:   prev_cmds.2,
+            cmds: cached_cmds,
+        });
+        self.pop_offs();
     }
 
     fn disable_clip_rect(&mut self) {
