@@ -7,13 +7,13 @@ use crate::logic::GamePainter;
 use sdl2::gfx::primitives::{DrawRenderer};
 
 pub struct SDLPainter<'a, 'b, 'c, 'd> {
-    pub canvas: sdl2::render::Canvas<sdl2::video::Window>,
-    pub font: Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
-    pub font_h: i32,
+    pub canvas:     sdl2::render::Canvas<sdl2::video::Window>,
+    pub font:       Rc<RefCell<sdl2::ttf::Font<'a, 'b>>>,
+    pub font_h:     i32,
     pub text_cache: std::collections::HashMap<((u8, u8, u8, u8), String), Surface<'d>>,
     pub offs_stack: std::vec::Vec<(i32, i32)>,
-    pub offs: (i32, i32),
-    pub textures: std::vec::Vec<sdl2::render::Texture<'c>>,
+    pub offs:       (i32, i32),
+    pub textures:   std::vec::Vec<sdl2::render::Texture<'c>>,
 }
 
 impl<'a, 'b, 'c, 'd> SDLPainter<'a, 'b, 'c, 'd> {
