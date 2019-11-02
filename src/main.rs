@@ -23,10 +23,10 @@ use sdl_painter::SDLPainter;
 use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext, SymbolTable};
 
 pub fn draw_cmds(
-    cmds: &[DrawCmd],
-    canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
-    txt_crt: &sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-    font: &sdl2::ttf::Font) {
+    cmds:     &[DrawCmd],
+    canvas:   &mut sdl2::render::Canvas<sdl2::video::Window>,
+    txt_crt:  &sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+    font:     &sdl2::ttf::Font) {
 
     for c in cmds {
         match c {
@@ -70,7 +70,7 @@ pub fn main() -> Result<(), String> {
         .build()
         .map_err(|e| e.to_string())?;
 
-    let canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -226,6 +226,9 @@ pub fn main() -> Result<(), String> {
 
     let mut cb_queue : std::vec::Vec<(Rc<EventCallback>, VVal)> =
         std::vec::Vec::new();
+
+    let mut txts : std::vec::Vec<sdl2::render::Texture> = std::vec::Vec::new();
+    txts.push(tc.create_texture_target(sdl2::pixels::PixelFormatEnum::RGBA8888, 10, 10).unwrap());
 
     let mut system_scroll : (i32, i32) = (0, 0);
     let mut last_mssp = MouseScreenSystemPos::new();
@@ -404,8 +407,25 @@ pub fn main() -> Result<(), String> {
             for w in s_wm.borrow_mut().windows.iter_mut() {
                 if let Some(w) = w {
                     w.draw(win_size.0, win_size.1, &mut tree_painter);
+                    txts[0] =
+                        tc.create_texture_target(
+                            sdl2::pixels::PixelFormatEnum::RGBA8888,
+                            win_size.0,
+                            win_size.1).unwrap();
+                    txts[0].set_blend_mode(sdl2::render::BlendMode::Blend);
                     let cmds = tree_painter.consume_cmds();
-                    draw_cmds(&cmds, &mut sdl_painter.canvas, &tc, &*font.borrow());
+                    sdl_painter.canvas.with_texture_canvas(&mut txts[0], |mut canvas| {
+                        canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
+                        canvas.clear();
+//                        canvas.set_draw_color(Color::RGBA(255, 255, 0, 255));
+//                        canvas.fill_rect(Rect::new(0, 0, 400, 400)).unwrap();
+                        draw_cmds(&cmds, &mut canvas, &tc, &*font.borrow());
+                    });
+                    sdl_painter.canvas.copy(
+                        &txts[0],
+                        Some(Rect::new(0, 0, win_size.0, win_size.1)),
+                        Some(Rect::new(0, 0, win_size.0, win_size.1))
+                    ).map_err(|e| e.to_string()).unwrap();
                 }
             }
             sdl_painter.done();

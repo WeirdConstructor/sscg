@@ -464,6 +464,10 @@ impl Window {
         self.win_feedback = w_fb;
     }
 
+    pub fn feedback_size(&self) -> (u32, u32) {
+        (self.win_feedback.w, self.win_feedback.h)
+    }
+
     pub fn add_layout(&mut self, s: Size, dir: BoxDir, c: &[usize]) -> usize {
         let id = self.widgets.len();
         self.widgets.push(Widget::Layout(id, s, Layout {
