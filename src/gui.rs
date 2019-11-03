@@ -292,6 +292,7 @@ impl WidgetFeedback {
     }
 
     pub fn is_inside(&self, x: u32, y: u32) -> bool {
+        println!("INSIDE {};{} => {:?}", x, y, self);
            x >= self.x && x <= (self.x + self.w)
         && y >= self.y && y <= (self.y + self.h)
     }
@@ -407,11 +408,12 @@ impl Window {
             else if ts.0 > available_text_width { available_text_width }
             else { ts.0 };
 
+        p.push_add_offs(w_fb.x as i32, w_fb.y as i32);
         p.declare_cache_draw(
-            w_fb.x as i32,
-            w_fb.y as i32,
+            0, 0,
             padding as u32 + w_fb.w, padding as u32 + w_fb.h,
             id, self.needs_redraw);
+// TODO: FIX:        self.needs_redraw = false;
 
         // window background rect
         p.draw_rect_filled(
@@ -472,6 +474,7 @@ impl Window {
             f.x += w_fb.x;
             f.y += w_fb.y;
         }
+        p.pop_offs();
         self.feedback = feedback;
         self.win_feedback = w_fb;
     }
