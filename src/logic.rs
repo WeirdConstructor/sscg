@@ -476,7 +476,10 @@ impl Ship {
     }
 
     pub fn tick(&mut self, er: &mut EventRouter) {
+        let mut tick_now = false;
+
         if let Some(_) = self.course {
+            let started = self.course_progress == 0;
             self.course_progress += self.speed_t;
             let d = self.course.unwrap().distance() * 100;
             if self.course_progress >= d {
@@ -484,12 +487,20 @@ impl Ship {
                 self.course = None;
                 self.state.set_map_key(
                     "_state".to_string(), VVal::new_str("arrived"));
+                tick_now = true;
 
             } else {
+                if started {
+                    tick_now = true;
+                    self.state.set_map_key(
+                        "_state".to_string(), VVal::new_str("started"));
+                } else {
+                    self.state.set_map_key(
+                        "_state".to_string(), VVal::new_str("flying"));
+                }
+
                 self.pos = self.course.unwrap().interpolate(
                     self.course_progress as f64 / d as f64);
-                self.state.set_map_key(
-                    "_state".to_string(), VVal::new_str("flying"));
             }
 
 //            println!("SHIP: pos={:?} dis={} cp={}", self.pos, d, self.course_progress);
@@ -501,6 +512,10 @@ impl Ship {
         self.tick_count += 1;
         if self.tick_count > TICK_RES {
             self.tick_count = 0;
+            tick_now = true;
+        }
+
+        if tick_now {
             er.emit("ship_tick".to_string(),
                 VVal::Int(self.id as i64));
         }
@@ -512,17 +527,17 @@ impl Ship {
 
         let a = 
             if let Some(c) = self.course {
-                p.draw_line(
-                    x, y, sys2screen(c.to.0), sys2screen(c.to.1),
-                    1, (190, 190, 190, 255));
                 c.rotation_quadrant()
             } else {
                 1
             };
 
+        if let Some(c) = self.course {
+            p.draw_line(
+                x, y, sys2screen(c.to.0), sys2screen(c.to.1),
+                1, (190, 190, 190, 255));
+        }
         p.texture(3 + ((8 - a) as usize + 3) % 8, x, y, true);
-//        p.draw_dot(
-//            x, y, 3, (160, 160, 255, 255));
 
         if self.notify_txt.len() > 0 {
             p.draw_text(

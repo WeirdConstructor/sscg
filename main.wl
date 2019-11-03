@@ -93,7 +93,7 @@ init = {!(ship) = @;
 ship_tick = {
     !(ship, system, entity) = _;
     sscg:win :set_label STATUS_PANEL_ID "SHIP_STATE" ship._state;
-    std:displayln "ENT" entity;
+    std:displayln "ENT" entity ship._state;
 
 
     (is_none entity) {
