@@ -513,6 +513,9 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
             lbl.left().editable(
                 &v.get_key("regex").unwrap_or(VVal::new_str(".*")).s_raw())
         },
+        "c_text"  => lbl.center().wrap(),
+        "l_text"  => lbl.left().wrap(),
+        "r_text"  => lbl.right().wrap(),
         "c_label" => lbl.center(),
         "l_label" => lbl.left(),
         "r_label" => lbl.right(),
