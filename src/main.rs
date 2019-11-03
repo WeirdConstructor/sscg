@@ -231,7 +231,6 @@ pub fn main() -> Result<(), String> {
 
     let mut wl_ctx = EvalContext::new_with_user(genv, s_gs.clone());
 
-
     let callbacks : VVal =
         match wl_ctx.eval_file("main.wl") {
             Ok(v) => {
@@ -476,8 +475,11 @@ pub fn main() -> Result<(), String> {
 
             let acts = s_wm.borrow_mut().get_activated_childs();
             if let Some(acts) = acts {
-                for (lblref, cb) in acts {
-                    let args = vec![VVal::new_str_mv(lblref)];
+                for (idx, lblref, cb) in acts {
+                    let args = vec![
+                        VVal::Int(idx as i64),
+                        VVal::new_str_mv(lblref)
+                    ];
                     if let Err(e) = wl_ctx.clone().call(&cb, &args) {
                         println!("ERROR IN WM CB: {}", e);
                     }
