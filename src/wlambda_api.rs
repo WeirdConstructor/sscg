@@ -317,17 +317,22 @@ impl WindowManager {
         }
     }
 
-    pub fn handle_activated_childs(&mut self, wl_ctx: &mut EvalContext) {
+    pub fn get_activated_childs(&mut self)
+        -> Option<std::vec::Vec<(String, VVal)>> {
+
+        let mut activations : Option<std::vec::Vec<(String, VVal)>> = None;
         for (w, cb) in self.windows.iter_mut().zip(self.ev_cbs.iter()) {
             if let Some(w) = w {
                 if let Some(lblref) = w.collect_activated_child() {
-                    let args = vec![VVal::new_str_mv(lblref.to_string())];
-                    if let Err(e) = wl_ctx.clone().call(cb, &args) {
-                        println!("ERROR IN WM CB: {}", e);
+                    if activations.is_none() { activations = Some(vec![]); }
+                    if let Some(ref mut a) = activations {
+                        a.push((lblref.to_string(), cb.clone()));
                     }
                 }
             }
         }
+
+        activations
     }
 
     pub fn set_label_text(&mut self, idx: usize, lblref: &str, text: String) {

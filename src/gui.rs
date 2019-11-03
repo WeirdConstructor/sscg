@@ -214,7 +214,7 @@ impl Widget {
                             p.pop_offs();
                             offs += h as i32;
                         }
-                        mh = offs as u32;
+                        if offs as u32 > mh { mh = offs as u32; }
                     },
                     BoxDir::Hori(spacing) => {
                         let mut offs = 0;
@@ -227,7 +227,7 @@ impl Widget {
                             p.pop_offs();
                             offs += w as i32;
                         }
-                        mw = offs as u32;
+                        if offs as u32 > mw { mw = offs as u32; }
                     },
                 }
             },
@@ -467,6 +467,10 @@ impl Window {
         p.done_cache_draw();
 
         p.pop_offs();
+        for f in feedback.iter_mut() {
+            f.x += w_fb.x;
+            f.y += w_fb.y;
+        }
         self.feedback = feedback;
         self.win_feedback = w_fb;
     }
@@ -627,7 +631,9 @@ impl Window {
             },
         };
 
-        self.does_need_redraw();
+        if r {
+            self.does_need_redraw();
+        }
 
         r
     }

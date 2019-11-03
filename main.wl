@@ -2,6 +2,41 @@
 !@import sscg sscg;
 
 !STATUS_PANEL_ID = 0;
+!STATION_WIN_ID = 1;
+
+!station_window = ${};
+station_window.open = \:open {
+    !(station) = @;
+    station_window.opened { return :open $n; };
+    station_window.opened = $t;
+
+    sscg:win :set_window STATION_WIN_ID ${
+        title = std:str:cat "Station " station.name,
+        x = 250,
+        y = 100,
+        w = 500,
+        h = 800,
+        child = ${
+            t = "vbox", w = 1000, h = 1000,
+            childs = $[
+                ${ t = "vbox", h = 900, w = 1000, childs = $[ ${ t = "l_label", text = "XXX" }, ], },
+                ${ t = "c_button", ref = "close",
+                   bg = "e88", fg = "000",
+                   h = 100,
+                   w = 500, text = "Close" },
+            ]
+        }
+    } {||
+        std:displayln "STATION ACTION" _;
+        match _
+            "close" {|| station_window.close[] };
+    };
+};
+station_window.close = {
+    station_window.opened = $f;
+    sscg:win :set_window STATION_WIN_ID $n $n;
+};
+
 !status_panel    = ${ };
 !x               = $&0;
 
@@ -10,7 +45,7 @@
 
 !info_label = { !(lbl, ref) = @;
     ${ t = "hbox", w = 1000, childs = $[
-        ${ t = "r_button", text = lbl, fg = "FFF", bg = "000", w = 300 },
+        ${ t = "r_label",  text = std:str:cat lbl " ", fg = "FFF", bg = "000", w = 300 },
         ${ t = "l_label",  ref = ref,  fg = "FFF", bg = "000", w = 700 },
     ]}
 };
@@ -56,21 +91,33 @@ init = {!(ship) = @;
 ship_tick = {
     !(ship, system, entity) = _;
     sscg:win :set_label STATUS_PANEL_ID "SHIP_STATE" ship._state;
+    std:displayln "ENT" entity;
 
-    match entity.typ
-        "asteroid_field" {||
-            ((len ship.cargo) < ship.max_capacity) {
-                std:push ship.cargo "rock";
+
+    (is_none entity) {
+        station_window.close[];
+    } {
+        match entity.typ
+            "asteroid_field" {||
+                ((len ship.cargo) < ship.max_capacity) {
+                    std:push ship.cargo "rock";
+                };
+            }
+            "station" {||
+                (ship.last_entity_id != entity.id) {
+                    station_window.open entity;
+                };
+
+                while { (len ship.cargo) > 0 } {
+                    match (std:pop ship.cargo)
+                        "rock" {||
+                            ship.credits = ship.credits + 1;
+                        };
+                };
             };
-        }
-        "station" {||
-            while { (len ship.cargo) > 0 } {
-                match (std:pop ship.cargo)
-                    "rock" {||
-                        ship.credits = ship.credits + 1;
-                    };
-            };
-        };
+    };
+
+    ship.last_entity_id = entity.id;
 
     sscg:win :set_label STATUS_PANEL_ID "SHIP_CARGO_COUNT" (len ship.cargo);
     sscg:win :set_label STATUS_PANEL_ID "SHIP_CREDITS"     ship.credits;
