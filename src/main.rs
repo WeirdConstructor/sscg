@@ -402,23 +402,29 @@ pub fn main() -> Result<(), String> {
                         }
                     },
                     Event::MouseButtonDown { x, y, .. } => {
-                        if let Some(sys) = system_of_ship.clone() {
-                            if let Some(e) = sys.borrow_mut().get_entity_close_to_screen(x, y) {
-                                let x = e.borrow().x;
-                                let y = e.borrow().y;
-                                active_ship.borrow_mut().set_course_to(x, y);
-                            } else {
-                                if let Some(p) = last_mssp.mouse2system(x, y) {
-                                    active_ship.borrow_mut().set_course_to(p.0, p.1);
+                        let mut handled = false;
+                        for w in s_wm.borrow_mut().windows.iter_mut() {
+                            if let Some(w) = w {
+                                if w.handle_event(gui::WindowEvent::Click(x, y)) {
+                                    handled = true;
                                 }
                             }
                         }
 
-                        for w in s_wm.borrow_mut().windows.iter_mut() {
-                            if let Some(w) = w {
-                                w.handle_event(gui::WindowEvent::Click(x, y));
+                        if !handled {
+                            if let Some(sys) = system_of_ship.clone() {
+                                if let Some(e) = sys.borrow_mut().get_entity_close_to_screen(x, y) {
+                                    let x = e.borrow().x;
+                                    let y = e.borrow().y;
+                                    active_ship.borrow_mut().set_course_to(x, y);
+                                } else {
+                                    if let Some(p) = last_mssp.mouse2system(x, y) {
+                                        active_ship.borrow_mut().set_course_to(p.0, p.1);
+                                    }
+                                }
                             }
                         }
+
                     },
                     Event::TextInput { text, .. } => {
                         for w in s_wm.borrow_mut().windows.iter_mut() {
@@ -468,7 +474,15 @@ pub fn main() -> Result<(), String> {
                 }
             }
 
-            s_wm.borrow_mut().handle_activated_childs(&mut wl_ctx);
+            let acts = s_wm.borrow_mut().get_activated_childs();
+            if let Some(acts) = acts {
+                for (lblref, cb) in acts {
+                    let args = vec![VVal::new_str_mv(lblref)];
+                    if let Err(e) = wl_ctx.clone().call(&cb, &args) {
+                        println!("ERROR IN WM CB: {}", e);
+                    }
+                }
+            }
 
             let active_ship_id = s_gs.borrow().active_ship_id;
             let active_ship    = s_gs.borrow().get_ship(active_ship_id)

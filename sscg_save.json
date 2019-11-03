@@ -2,7 +2,7 @@
   "sscg_savegame",
   0,
   {
-    "clock": 157
+    "clock": 4
   },
   0,
   [
@@ -14,16 +14,21 @@
         0,
         1,
         "Cocky",
-        2000,
-        3000,
+        814,
+        860,
         1000,
-        507000,
-        null,
-        5,
+        8000,
+        [
+          750,
+          812,
+          1000,
+          1000
+        ],
+        36,
         {
-          "_state": "stopped",
-          "credits": 18,
           "max_capacity": 10,
+          "_state": "flying",
+          "credits": 0,
           "cargo": []
         }
       ],
@@ -33,7 +38,7 @@
         1,
         0,
         0,
-        5,
+        36,
         {},
         [
           [
@@ -43,7 +48,7 @@
             0,
             1000,
             1000,
-            "makmak",
+            "Babylon 5",
             {
               "type": "station"
             }
@@ -55,7 +60,7 @@
             0,
             2000,
             3000,
-            "",
+            "Deep Space 9",
             {
               "type": "station"
             }
@@ -67,7 +72,7 @@
             1,
             1000,
             2800,
-            "",
+            "Form 1",
             {
               "type": "asteroid_field"
             }
@@ -79,7 +84,7 @@
             1,
             5000,
             1800,
-            "",
+            "Lol 2",
             {
               "type": "asteroid_field"
             }
@@ -103,7 +108,7 @@
             0,
             7000,
             9000,
-            "",
+            "Deep Space 2",
             {
               "type": "station"
             }
@@ -115,7 +120,7 @@
             0,
             7000,
             3800,
-            "",
+            "Space Station Orion",
             {
               "type": "station"
             }
@@ -153,7 +158,7 @@
         0,
         1000,
         1000,
-        "makmak",
+        "Babylon 5",
         {
           "type": "station"
         }
@@ -165,7 +170,7 @@
         0,
         2000,
         3000,
-        "",
+        "Deep Space 9",
         {
           "type": "station"
         }
@@ -177,7 +182,7 @@
         1,
         1000,
         2800,
-        "",
+        "Form 1",
         {
           "type": "asteroid_field"
         }
@@ -189,7 +194,7 @@
         1,
         5000,
         1800,
-        "",
+        "Lol 2",
         {
           "type": "asteroid_field"
         }
@@ -213,7 +218,7 @@
         0,
         7000,
         9000,
-        "",
+        "Deep Space 2",
         {
           "type": "station"
         }
@@ -225,7 +230,7 @@
         0,
         7000,
         3800,
-        "",
+        "Space Station Orion",
         {
           "type": "station"
         }
