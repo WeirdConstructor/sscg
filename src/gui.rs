@@ -333,18 +333,18 @@ pub enum WindowEvent {
 impl Window {
     pub fn new() -> Self {
         Self {
-            title: String::from(""),
-            title_color: (255, 128, 128, 255),
-            widgets: std::vec::Vec::new(),
-            feedback: std::vec::Vec::new(),
-            child: 0,
-            focus_child: None,
-            hover_child: None,
-            activ_child: None,
-            x: 0,
-            y: 0,
-            w: 0,
-            h: 0,
+            title:        String::from(""),
+            title_color:  (255, 128, 128, 255),
+            widgets:      std::vec::Vec::new(),
+            feedback:     std::vec::Vec::new(),
+            child:        0,
+            focus_child:  None,
+            hover_child:  None,
+            activ_child:  None,
+            x:            0,
+            y:            0,
+            w:            0,
+            h:            0,
             needs_redraw: false,
             win_feedback: WidgetFeedback::new(),
         }
@@ -415,7 +415,8 @@ impl Window {
 
         // window background rect
         p.draw_rect_filled(
-            0, 0, padding as u32 + w_fb.w, padding as u32 + w_fb.h, (0, 0, 0, 255));
+            0, 0, padding as u32 + w_fb.w, padding as u32 + w_fb.h,
+            (0, 0, 0, 255));
         p.push_add_offs(padding, padding);
 
         // left round circle
