@@ -218,6 +218,15 @@ impl ObjectRegistry {
         }
     }
 
+    pub fn all_entities_need_redraw(&mut self) {
+        for o in self.objects.iter_mut() {
+            match o {
+                Object::Entity(e) => { e.borrow_mut().does_need_redraw(); },
+                _ => (),
+            }
+        }
+    }
+
     pub fn add_entity(&mut self, mut e: Entity) -> Rc<RefCell<Entity>> {
         e.set_id(self.objects.len());
         let r = Rc::new(RefCell::new(e));
@@ -551,6 +560,8 @@ impl Entity {
             name:           String::from(""),
         }
     }
+
+    pub fn does_need_redraw(&mut self) { self.redraw = true; }
 
     pub fn deserialize(_or: &mut ObjectRegistry, v: VVal) -> Self {
         let mut s = Self::new(SystemObject::Station);
