@@ -2,9 +2,9 @@
 !@import sscg sscg;
 
 !STATUS_PANEL_ID = 0;
-!STATION_WIN_ID = 1;
+!STATION_WIN_ID  = 1;
 
-!station_window = ${};
+!station_window = $&${};
 station_window.open = \:open {
     !(station) = @;
     station_window.opened { return :open $n; };
@@ -19,11 +19,13 @@ station_window.open = \:open {
         child = ${
             t = "vbox", w = 1000, h = 1000,
             childs = $[
-                ${ t = "vbox", h = 900, w = 1000, childs = $[ ${ t = "l_label", text = "XXX" }, ], },
+                ${ t = "vbox", h = 900, w = 1000, childs = $[
+                    ${ t = "l_text", h = 200, w = 1000, fg = "FFF", bg = "333",
+                       text = "X fewui fhwf hewif wehfiwe hfiweu fhiweu hfweiu wehif we uiXX" },
+                ], },
                 ${ t = "c_button", ref = "close",
                    bg = "e88", fg = "000",
-                   h = 100,
-                   w = 500, text = "Close" },
+                   h = 100, w = 500, text = "Close" },
             ]
         }
     } {||
