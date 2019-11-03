@@ -355,6 +355,14 @@ pub fn main() -> Result<(), String> {
                     Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                         break 'running
                     },
+                    Event::Unknown { type_, timestamp } => {
+                        if type_ == 8192 || type_ == 8193 {
+                            for w in s_wm.borrow_mut().windows.iter_mut() {
+                                if let Some(w) = w { w.does_need_redraw(); }
+                            }
+                            s_gs.borrow().object_registry.borrow_mut().all_entities_need_redraw();
+                        }
+                    },
                     Event::KeyDown { keycode: Some(Keycode::F2), .. } => {
                         let ser = s_gs.borrow().serialize();
                         if let Err(e) = util::write_file_safely(

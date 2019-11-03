@@ -411,7 +411,7 @@ impl Window {
             w_fb.x as i32,
             w_fb.y as i32,
             padding as u32 + w_fb.w, padding as u32 + w_fb.h,
-            id, true);
+            id, self.needs_redraw);
 
         // window background rect
         p.draw_rect_filled(
@@ -481,16 +481,19 @@ impl Window {
             dir,
             childs: c.to_vec(),
         }));
+        self.does_need_redraw();
         id
     }
 
     pub fn add_label(&mut self, s: Size, l: Label) -> usize {
         let id = self.widgets.len();
         self.widgets.push(Widget::Label(id, s, l));
+        self.does_need_redraw();
         id
     }
 
     pub fn needs_redraw(&self) -> bool { self.needs_redraw }
+    pub fn does_need_redraw(&mut self) { self.needs_redraw = true; }
 
     pub fn get_label_text(&self, lblref: &str) -> Option<String> {
         for c in self.widgets.iter() {
@@ -566,7 +569,7 @@ impl Window {
     }
 
     pub fn handle_event(&mut self, ev: WindowEvent) -> bool {
-        match ev {
+        let r = match ev {
             WindowEvent::MousePos(x, y) => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
                     self.hover_child =
@@ -622,7 +625,11 @@ impl Window {
                 }
                 true
             },
-        }
+        };
+
+        self.does_need_redraw();
+
+        r
     }
 }
 
