@@ -1,4 +1,5 @@
 !@import clock gamelib:clock;
+!@import ui gamelib:ui;
 !@import sscg sscg;
 
 !STATUS_PANEL_ID = 0;
@@ -10,29 +11,19 @@ station_window.open = \:open {
     station_window.opened { return :open $n; };
     station_window.opened = $t;
 
-    sscg:win :set_window STATION_WIN_ID ${
-        title = std:str:cat "Station " station.name,
-        x = 250,
-        y = 100,
-        w = 500,
-        h = 800,
-        child = ${
-            t = "vbox", w = 1000, h = 1000,
-            childs = $[
-                ${ t = "vbox", h = 900, w = 1000, childs = $[
-                    ${ t = "l_text", h = 200, w = 1000, fg = "FFF", bg = "333",
-                       text = "X fewui fhwf hewif wehfiwe hfiweu fhiweu hfweiu wehif we uiXX" },
-                ], },
-                ${ t = "c_button", ref = "close",
-                   bg = "e88", fg = "000",
-                   h = 100, w = 500, text = "Close" },
-            ]
-        }
-    } {||
-        std:displayln "STATION ACTION" _;
-        match _
-            "close" {|| station_window.close[] };
-    };
+    ui:dialog_yes_no
+        STATION_WIN_ID
+        (std:str:cat "Station " station.name)
+        "Station requires you to pay 50 credits as docking fee."
+        "Pay"
+        "Cancel"
+        {!(ok) = @;
+            ok {
+                !ship = (sscg:game :list_by_type :ship).0;
+                ship.credits = ship.credits - 50;
+                station_window.close[];
+            }
+        };
 };
 station_window.close = {
     station_window.opened = $f;
@@ -134,7 +125,7 @@ game_load = {||
     (is_none ship.cargo) {
         ship.cargo        = $[];
         ship.max_capacity = 10;
-        ship.credits      = 0;
+        ship.credits      = 1000;
     };
     .*g_ship = ship;
 },

@@ -318,15 +318,16 @@ impl WindowManager {
     }
 
     pub fn get_activated_childs(&mut self)
-        -> Option<std::vec::Vec<(String, VVal)>> {
+        -> Option<std::vec::Vec<(usize, String, VVal)>> {
 
-        let mut activations : Option<std::vec::Vec<(String, VVal)>> = None;
-        for (w, cb) in self.windows.iter_mut().zip(self.ev_cbs.iter()) {
+        let mut activations : Option<std::vec::Vec<(usize, String, VVal)>> = None;
+
+        for (idx, (w, cb)) in self.windows.iter_mut().zip(self.ev_cbs.iter()).enumerate() {
             if let Some(w) = w {
                 if let Some(lblref) = w.collect_activated_child() {
                     if activations.is_none() { activations = Some(vec![]); }
                     if let Some(ref mut a) = activations {
-                        a.push((lblref.to_string(), cb.clone()));
+                        a.push((idx, lblref.to_string(), cb.clone()));
                     }
                 }
             }
