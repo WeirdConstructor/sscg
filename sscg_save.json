@@ -2,7 +2,7 @@
   "sscg_savegame",
   0,
   {
-    "clock": 4
+    "clock": 6
   },
   0,
   [
@@ -14,22 +14,23 @@
         0,
         1,
         "Cocky",
-        814,
-        860,
+        799,
+        799,
         1000,
-        8000,
+        113000,
         [
-          750,
-          812,
+          0,
+          0,
           1000,
           1000
         ],
-        36,
+        6,
         {
+          "cargo": [],
           "max_capacity": 10,
-          "_state": "flying",
-          "credits": 0,
-          "cargo": []
+          "credits": 1000,
+          "last_entity_id": null,
+          "_state": "flying"
         }
       ],
       [
@@ -38,7 +39,7 @@
         1,
         0,
         0,
-        36,
+        6,
         {},
         [
           [

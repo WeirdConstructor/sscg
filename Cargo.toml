@@ -22,8 +22,8 @@ vector2d = "2.2.0"
 version="0.32"
 #path="../other/rust-sdl2"
 default-features=false
-features=["ttf","bundled","gfx","image"]
-#features=["ttf","gfx","image"]
+#features=["ttf","bundled","gfx","image"]
+features=["ttf","gfx","image"]
 #,"image","gfx","ttf"]
 #,"mixer"]
 
