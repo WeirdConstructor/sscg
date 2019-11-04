@@ -1,6 +1,6 @@
 !@import clock gamelib:clock;
-!@import ui gamelib:ui;
-!@import sscg sscg;
+!@import ui    gamelib:ui;
+!@import sscg  sscg;
 
 !STATUS_PANEL_ID = 0;
 !STATION_WIN_ID  = 1;
@@ -15,11 +15,10 @@ station_window.open = \:open {
         STATION_WIN_ID
         (std:str:cat "Station " station.name)
         "Station requires you to pay 50 credits as docking fee."
-        "Pay"
-        "Cancel"
+        "Pay" "Cancel"
         {!(ok) = @;
             ok {
-                !ship = (sscg:game :list_by_type :ship).0;
+                !ship = 0 ~ sscg:game :list_by_type :ship;
                 ship.credits = ship.credits - 50;
                 station_window.close[];
             }
