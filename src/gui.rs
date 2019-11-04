@@ -292,7 +292,6 @@ impl WidgetFeedback {
     }
 
     pub fn is_inside(&self, x: u32, y: u32) -> bool {
-        println!("INSIDE {};{} => {:?}", x, y, self);
            x >= self.x && x <= (self.x + self.w)
         && y >= self.y && y <= (self.y + self.h)
     }
@@ -413,70 +412,70 @@ impl Window {
             0, 0,
             padding as u32 + w_fb.w, padding as u32 + w_fb.h,
             id, self.needs_redraw);
-// TODO: FIX:        self.needs_redraw = false;
+        if self.needs_redraw {
+            self.needs_redraw = false;
 
-        // window background rect
-        p.draw_rect_filled(
-            0, 0, padding as u32 + w_fb.w, padding as u32 + w_fb.h,
-            (0, 0, 0, 255));
-        p.push_add_offs(padding, padding);
+            // window background rect
+            p.draw_rect_filled(
+                0, 0, padding as u32 + w_fb.w, padding as u32 + w_fb.h,
+                (0, 0, 0, 255));
+            p.push_add_offs(padding, padding);
 
-        // left round circle
-        p.draw_dot(
-            corner_radius as i32, corner_radius as i32, corner_radius,
-            title_color);
-        // extension of left circle to text
-        p.draw_rect_filled(
-            corner_radius as i32, 0,
-            2 * corner_radius + 1, 2 * corner_radius + 1, title_color);
-        // title text
-        let text_pos = 3 * corner_radius as i32 + text_lr_pad;
-        p.draw_text(
-            text_pos, 0, ts.0,
-            title_color, None, 1, &self.title);
-        let after_text = text_pos + text_lr_pad + ts.0 as i32;
-        let after_text_to_win_max_x = w_fb.w as i32 - after_text;
-        // rectangle from text end to right circle
-        p.draw_rect_filled(
-            after_text, 0,
-            (after_text_to_win_max_x - 2 * corner_radius as i32) as u32,
-            2 * corner_radius + 1,
-            title_color);
-        // right circle
-        let right_dot_x =
-            after_text + after_text_to_win_max_x - 2 * corner_radius as i32;
-        p.draw_dot(
-            right_dot_x,
-            corner_radius as i32,
-            corner_radius,
-            title_color);
-        // right window border decor down from top right circle
-        p.draw_rect_filled(
-            right_dot_x, corner_radius as i32,
-            corner_radius + 1,
-            w_fb.h - (corner_radius + padding as u32),
-            title_color);
+            // left round circle
+            p.draw_dot(
+                corner_radius as i32, corner_radius as i32, corner_radius,
+                title_color);
+            // extension of left circle to text
+            p.draw_rect_filled(
+                corner_radius as i32, 0,
+                2 * corner_radius + 1, 2 * corner_radius + 1, title_color);
+            // title text
+            let text_pos = 3 * corner_radius as i32 + text_lr_pad;
+            p.draw_text(
+                text_pos, 0, ts.0,
+                title_color, None, 1, &self.title);
+            let after_text = text_pos + text_lr_pad + ts.0 as i32;
+            let after_text_to_win_max_x = w_fb.w as i32 - after_text;
+            // rectangle from text end to right circle
+            p.draw_rect_filled(
+                after_text, 0,
+                (after_text_to_win_max_x - 2 * corner_radius as i32) as u32,
+                2 * corner_radius + 1,
+                title_color);
+            // right circle
+            let right_dot_x =
+                after_text + after_text_to_win_max_x - 2 * corner_radius as i32;
+            p.draw_dot(
+                right_dot_x,
+                corner_radius as i32,
+                corner_radius,
+                title_color);
+            // right window border decor down from top right circle
+            p.draw_rect_filled(
+                right_dot_x, corner_radius as i32,
+                corner_radius + 1,
+                w_fb.h - (corner_radius + padding as u32),
+                title_color);
 
-        let ww = w_fb.w - (1 * corner_radius + (3 * padding) as u32);
-        let wh = w_fb.h - (2 * corner_radius + (3 * padding) as u32);
+            let ww = w_fb.w - (1 * corner_radius + (3 * padding) as u32);
+            let wh = w_fb.h - (2 * corner_radius + (3 * padding) as u32);
 
-        p.push_add_offs(0, padding as i32 + 2 * corner_radius as i32);
+            p.push_add_offs(0, padding as i32 + 2 * corner_radius as i32);
 
-        p.set_clip_rect(0, 0, ww, wh);
-        child.draw(&self, &mut feedback[..], ww, wh, p);
-        p.disable_clip_rect();
-        p.pop_offs();
-
-        p.done_cache_draw();
-
-        p.pop_offs();
-        for f in feedback.iter_mut() {
-            f.x += w_fb.x;
-            f.y += w_fb.y;
+            p.set_clip_rect(0, 0, ww, wh);
+            child.draw(&self, &mut feedback[..], ww, wh, p);
+            p.disable_clip_rect();
+            p.pop_offs();
+            p.pop_offs();
+            for f in feedback.iter_mut() {
+                f.x += w_fb.x;
+                f.y += w_fb.y;
+            }
+            self.feedback = feedback;
+            self.win_feedback = w_fb;
         }
+        p.done_cache_draw();
         p.pop_offs();
-        self.feedback = feedback;
-        self.win_feedback = w_fb;
     }
 
     pub fn feedback_size(&self) -> (u32, u32) {
