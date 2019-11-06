@@ -9,10 +9,23 @@
 !r = std:rand:split_mix64_new[];
 !rand_gen = { std:rand:split_mix64_next_open01 r };
 
-range 1 100 1 {||
-    !name_pattern = w:gen "f s" wl:name_set rand_gen;
-    w:gen name_pattern wl:particle_set rand_gen | ucfirst_on_words | std:displayln;
+
+!do_ten = {
+    !(pattern) = @;
+    std:displayln "*** PATTERN:" pattern " ***";
+    range 1 10 1 {||
+        !name_pattern = w:gen pattern wl:name_set rand_gen;
+        w:gen name_pattern wl:particle_set rand_gen | ucfirst_on_words | std:displayln;
+    };
+    std:displayln "";
 };
+
+do_ten "a b";
+do_ten "a g";
+do_ten "a s";
+do_ten "f c";
+do_ten "a c";
+do_ten "C c";
 
 #!occ = ${};
 #range 1 1000 1 {||
