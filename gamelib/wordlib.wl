@@ -150,11 +150,16 @@
         $[1, "cvvc"],
         $[1, "cvccvcvc"],
     ],
+    C = $[ # japanese first name
+        $[3, "jj"],
+        $[2, "jjj"],
+    ],
     c = $[ # japanese
-        $[1, "jj"],
+        $[2, "jj"],
+        $[3, "jjj"],
         $[1, "jjjjj"],
-        $[1, "jjjj"],
-        $[1, "jjjc"],
+        $[3, "jjjj"],
+        $[2, "jjjc"],
     ],
     d = $[ # japanese assorted
         $[1, "jjjvcvc"],
