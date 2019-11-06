@@ -122,8 +122,10 @@ game_load = {||
     std:displayln "GAME LOAD";
     !ship = (sscg:game :list_by_type :ship).0;
     (is_none ship.cargo) {
-        ship.cargo        = $[];
-        ship.max_capacity = 10;
+        ship.cargo_bay = ${
+            goods = ${ },
+            limits = ${ weight_kg = 10000.0, volume_m3 = 1.0 },
+        },
         ship.credits      = 1000;
     };
     .*g_ship = ship;
