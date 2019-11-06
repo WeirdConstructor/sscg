@@ -2,15 +2,13 @@
 !@import std std;
 !@import wlambda;
 
-!@export set1 ${
-    v = $[$[1, "o"], $[50, "a"], $[1, "e"]],
-    c = $[$[4, "k"], $[10, "l"]],
-};
-
 !@export gen {!(input, set, gen_cb) = @;
 std:str:join "" ~
-    input {
-        !elems = _ set;
+    input \:next{
+        !char = _;
+        !elems = char set;
+        (is_none elems) { return :next char; };
+
         !sum = $&0;
         elems { .sum = sum + _.0; };
         !sel_weight = $&(std:num:ceil ~ gen_cb[] * $*sum);
