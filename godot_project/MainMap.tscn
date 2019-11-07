@@ -4,17 +4,32 @@
 
 [node name="Spatial" type="Spatial"]
 
-[node name="OmniLight" type="OmniLight" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.23603, 7.97028, 6.78606 )
-light_energy = 2.71
-light_specular = 0.42
-light_bake_mode = 0
-omni_range = 61.2
-omni_attenuation = 0.933032
-
-[node name="Camera" type="Camera" parent="."]
-transform = Transform( 0.789903, 0.317004, -0.52494, 0.0162233, 0.84492, 0.534647, 0.613017, -0.430836, 0.662262, -11.7242, 13.2258, 17.7071 )
-fov = 49.7518
-
 [node name="Scene Root" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.69902, 5.34279, 4.40857 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.69902, 6.80033, 2.96458 )
+
+[node name="OmniLight2" type="OmniLight" parent="Scene Root"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.28844, 0.507324, -0.708077 )
+light_color = Color( 1, 0, 0, 1 )
+
+[node name="OmniLight3" type="OmniLight" parent="Scene Root"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.20921, 0.507324, -0.708077 )
+light_color = Color( 1, 0, 0, 1 )
+
+[node name="SpotLight" type="SpotLight" parent="Scene Root"]
+transform = Transform( 0.999523, -0.0308297, 0.00167123, 0.0302539, 0.988783, 0.146264, -0.00616177, -0.146144, 0.989244, 0.0249852, 0.892155, -1.42762 )
+light_color = Color( 1, 0.372549, 0.0352941, 1 )
+light_energy = 16.0
+spot_range = 6.3
+spot_angle = 45.1
+
+[node name="Camera" type="Camera" parent="Scene Root"]
+transform = Transform( -0.963786, -0.0279479, 0.265207, 0.0868634, 0.907357, 0.411288, -0.252132, 0.41943, -0.872071, 2.80681, 11.073, -11.4506 )
+fov = 64.8
+
+[node name="OmniLight" type="OmniLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.23603, 10.4124, 6.37825 )
+light_energy = 2.11
+light_specular = 0.0
+shadow_enabled = true
+omni_range = 113.7
+omni_attenuation = 12.996

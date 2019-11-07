@@ -1,12 +1,17 @@
 [gd_resource type="Environment" load_steps=3 format=2]
 
-[ext_resource path="res://0001.png" type="Texture" id=1]
+[sub_resource type="StreamTexture" id=1]
+flags = 4
+load_path = "res://.import/sky10001.png-0a22ce0193258fbebfda3df92232c590.stex"
 
-[sub_resource type="PanoramaSky" id=1]
-panorama = ExtResource( 1 )
+[sub_resource type="PanoramaSky" id=2]
+radiance_size = 0
+panorama = SubResource( 1 )
 
 [resource]
 background_mode = 2
-background_sky = SubResource( 1 )
+background_sky = SubResource( 2 )
 background_energy = 0.87
-ambient_light_energy = 0.0
+ambient_light_color = Color( 0.141176, 0.0823529, 0.172549, 1 )
+ambient_light_energy = 1.1
+ambient_light_sky_contribution = 0.0
