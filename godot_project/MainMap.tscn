@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://blender_imports/ship_1.gltf" type="PackedScene" id=1]
+
+[node name="Spatial" type="Spatial"]
+
+[node name="OmniLight" type="OmniLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.23603, 7.97028, 6.78606 )
+light_energy = 2.71
+light_specular = 0.42
+light_bake_mode = 0
+omni_range = 61.2
+omni_attenuation = 0.933032
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 0.789903, 0.317004, -0.52494, 0.0162233, 0.84492, 0.534647, 0.613017, -0.430836, 0.662262, -11.7242, 13.2258, 17.7071 )
+fov = 49.7518
+
+[node name="Scene Root" parent="." instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.69902, 5.34279, 4.40857 )
