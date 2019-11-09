@@ -524,7 +524,7 @@ dependencies = [
  "sdl2 0.32.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vecmath 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "vector2d 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "wlambda 0.3.1",
+ "wlambda 0.3.3",
 ]
 
 [[package]]
@@ -633,7 +633,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "wlambda"
-version = "0.3.1"
+version = "0.3.3"
 dependencies = [
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
