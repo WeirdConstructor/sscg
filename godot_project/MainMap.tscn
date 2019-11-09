@@ -33,7 +33,7 @@ fov = 78.6
 far = 662.5
 
 [node name="Scene Root" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -87.2753, 11.1011, 108.427 )
+transform = Transform( -0.980094, 0, 0.198532, 0, 1, 0, -0.198532, 0, -0.980094, -87.2753, 11.1011, 108.427 )
 script = ExtResource( 4 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
