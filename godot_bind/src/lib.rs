@@ -13,7 +13,8 @@ use sscg::tree_painter::{DrawCmd, TreePainter};
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, Condvar};
+
 
 struct Fonts {
     main_font: DynamicFont,
@@ -33,6 +34,7 @@ fn c2c(c: (u8, u8, u8, u8)) -> Color {
 struct SSCGState {
     b: bool,
     v: std::vec::Vec<DrawCmd>,
+    fonts: Option<Fonts>,
 
 //    tp: TreePainter<Box<dyn Fn(&str) -> (u32, u32)>, Box<dyn Fn(usize) -> (u32, u32)>>,
 }
@@ -42,6 +44,7 @@ lazy_static! {
         Arc::new(Mutex::new(SSCGState {
             b: true,
             v: std::vec::Vec::new(),
+            fonts: None,
         }));
 }
 
@@ -54,6 +57,18 @@ pub struct GUIPaintNode {
 //    tp:     Rc<RefCell<TreePainter<Box<dyn Fn(&str) -> (u32, u32)>, Box<dyn Fn(usize) -> (u32, u32)>>>>,
 }
 
+//struct ThreadGUIState {
+//    f: Fonts,
+//    cmds: std::vec::Vec<DrawCmd>,
+//}
+//
+//struct ThreadGUIExchange {
+//    cv: Condvar,
+//    mx: Mutex<Option<ThreadGUIState>>,
+//}
+//
+//impl {
+//}
 
 fn draw_cmds(n: &mut Node2D, f: &Fonts, cmds: &std::vec::Vec<DrawCmd>) {
     for c in cmds {
@@ -238,6 +253,12 @@ impl GUIPaintNode {
         draw_cmds(&mut s, &self.f, &self.cmds);
 
         unsafe {
+            s.draw_string(
+                Some(self.f.main_font.to_font()),
+                vec2(50.0, 50.0),
+                GodotString::from_str("BUKAKKE"),
+                c2c((55, 0, 55, 255)),
+                100);
 //            godot_print!("DRAW: {} ", s.get_name().to_string());
 //            s.draw_rect(rect(10.0, 10.0, 200.0, 200.0), Color::rgba(255.0, 1.0, 0.0, 255.0), true);
 //            s.draw_circle(vec2(50.0, 50.0), 20.0, Color::rgb(1.0, 0.0, 1.0));
@@ -304,7 +325,17 @@ fn init(handle: gdnative::init::InitHandle) {
     cmds.push(DrawCmd::Rect { x: 0, y: 0, w: 100, h: 100, color: (255, 255, 0, 255) });
     cmds.push(DrawCmd::Rect { x: 50, y: 25, w: 100, h: 100, color: (0, 255, 0, 255) });
 
+    let f =
+        ResourceLoader::godot_singleton().load(
+            GodotString::from_str("res://fonts/main_font_normal.tres"),
+            GodotString::from_str("DynamicFont"),
+            false);
+    let df : DynamicFont = f.and_then(|f| f.cast::<DynamicFont>()).unwrap();
+
     let mut d = SSCG.lock().unwrap();
+    d.fonts = Some(Fonts {
+        main_font: df,
+    });
     std::mem::replace(&mut d.v, cmds);
 }
 
