@@ -31,7 +31,7 @@ pub struct TreePainter {
 }
 
 impl TreePainter {
-    pub fn new(metric: Rc<dyn FontMetric>) {
+    pub fn new(metric: Rc<dyn FontMetric>) -> Self {
         Self {
             text_metric:    metric,
             cmds:           std::vec::Vec::new(),
@@ -163,7 +163,7 @@ impl GamePainter for TreePainter {
         });
     }
     fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        (self.text_metrics_fn)(txt)
+        self.text_metric.text_size(txt)
     }
     fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32) {
         self.cmds.push(DrawCmd::TextureCrop {
