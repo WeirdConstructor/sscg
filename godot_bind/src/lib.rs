@@ -57,107 +57,58 @@ pub struct GUIPaintNode { }
 fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
     for c in cmds {
         match c {
-            DrawCmd::CacheDraw { w, h, id, cmds } => {
-//                if *id >= txt_cache.len() {
-//                    txt_cache.resize(*id + 1, None);
-//                }
-//                let mut t =
-//                    txt_crt.create_texture_target(
-//                        sdl2::pixels::PixelFormatEnum::RGBA8888,
-//                        *w, *h).unwrap();
-//                t.set_blend_mode(sdl2::render::BlendMode::Blend);
-//
-//                canvas.with_texture_canvas(&mut t, |mut canvas| {
-//                    canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
-//                    canvas.clear();
-//                    draw_cmds(&cmds, &mut canvas, txt_crt,
-//                              font,
-//                              txt_cache,
-//                              textures);
-//                });
-//                txt_cache[*id] = Some(Rc::new(t));
-            },
-            DrawCmd::DrawCache { x, y, w, h, id } => {
-//                if let Some(t) = &txt_cache[*id] {
-////                    println!("DRAW {}, {}, {}, {}", *x, *y, *w, *h);
-//                    canvas.copy(
-//                        &t,
-//                        Some(Rect::new(0,   0, *w, *h)),
-//                        Some(Rect::new(*x, *y, *w, *h))
-//                    ).map_err(|e| e.to_string()).unwrap();
-//                }
-            },
             DrawCmd::Text { txt, align, color, x, y, w } => {
-//                if txt.is_empty() { continue; }
-//                let max_w = *w as i32;
-//                let c : Color = (*color).into();
-//                let f =
-//                    font.render(txt).blended(c).map_err(|e| e.to_string()).unwrap();
-//                let txt = txt_crt.create_texture_from_surface(&f).map_err(|e| e.to_string()).unwrap();
-//                let tq  = txt.query();
-//
-//                let xo = if *align == 2
-//                         || *align == 0 { (max_w - (tq.width as i32)) / 2 }
-//                    else if *align < 0  { max_w - (tq.width as i32) }
-//                    else { 0 };
-//
-//                let w : i32 = if max_w < (tq.width as i32) { max_w } else { tq.width as i32 };
-//
-//                let xo = if xo < 0 { 0 } else { xo };
-//
-//                canvas.copy(
-//                    &txt,
-//                    Some(Rect::new(0,      0, w as u32, tq.height)),
-//                    Some(Rect::new(*x + xo, *y, w as u32, tq.height))
-//                ).map_err(|e| e.to_string()).unwrap();
-            },
-            DrawCmd::TextureCrop { txt_idx, x, y, w, h } => {
-//                if *txt_idx >= textures.len() { return; }
-//                if let Some(t) = textures.get(*txt_idx) {
-//                    let q = t.query();
-//                    let mut w = *w;
-//                    let mut h = *h;
-//                    if q.width  < w { w = q.width; }
-//                    if q.height < h { h = q.height; }
-//                    canvas.copy(
-//                        t,
-//                        Some(Rect::new(0, 0,   w, h)),
-//                        Some(Rect::new(*x, *y, w, h)));
-//                }
-            },
-            DrawCmd::Texture { txt_idx, x, y, centered } => {
-//                if *txt_idx >= textures.len() { return; }
-//                if let Some(t) = textures.get(*txt_idx) {
-//                    let q = t.query();
-//                    let mut rx : i32 = 0;
-//                    let mut ry : i32 = 0;
-//                    if *centered {
-//                        rx = -(q.width as i32 / 2);
-//                        ry = -(q.height as i32 / 2);
-//                    }
-//                    canvas.copy(
-//                        t,
-//                        Some(Rect::new(0, 0, q.width, q.height)),
-//                        Some(Rect::new(x + rx, y + ry, q.width, q.height)));
-//                }
+                unsafe {
+                    let size =
+                        fh.main_font.get_string_size(GodotString::from(txt));
+                    let xo =
+                        if *w as f32 > size.x  {
+                            match *align {
+                                1  => 0.0,
+                                0  => (*w as f32 - size.x) / 2.0,
+                                -1 => (*w as f32 - size.x),
+                                _  => 0.0,
+                            }
+                        } else {
+                            0.0
+                        };
+                    n.draw_string(
+                        Some(fh.main_font.to_font()),
+                        vec2(xo + *x as f32, *y as f32),
+                        GodotString::from_str(txt),
+                        c2c(*color),
+                        *w as i64);
+                }
             },
             DrawCmd::Circle { x, y, r, color } => {
-//                canvas.circle(*x as i16, *y as i16, *r as i16,
-//                    Color::from(*color)).expect("drawing circle");
+                unsafe {
+                    n.draw_circle(
+                        vec2(*x as f32,
+                             *y as f32),
+                        *r as f64,
+                        c2c(*color));
+                }
             },
             DrawCmd::FilledCircle { x, y, r, color } => {
-//                canvas.filled_circle(*x as i16, *y as i16, *r as i16,
-//                    Color::from(*color)).expect("drawing circle");
+                unsafe {
+                    n.draw_circle(
+                        vec2(*x as f32,
+                             *y as f32),
+                        *r as f64,
+                        c2c(*color));
+                }
             },
             DrawCmd::Line { x, y, x2, y2, t, color } => {
-//                canvas.thick_line(
-//                    *x as i16,
-//                    *y as i16,
-//                    *x2 as i16,
-//                    *y2 as i16,
-//                    *t as u8,
-//                    Color::from(*color))
-//                    .expect("drawing thick_line");
+                unsafe {
+                    n.draw_line(
+                        vec2(*x as f32,
+                             *y as f32),
+                        vec2(*x2 as f32,
+                             *y2 as f32),
+                        c2c(*color),
+                        *t as f64,
+                        true);
+                }
             },
             DrawCmd::Rect { x, y, w, h, color } => {
                 unsafe {
@@ -167,23 +118,21 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
                              *w as f32,
                              *h as f32),
                         c2c(*color),
-                        true);
+                        false);
                 }
-//                canvas.set_draw_color(Color::from(*color));
-//                canvas.draw_rect(Rect::new(*x, *y, *w, *h))
-//                    .expect("drawing rectangle");
             },
             DrawCmd::FilledRect { x, y, w, h, color } => {
-//                canvas.set_draw_color(Color::from(*color));
-//                canvas.fill_rect(Rect::new(*x, *y, *w, *h))
-//                    .expect("drawing rectangle");
+                unsafe {
+                    n.draw_rect(
+                        rect(*x as f32,
+                             *y as f32,
+                             *w as f32,
+                             *h as f32),
+                        c2c(*color),
+                        true);
+                }
             },
-            DrawCmd::ClipRectOff => {
-//                canvas.set_clip_rect(None);
-            },
-            DrawCmd::ClipRect { x, y, w, h } => {
-//                canvas.set_clip_rect(Rect::new(*x, *y, *w, *h));
-            },
+            _ => (),
         }
     }
 }
@@ -287,6 +236,9 @@ fn init(handle: gdnative::init::InitHandle) {
     let mut cmds = std::vec::Vec::new();
     cmds.push(DrawCmd::Rect { x: 0, y: 0, w: 100, h: 100, color: (255, 255, 0, 255) });
     cmds.push(DrawCmd::Rect { x: 50, y: 25, w: 100, h: 100, color: (0, 255, 0, 255) });
+    cmds.push(DrawCmd::Text { x: 100, y: 100, w: 300,
+        txt: String::from("FOFOFööß"),
+        align: 0, color: (0, 255, 0, 255) });
 
     let f =
         ResourceLoader::godot_singleton().load(
