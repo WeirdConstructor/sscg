@@ -20,6 +20,10 @@ pub enum DrawCmd {
     DrawCache    { x: i32, y: i32, w: u32, h: u32, id: usize },
 }
 
+pub trait FontMetric {
+    fn text_size(&self, text: &str) -> (u32, u32);
+}
+
 pub struct TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
     text_metrics_fn:    P,
     texture_size_fn:    T,
