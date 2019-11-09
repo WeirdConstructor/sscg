@@ -30,7 +30,7 @@ spot_angle = 45.1
 [node name="Camera" type="Camera" parent="Ship"]
 transform = Transform( -0.989107, -0.0484519, 0.138992, 0.00072391, 0.942659, 0.333758, -0.147193, 0.330223, -0.932356, 2.74424, 5.95173, -11.4506 )
 fov = 78.6
-far = 1558.0
+far = 662.5
 
 [node name="Scene Root" parent="." instance=ExtResource( 3 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -87.2753, 11.1011, 108.427 )
@@ -38,14 +38,18 @@ script = ExtResource( 4 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 transform = Transform( -0.891941, 0, 0.452152, 0.335002, 0.671609, 0.660844, -0.303669, 0.740906, -0.599036, 21.4109, 45.3778, -46.404 )
-light_energy = 0.62
-light_indirect_energy = 1.09
+light_color = Color( 1, 0.996078, 0.980392, 1 )
+light_energy = 0.45
+light_indirect_energy = 1.35
+light_specular = 0.53
 shadow_enabled = true
-directional_shadow_split_2 = 0.275
-directional_shadow_split_3 = 0.509
-directional_shadow_normal_bias = 0.72
-directional_shadow_bias_split_scale = 0.19
-directional_shadow_max_distance = 295.5
+directional_shadow_split_1 = 0.014
+directional_shadow_split_2 = 0.366
+directional_shadow_split_3 = 0.682
+directional_shadow_blend_splits = true
+directional_shadow_normal_bias = 0.23
+directional_shadow_bias_split_scale = 0.54
+directional_shadow_max_distance = 510.5
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 

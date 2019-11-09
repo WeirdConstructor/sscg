@@ -65,7 +65,7 @@ impl HelloWorld {
             if let Some(n) = owner.get_node(NodePath::from_str("Ship")) {
                 let mut s : Spatial = n.cast().unwrap();
 //                godot_print!("DELTA: {} : {}", s.get_name().to_string(), delta);
-                s.rotate_y(delta);
+//                s.rotate_y(delta);
             }
             if let Some(n) = owner.get_node(NodePath::from_str("CanvasLayer/Node2D")) {
 //                if let Some(x) = n

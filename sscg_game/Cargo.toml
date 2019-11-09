@@ -12,7 +12,7 @@ edition = "2018"
 #opt-level = 2
 
 [dependencies]
-wlambda = { path = "../wlambda" }
+wlambda = { path = "../../wlambda" }
 astar   = "4.0.0"
 regex   = "1.1.9"
 vecmath = "1.0.0"
