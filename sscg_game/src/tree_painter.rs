@@ -2,8 +2,6 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use crate::logic::GamePainter;
 
-pub type TextMetricCalcFn = dyn Fn(&str) -> (u32, u32);
-
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum DrawCmd {
     ClipRectOff,
@@ -24,20 +22,18 @@ pub trait FontMetric {
     fn text_size(&self, text: &str) -> (u32, u32);
 }
 
-pub struct TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
-    text_metrics_fn:    P,
-    texture_size_fn:    T,
+pub struct TreePainter {
+    text_metric:        Rc<dyn FontMetric>,
     cache_tmp_cmds:     Option<(i32, i32, u32, u32, usize, std::vec::Vec<DrawCmd>)>,
     cmds:               std::vec::Vec<DrawCmd>,
     offs_stack:         std::vec::Vec<(i32, i32)>,
     offs:               (i32, i32),
 }
 
-impl<P, T> TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
-    pub fn new(text_metrics_fn: P, texture_size_fn: T) -> Self where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
+impl TreePainter {
+    pub fn new(metric: Rc<dyn FontMetric>) {
         Self {
-            text_metrics_fn,
-            texture_size_fn,
+            text_metric:    metric,
             cmds:           std::vec::Vec::new(),
             offs_stack:     std::vec::Vec::new(),
             offs:           (0, 0),
@@ -53,7 +49,7 @@ impl<P, T> TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u
     }
 }
 
-impl<P, T> GamePainter for TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T: Fn(usize) -> (u32, u32) {
+impl GamePainter for TreePainter {
     fn push_offs(&mut self, xo: i32, yo: i32) {
         self.offs_stack.push(self.offs);
         self.offs = (xo, yo);
@@ -179,7 +175,7 @@ impl<P, T> GamePainter for TreePainter<P, T> where P: Fn(&str) -> (u32, u32), T:
         });
     }
     fn texture_size(&mut self, idx: usize) -> (u32, u32) {
-        (self.texture_size_fn)(idx)
+        (0, 0)
     }
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool) {
         self.cmds.push(DrawCmd::Texture {
