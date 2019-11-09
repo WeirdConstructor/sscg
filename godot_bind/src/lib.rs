@@ -8,19 +8,22 @@ use euclid::vec2;
 
 use sscg::gui;
 use sscg::logic;
-use sscg::tree_painter::{DrawCmd, TreePainter};
+use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric};
 
 use std::rc::Rc;
 use std::cell::RefCell;
 
 use std::sync::{Arc, Mutex, Condvar};
 
-
-struct Fonts {
+struct FontHolder {
     main_font: DynamicFont,
 }
 
-unsafe impl Send for Fonts { }
+impl FontMetric for FontHolder {
+    fn text_size(&self, text: &str) -> (u32, u32) {
+        (0, 0)
+    }
+}
 
 fn c2c(c: (u8, u8, u8, u8)) -> Color {
     Color::rgba(
@@ -31,47 +34,27 @@ fn c2c(c: (u8, u8, u8, u8)) -> Color {
 }
 
 struct SSCGState {
-    fonts: Fonts,
-//    tp:    TreePainter<Box<dyn Fn(&str) -> (u32, u32)>, Box<dyn Fn(usize) -> (u32, u32)>>,
+    fonts: Rc<FontHolder>,
+    tp:    TreePainter,
     v:     std::vec::Vec<DrawCmd>,
 }
 
+// XXX: This is safe as long as it is only accessed from the
+//      Godot main thread. If there are going to be multiple
+//      threads, we will probably need to split it up anyways.
 unsafe impl Send for SSCGState { }
 
 lazy_static! {
     static ref SSCG : Arc<Mutex<Option<SSCGState>>> =
         Arc::new(Mutex::new(None));
-//        SSCGState {
-//            b: true,
-//            v: std::vec::Vec::new(),
-//            fonts: None,
-//            tp: None,
-//        }));
 }
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Node2D)]
 #[user_data(user_data::MutexData<GUIPaintNode>)]
-pub struct GUIPaintNode {
-    cmds: std::vec::Vec<DrawCmd>,
-    f: Fonts,
-//    tp:     Rc<RefCell<TreePainter<Box<dyn Fn(&str) -> (u32, u32)>, Box<dyn Fn(usize) -> (u32, u32)>>>>,
-}
+pub struct GUIPaintNode { }
 
-//struct ThreadGUIState {
-//    f: Fonts,
-//    cmds: std::vec::Vec<DrawCmd>,
-//}
-//
-//struct ThreadGUIExchange {
-//    cv: Condvar,
-//    mx: Mutex<Option<ThreadGUIState>>,
-//}
-//
-//impl {
-//}
-
-fn draw_cmds(n: &mut Node2D, f: &Fonts, cmds: &std::vec::Vec<DrawCmd>) {
+fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
     for c in cmds {
         match c {
             DrawCmd::CacheDraw { w, h, id, cmds } => {
@@ -207,21 +190,7 @@ fn draw_cmds(n: &mut Node2D, f: &Fonts, cmds: &std::vec::Vec<DrawCmd>) {
 
 #[methods]
 impl GUIPaintNode {
-    fn _init(_owner: Node2D) -> Self {
-
-        let f =
-            ResourceLoader::godot_singleton().load(
-                GodotString::from_str("res://fonts/main_font_normal.tres"),
-                GodotString::from_str("DynamicFont"),
-                false);
-        let df : DynamicFont = f.and_then(|f| f.cast::<DynamicFont>()).unwrap();
-        GUIPaintNode {
-            cmds: std::vec::Vec::new(),
-            f: Fonts {
-                main_font: df,
-            },
-        }
-    }
+    fn _init(_owner: Node2D) -> Self { Self { } }
 
     #[export]
     fn _ready(&self, _owner: Node2D) {
@@ -234,20 +203,21 @@ impl GUIPaintNode {
     fn _draw(&mut self, mut s: Node2D) {
         let mut d = SSCG.lock().unwrap();
         let d2 = d.as_mut().unwrap();
-        if !d2.v.is_empty() {
-            self.cmds = std::mem::replace(&mut d2.v, std::vec::Vec::new());
-            godot_print!("GOT IT");
-        }
+//        if !d2.v.is_empty() {
+//            self.cmds = std::mem::replace(&mut d2.v, std::vec::Vec::new());
+//            godot_print!("GOT IT");
+//        }
 
 //        for v in self.cmds.iter() {
 //            godot_print!("FO {:?}", v);
 //        }
 
-        draw_cmds(&mut s, &self.f, &self.cmds);
+        let fh_rc = d2.fonts.clone();
+        draw_cmds(&mut s, &*fh_rc, &d2.v);
 
         unsafe {
             s.draw_string(
-                Some(self.f.main_font.to_font()),
+                Some(fh_rc.main_font.to_font()),
                 vec2(50.0, 50.0),
                 GodotString::from_str("FÖRSTER"),
                 c2c((55, 0, 55, 255)),
@@ -325,28 +295,14 @@ fn init(handle: gdnative::init::InitHandle) {
             false);
     let df : DynamicFont = f.and_then(|f| f.cast::<DynamicFont>()).unwrap();
 
-//        let tp =
-//            TreePainter::new(Box::new(|txt: &str| {
-//                (0, 0)
-////                font2.borrow().size_of(txt).unwrap_or((0, 0))
-//            }), Box::new(|idx: usize| {
-//                (0, 0)
-////                let tq = asset_textures[idx].query();
-////                (tq.width, tq.height)
-//            }));
+    let fh: Rc<FontHolder> = Rc::new(FontHolder { main_font: df });
+    let tp = TreePainter::new(fh.clone());
     let mut d = SSCG.lock().unwrap();
     *d = Some(SSCGState {
-        fonts: Fonts {
-            main_font: df,
-        },
+        fonts: fh,
         v: cmds,
-//        tp,
+        tp,
     });
-
-//    d.fonts = Some(Fonts {
-//        main_font: df,
-//    });
-//    std::mem::replace(&mut d.v, cmds);
 }
 
 // macros that create the entry-points of the dynamic library.
