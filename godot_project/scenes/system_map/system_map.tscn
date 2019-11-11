@@ -15,7 +15,7 @@ extents = Vector3( 10, 0.1, 10 )
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( -2.45373e-08, 0.56724, -0.823552, 2.7838e-08, 0.823552, 0.56724, 1, -9.00748e-09, -3.59986e-08, -13.2915, 5.47754, 0.452708 )
+transform = Transform( -2.45373e-008, 0.56724, -0.823552, 2.7838e-008, 0.823552, 0.56724, 1, -9.00748e-009, -3.59986e-008, -13.2915, 5.47754, 0.452708 )
 fov = 50.0
 
 [node name="Area" type="Area" parent="."]
@@ -41,3 +41,12 @@ transform = Transform( 0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.36526, 1.52071, 4.4555
 transform = Transform( 1, 0, 0, 0, -0.326445, 0.945216, 0, -0.945216, -0.326445, 6.97923, 13.4765, -3.55471 )
 light_energy = 0.34
 light_specular = 0.0
+shadow_enabled = true
+shadow_bias = 0.06
+directional_shadow_split_1 = 0.003
+directional_shadow_split_2 = 0.02
+directional_shadow_split_3 = 0.46
+directional_shadow_blend_splits = true
+directional_shadow_normal_bias = 0.0
+directional_shadow_bias_split_scale = 0.0
+directional_shadow_max_distance = 20.4

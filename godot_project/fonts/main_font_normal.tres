@@ -3,4 +3,5 @@
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=1]
 
 [resource]
+use_filter = true
 font_data = ExtResource( 1 )
