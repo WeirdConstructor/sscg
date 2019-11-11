@@ -162,7 +162,10 @@ impl GUIPaintNode {
 //        }
 
         let fh_rc = d2.fonts.clone();
-        draw_cmds(&mut s, &*fh_rc, &d2.v);
+        if !d2.v.is_empty() {
+            draw_cmds(&mut s, &*fh_rc, &d2.v);
+            d2.v.clear();
+        }
 
         unsafe {
             s.draw_string(
