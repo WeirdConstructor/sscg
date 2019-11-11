@@ -1,17 +1,13 @@
 extends Spatial
 
+export var selected = false
 # Declare member variables here. Examples:
 # var a = 2
 # var b = "text"
 
-var speed = Vector2(0, 0);
-
-#func _physics_process(delta):
-	#if Input.is_action_pressed("move_forward"):
-		#speed.
-	
-
-
+func _process(delta):
+	if selected:
+		self.get_child(1).show()
 
 # Called when the node enters the scene tree for the first time.
 func _ready():

@@ -17,7 +17,8 @@ func _mouse_exited():
 	
 func _input_event(camera, event, click_pos, cl, pre):
 	print("EVE", event);
-	self.get_parent().get_child(1).show()
+	self.get_parent().selected = true
+	
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
