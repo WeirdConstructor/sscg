@@ -3,13 +3,13 @@
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/system_map/SystemMapAreaScript.gd" type="Script" id=2]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=3]
-[ext_resource path="res://Station.tscn" type="PackedScene" id=4]
-[ext_resource path="res://scenes/system_map/map_box.tscn" type="PackedScene" id=5]
+[ext_resource path="res://scenes/system_map/map_box.tscn" type="PackedScene" id=4]
+[ext_resource path="res://scenes/entities/Station Selector.tscn" type="PackedScene" id=5]
 
 [sub_resource type="BoxShape" id=1]
 extents = Vector3( 10, 0.1, 10 )
 
-[node name="Spatial" type="Spatial"]
+[node name="SystemMap" type="Spatial"]
 
 [node name="crosshair" parent="." instance=ExtResource( 1 )]
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
@@ -19,6 +19,7 @@ transform = Transform( -2.45373e-008, 0.56724, -0.823552, 2.7838e-008, 0.823552,
 fov = 50.0
 
 [node name="Area" type="Area" parent="."]
+editor/display_folded = true
 script = ExtResource( 2 )
 
 [node name="Tween" type="Tween" parent="Area"]
@@ -29,13 +30,10 @@ shape = SubResource( 1 )
 [node name="Ship" parent="." instance=ExtResource( 3 )]
 transform = Transform( 0.085895, 0, -0.180616, 0, 0.2, 0, 0.180616, 0, 0.085895, 7.09698, 0.939844, -7.50822 )
 
-[node name="Scene Root" parent="." instance=ExtResource( 4 )]
-transform = Transform( 0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.53122, 1.66469, 6.05087 )
+[node name="map surface" parent="." instance=ExtResource( 4 )]
 
-[node name="Scene Root2" parent="." instance=ExtResource( 4 )]
-transform = Transform( 0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.36526, 1.52071, 4.45553 )
-
-[node name="map surface" parent="." instance=ExtResource( 5 )]
+[node name="Station Selector" parent="." instance=ExtResource( 5 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.00256, 2.21366, 4.47468 )
 
 [node name="Sun" type="DirectionalLight" parent="."]
 transform = Transform( 1, 0, 0, 0, -0.326445, 0.945216, 0, -0.945216, -0.326445, 6.97923, 13.4765, -3.55471 )
