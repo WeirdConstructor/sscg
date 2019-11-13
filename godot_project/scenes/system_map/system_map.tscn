@@ -21,7 +21,7 @@ script = SubResource( 1 )
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( -2.45373e-008, 0.56724, -0.823552, 2.7838e-008, 0.823552, 0.56724, 1, -9.00748e-009, -3.59986e-008, -13.2915, 5.47754, 0.452708 )
+transform = Transform( -2.45373e-08, 0.56724, -0.823552, 2.7838e-08, 0.823552, 0.56724, 1, -9.00748e-09, -3.59986e-08, -13.2915, 5.47754, 0.452708 )
 fov = 50.0
 
 [node name="Area" type="Area" parent="."]

@@ -1,5 +1,6 @@
 mod state;
 mod system_map;
+mod wl_gd_mod_resolver;
 
 #[macro_use]
 extern crate lazy_static;
@@ -231,13 +232,7 @@ fn init(handle: gdnative::init::InitHandle) {
     let fh: Rc<FontHolder> = Rc::new(FontHolder { main_font: df });
     let tp = TreePainter::new(fh.clone());
     let mut d = SSCG.lock().unwrap();
-    *d = Some(SSCGState {
-        fonts: fh,
-        v: cmds,
-        temp_stations: vec![(1, 1), (900, 500)],
-        update_stations: true,
-        tp,
-    });
+    *d = Some(SSCGState::new(fh, cmds));
 }
 
 // macros that create the entry-points of the dynamic library.
