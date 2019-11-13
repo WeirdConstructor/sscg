@@ -767,6 +767,7 @@ dependencies = [
  "gdnative 0.5.0",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sscg 0.1.0",
+ "wlambda 0.3.3",
 ]
 
 [[package]]

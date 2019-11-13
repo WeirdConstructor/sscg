@@ -25,6 +25,9 @@ impl SystemMap {
         let txt = f.get_as_text().to_string();
         println!("LAODED: {}", txt);
 
+        let mut sscg_lck = SSCG.lock().unwrap();
+        let sscg = sscg_lck.as_mut().unwrap();
+        sscg.setup_wlambda();
 
         godot_print!("Scene Map Instanciated!");
         let scene = ResourceLoader::godot_singleton().load(

@@ -10,6 +10,7 @@ edition = "2018"
 lazy_static = "1.4.0"
 gdnative = { path = "../../other/godot-rust/gdnative" }
 sscg     = { path = "../sscg_game" }
+wlambda  = { path = "../../wlambda" }
 euclid   = "0.20.1"
 
 [lib]
