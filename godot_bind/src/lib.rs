@@ -1,3 +1,6 @@
+mod state;
+mod system_map;
+
 #[macro_use]
 extern crate lazy_static;
 extern crate gdnative;
@@ -6,24 +9,14 @@ use gdnative::*;
 use euclid::rect;
 use euclid::vec2;
 
-use sscg::gui;
-use sscg::logic;
-use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric};
+//use sscg::gui;
+//use sscg::logic;
+use sscg::tree_painter::{DrawCmd, TreePainter};
 
 use std::rc::Rc;
-use std::cell::RefCell;
+//use std::cell::RefCell;
 
-use std::sync::{Arc, Mutex, Condvar};
-
-struct FontHolder {
-    main_font: DynamicFont,
-}
-
-impl FontMetric for FontHolder {
-    fn text_size(&self, text: &str) -> (u32, u32) {
-        (0, 0)
-    }
-}
+use state::*;
 
 fn c2c(c: (u8, u8, u8, u8)) -> Color {
     Color::rgba(
@@ -33,25 +26,9 @@ fn c2c(c: (u8, u8, u8, u8)) -> Color {
         c.3 as f32 / 255.0)
 }
 
-struct SSCGState {
-    fonts: Rc<FontHolder>,
-    tp:    TreePainter,
-    v:     std::vec::Vec<DrawCmd>,
-}
-
-// XXX: This is safe as long as it is only accessed from the
-//      Godot main thread. If there are going to be multiple
-//      threads, we will probably need to split it up anyways.
-unsafe impl Send for SSCGState { }
-
-lazy_static! {
-    static ref SSCG : Arc<Mutex<Option<SSCGState>>> =
-        Arc::new(Mutex::new(None));
-}
-
 #[derive(NativeClass)]
 #[inherit(gdnative::Node2D)]
-#[user_data(user_data::MutexData<GUIPaintNode>)]
+#[user_data(user_data::ArcData<GUIPaintNode>)]
 pub struct GUIPaintNode { }
 
 fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
@@ -149,7 +126,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn _draw(&mut self, mut s: Node2D) {
+    fn _draw(&self, mut s: Node2D) {
         let mut d = SSCG.lock().unwrap();
         let d2 = d.as_mut().unwrap();
 //        if !d2.v.is_empty() {
@@ -212,22 +189,22 @@ impl HelloWorld {
     }
 
     #[export]
-    fn _process(&self, owner: Node, delta: f64) {
-        unsafe {
-            if let Some(n) = owner.get_node(NodePath::from_str("Ship")) {
-                let mut s : Spatial = n.cast().unwrap();
+    fn _process(&self, _owner: Node, _delta: f64) {
+//        unsafe {
+//            if let Some(n) = owner.get_node(NodePath::from_str("Ship")) {
+//                let s : Spatial = n.cast().unwrap();
 //                godot_print!("DELTA: {} : {}", s.get_name().to_string(), delta);
 //                s.rotate_y(delta);
-            }
-            if let Some(n) = owner.get_node(NodePath::from_str("CanvasLayer/Node2D")) {
+//            }
+//            if let Some(n) = owner.get_node(NodePath::from_str("CanvasLayer/Node2D")) {
 //                if let Some(x) = n
-                let mut s : Node2D = n.cast().unwrap();
+//                let s : Node2D = n.cast().unwrap();
 //                godot_print!("DELTA: {} : {}", s.get_name().to_string(), delta);
 //                s.draw_rect(rect(10.0, 10.0, 200.0, 200.0), Color::rgb(1.0, 1.0, 0.0), true);
 //                s.update();
 //                s.rotate_y(delta);
-            }
-        }
+//            }
+//        }
     }
 }
 
@@ -235,6 +212,7 @@ impl HelloWorld {
 fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<HelloWorld>();
     handle.add_class::<GUIPaintNode>();
+    handle.add_class::<system_map::SystemMap>();
 
     let mut cmds = std::vec::Vec::new();
     cmds.push(DrawCmd::Rect { x: 0, y: 0, w: 100, h: 100, color: (255, 255, 0, 255) });
@@ -256,6 +234,8 @@ fn init(handle: gdnative::init::InitHandle) {
     *d = Some(SSCGState {
         fonts: fh,
         v: cmds,
+        temp_stations: vec![(1, 1), (900, 500)],
+        update_stations: true,
         tp,
     });
 }
