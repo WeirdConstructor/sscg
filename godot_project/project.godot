@@ -16,7 +16,7 @@ _global_script_class_icons={
 [application]
 
 config/name="Space Ship Cargo Game"
-run/main_scene="res://MainMap.tscn"
+run/main_scene="res://scenes/system_map/system_map.tscn"
 config/icon="res://icon.png"
 
 [rendering]

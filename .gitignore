@@ -2,3 +2,13 @@ target/
 *.dll
 *.lib
 *.blend1
+
+/*.exe
+/*.pck
+/assets/bitzer.png
+/assets/bitzer_logo.blend
+/assets/killme.blend
+/assets/shadertest.blend
+/godot/Godot_v3.1.1-stable_win64.exe
+/godot/Godot_v3.1.1-stable_win64.exe.zip
+/godot_project/.import/
