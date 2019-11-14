@@ -1,8 +1,29 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://blender_imports/ship_1.gltf" type="PackedScene" id=1]
 [ext_resource path="res://gdnative/GUIPaintNodeScript.gdns" type="Script" id=2]
 [ext_resource path="res://Station.tscn" type="PackedScene" id=3]
+
+[sub_resource type="QuadMesh" id=1]
+resource_local_to_scene = true
+
+[sub_resource type="ViewportTexture" id=2]
+flags = 5
+viewport_path = NodePath("Viewport")
+
+[sub_resource type="SpatialMaterial" id=3]
+resource_local_to_scene = true
+flags_unshaded = true
+flags_albedo_tex_force_srgb = true
+flags_do_not_receive_shadows = true
+flags_disable_ambient_light = true
+params_diffuse_mode = 1
+params_line_width = 0.1
+params_billboard_mode = 1
+params_billboard_keep_scale = true
+params_use_alpha_scissor = true
+params_alpha_scissor_threshold = 0.05
+albedo_texture = SubResource( 2 )
 
 [node name="Spatial" type="Spatial"]
 
@@ -25,9 +46,10 @@ spot_range = 6.3
 spot_angle = 45.1
 
 [node name="Camera" type="Camera" parent="Ship"]
-transform = Transform( -0.989107, -0.0484519, 0.138992, 0.00072391, 0.942659, 0.333758, -0.147193, 0.330223, -0.932356, 2.74424, 5.95173, -11.4506 )
+transform = Transform( -0.989108, -0.0484519, 0.138992, 0.000723907, 0.942659, 0.333758, -0.147193, 0.330223, -0.932356, 2.74425, 5.95173, -11.4506 )
 fov = 78.6
-far = 662.5
+near = 0.06
+far = 4939.7
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 transform = Transform( -0.891941, 0, 0.452152, 0.335002, 0.671609, 0.660844, -0.303669, 0.740906, -0.599036, 21.4109, 45.3778, -46.404 )
@@ -44,10 +66,30 @@ directional_shadow_normal_bias = 0.74
 directional_shadow_bias_split_scale = 0.31
 directional_shadow_max_distance = 718.4
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="Viewport" type="Viewport" parent="."]
+size = Vector2( 200, 200 )
+transparent_bg = true
+handle_input_locally = false
+hdr = false
+disable_3d = true
+usage = 0
+render_target_v_flip = true
 
-[node name="Node2D" type="Node2D" parent="CanvasLayer"]
+[node name="CheckButton" type="CheckButton" parent="Viewport"]
+margin_right = 76.0
+margin_bottom = 40.0
+text = "XXX123"
+
+[node name="CanvasLayer" type="CanvasLayer" parent="Viewport"]
+
+[node name="Node2D" type="Node2D" parent="Viewport/CanvasLayer"]
 script = ExtResource( 2 )
 
 [node name="Station Scene" parent="." instance=ExtResource( 3 )]
 transform = Transform( 20, 0, 0, 0, 20, 0, 0, 0, 20, -49.0474, 47.7122, 77.6518 )
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+transform = Transform( -181.81, 0, 137.834, 0, 191.896, 0, -0.604134, 0, -0.796883, -50.2336, 74.2466, 77.2194 )
+cast_shadow = 0
+mesh = SubResource( 1 )
+material/0 = SubResource( 3 )

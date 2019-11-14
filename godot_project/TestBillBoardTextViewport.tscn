@@ -1,0 +1,47 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://fonts/main_font_normal.tres" type="DynamicFont" id=1]
+
+[sub_resource type="ViewportTexture" id=1]
+viewport_path = NodePath("Viewport")
+
+[sub_resource type="SpatialMaterial" id=2]
+resource_local_to_scene = true
+flags_unshaded = true
+flags_do_not_receive_shadows = true
+albedo_texture = SubResource( 1 )
+
+[sub_resource type="PlaneMesh" id=3]
+resource_local_to_scene = true
+material = SubResource( 2 )
+
+[sub_resource type="OpenSimplexNoise" id=5]
+seed = 7
+
+[sub_resource type="NoiseTexture" id=6]
+noise = SubResource( 5 )
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 0.827451, 0.635294, 0.635294, 1 )
+anti_aliasing = false
+anti_aliasing_size = 5
+
+[node name="Spatial" type="Spatial"]
+
+[node name="plane" type="MeshInstance" parent="."]
+mesh = SubResource( 3 )
+material/0 = null
+
+[node name="Viewport" type="Viewport" parent="."]
+transparent_bg = true
+usage = 0
+
+[node name="Sprite" type="Sprite" parent="Viewport"]
+texture = SubResource( 6 )
+
+[node name="Label" type="Label" parent="Viewport"]
+margin_right = 40.0
+margin_bottom = 14.0
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = ExtResource( 1 )
+text = "Hello There!"
