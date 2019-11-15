@@ -23,7 +23,8 @@ pub struct SSCGState {
     pub v:     std::vec::Vec<DrawCmd>,
     pub temp_stations: std::vec::Vec<(i32, i32)>,
     pub update_stations: bool,
-    pub wlctx:  EvalContext,
+    pub wlctx: EvalContext,
+    pub state: VVal,
 }
 
 // XXX: This is safe as long as it is only accessed from the
@@ -33,6 +34,7 @@ unsafe impl Send for SSCGState { }
 
 impl SSCGState {
     pub fn new(fh: Rc<FontHolder>, cmds: std::vec::Vec<DrawCmd>) -> Self {
+        dbg!("INIT SSCGState");
         let genv = GlobalEnv::new_default();
         genv.borrow_mut().set_resolver(
             Rc::new(RefCell::new(GodotModuleResolver::new())));
@@ -44,12 +46,16 @@ impl SSCGState {
             update_stations: true,
             tp,
             wlctx: EvalContext::new(genv),
+            state: VVal::Nul,
         }
     }
 
     pub fn setup_wlambda(&mut self) {
         match self.wlctx.eval("!@import main main; main:init[]") {
-            Ok(_) => (),
+            Ok(state) => {
+                self.state = state.clone();
+                dbg!("SET STATE INIT!");
+            },
             Err(e) => { godot_print!("main.wl error: {:?}", e); }
         }
     }
