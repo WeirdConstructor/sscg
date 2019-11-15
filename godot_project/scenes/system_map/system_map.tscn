@@ -1,18 +1,13 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
-[ext_resource path="res://scenes/system_map/SystemMapAreaScript.gd" type="Script" id=3]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=4]
-[ext_resource path="res://scenes/system_map/map_box.tscn" type="PackedScene" id=5]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
-
-[sub_resource type="BoxShape" id=2]
-extents = Vector3( 10, 0.1, 10 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -20,23 +15,8 @@ script = SubResource( 1 )
 [node name="crosshair" parent="." instance=ExtResource( 2 )]
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
-[node name="Camera" type="Camera" parent="."]
-transform = Transform( -2.45373e-08, 0.56724, -0.823552, 2.7838e-08, 0.823552, 0.56724, 1, -9.00748e-09, -3.59986e-08, -13.2915, 5.47754, 0.452708 )
-fov = 50.0
-
-[node name="Area" type="Area" parent="."]
-script = ExtResource( 3 )
-
-[node name="Tween" type="Tween" parent="Area"]
-
-[node name="CollisionShape" type="CollisionShape" parent="Area"]
-shape = SubResource( 2 )
-
 [node name="ship" parent="." instance=ExtResource( 4 )]
-transform = Transform( 0.085895, 0, -0.180616, 0, 0.2, 0, 0.180616, 0, 0.085895, 8.26672, 0.939844, 7.13854 )
-
-[node name="map surface" parent="." instance=ExtResource( 5 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.249519, 0.130667, -0.356853 )
+transform = Transform( 0.429475, 0, -0.903079, 0, 1, 0, 0.903079, 0, 0.429475, 8.17908, 0.939844, 6.95426 )
 
 [node name="entities" type="Spatial" parent="."]
 
