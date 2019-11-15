@@ -9,10 +9,10 @@ use gdnative::*;
 
 use euclid::rect;
 use euclid::vec2;
+use sscg::tree_painter::{DrawCmd, TreePainter};
 
 //use sscg::gui;
 //use sscg::logic;
-use sscg::tree_painter::{DrawCmd, TreePainter};
 
 use std::rc::Rc;
 //use std::cell::RefCell;
@@ -209,36 +209,22 @@ impl HelloWorld {
     }
 }
 
+fn terminate(options: *mut gdnative::sys::godot_gdnative_terminate_options) {
+    dbg!("*** terminate sscg native");
+}
+
 // Function that registers all exposed classes to Godot
 fn init(handle: gdnative::init::InitHandle) {
+    dbg!("*** init sscg native");
     handle.add_class::<HelloWorld>();
     handle.add_class::<GUIPaintNode>();
     handle.add_class::<system_map::SystemMap>();
-
-    let mut cmds = std::vec::Vec::new();
-    cmds.push(DrawCmd::Rect { x: 0, y: 0, w: 100, h: 100, color: (255, 255, 0, 255) });
-    cmds.push(DrawCmd::Rect { x: 50, y: 25, w: 100, h: 100, color: (0, 255, 0, 255) });
-    cmds.push(DrawCmd::Text { x: 100, y: 100, w: 300,
-        txt: String::from("FOFOFööß"),
-        align: 0, color: (0, 255, 0, 255) });
-
-    let f =
-        ResourceLoader::godot_singleton().load(
-            GodotString::from_str("res://fonts/main_font_normal.tres"),
-            GodotString::from_str("DynamicFont"),
-            false);
-    let df : DynamicFont = f.and_then(|f| f.cast::<DynamicFont>()).unwrap();
-
-    let fh: Rc<FontHolder> = Rc::new(FontHolder { main_font: df });
-    let tp = TreePainter::new(fh.clone());
-    let mut d = SSCG.lock().unwrap();
-    *d = Some(SSCGState::new(fh, cmds));
 }
 
 // macros that create the entry-points of the dynamic library.
 godot_gdnative_init!();
 godot_nativescript_init!(init);
-godot_gdnative_terminate!();
+godot_gdnative_terminate!(terminate);
 
 
 #[cfg(test)]

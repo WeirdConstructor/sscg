@@ -2,8 +2,6 @@
 
 [resource]
 resource_name = "HH"
-config_file = Object(ConfigFile,"script":null)
-
 entry/Windows.64 = "res://gdnative/sscg_gd.dll"
 entry/X11.64 = "res://gdnative/libsscg_gd.so"
 dependency/Windows.64 = [  ]

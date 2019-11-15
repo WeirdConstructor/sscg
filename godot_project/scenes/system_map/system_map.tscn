@@ -21,11 +21,10 @@ script = SubResource( 1 )
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( -2.45373e-008, 0.56724, -0.823552, 2.7838e-008, 0.823552, 0.56724, 1, -9.00748e-009, -3.59986e-008, -13.2915, 5.47754, 0.452708 )
+transform = Transform( -2.45373e-08, 0.56724, -0.823552, 2.7838e-08, 0.823552, 0.56724, 1, -9.00748e-09, -3.59986e-08, -13.2915, 5.47754, 0.452708 )
 fov = 50.0
 
 [node name="Area" type="Area" parent="."]
-editor/display_folded = true
 script = ExtResource( 3 )
 
 [node name="Tween" type="Tween" parent="Area"]
@@ -33,11 +32,13 @@ script = ExtResource( 3 )
 [node name="CollisionShape" type="CollisionShape" parent="Area"]
 shape = SubResource( 2 )
 
-[node name="Ship" parent="." instance=ExtResource( 4 )]
-transform = Transform( 0.085895, 0, -0.180616, 0, 0.2, 0, 0.180616, 0, 0.085895, 7.09698, 0.939844, -7.50822 )
+[node name="ship" parent="." instance=ExtResource( 4 )]
+transform = Transform( 0.085895, 0, -0.180616, 0, 0.2, 0, 0.180616, 0, 0.085895, 8.26672, 0.939844, 7.13854 )
 
 [node name="map surface" parent="." instance=ExtResource( 5 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.249519, 0.130667, -0.356853 )
+
+[node name="entities" type="Spatial" parent="."]
 
 [node name="Sun" type="DirectionalLight" parent="."]
 transform = Transform( 0.741775, 0.518385, 0.425497, 0, -0.634455, 0.77296, 0.670649, -0.573362, -0.470623, 6.97923, 4.02086, -16.111 )
