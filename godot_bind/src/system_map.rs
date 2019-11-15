@@ -71,22 +71,22 @@ impl SystemMap {
         let sscg = sscg_lck.as_mut().unwrap();
 
         let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
-        let ship_pos = vvship.get_key("pos").unwrap_or(VVal::Nul);
-        unsafe {
-            let mut ship =
-                owner.get_node(NodePath::from_str("ship"))
-                     .expect("Find 'ship' node")
-                     .cast::<Spatial>()
-                     .unwrap();
-
-            let t = vec3(
-                -8.0 + ((ship_pos.v_f(0) as f32 * 16.0) / 10000.0),
-                1.0,
-                -8.0 + ((ship_pos.v_f(1) as f32 * 16.0) / 10000.0));
-            ship.set_translation(t);
-
-//            println!("SHIP POS: {:?}", t);
-        }
+//        let ship_pos = vvship.get_key("pos").unwrap_or(VVal::Nul);
+//        unsafe {
+//            let mut ship =
+//                owner.get_node(NodePath::from_str("ship"))
+//                     .expect("Find 'ship' node")
+//                     .cast::<Spatial>()
+//                     .unwrap();
+//
+//            let t = vec3(
+//                -8.0 + ((ship_pos.v_f(0) as f32 * 16.0) / 10000.0),
+//                2.5,
+//                -8.0 + ((ship_pos.v_f(1) as f32 * 16.0) / 10000.0));
+//            ship.set_translation(t);
+//
+////            println!("SHIP POS: {:?}", t);
+//        }
 
         let mut entities = unsafe {
             owner.get_node(NodePath::from_str("entities"))
@@ -125,9 +125,9 @@ impl SystemMap {
                         .cast::<Spatial>()
                         .expect("Station must be a Spatial");
                 let v = vec3(
-                    -8.0 + (x as f32 * 16.0) / 10000.0,
+                    -80.0 + (x as f32 * 160.0) / 10000.0,
                     1.0,
-                    -8.0 + (y as f32 * 16.0) / 10000.0);
+                    -80.0 + (y as f32 * 160.0) / 10000.0);
                     println!("FO {:?}", v);
                 ins.set(
                     GodotString::from_str("system_id"),
