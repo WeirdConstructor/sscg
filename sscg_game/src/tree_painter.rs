@@ -22,6 +22,7 @@ pub trait FontMetric {
     fn text_size(&self, text: &str) -> (u32, u32);
 }
 
+#[derive(Clone)]
 pub struct TreePainter {
     text_metric:        Rc<dyn FontMetric>,
     cache_tmp_cmds:     Option<(i32, i32, u32, u32, usize, std::vec::Vec<DrawCmd>)>,

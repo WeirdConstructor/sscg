@@ -6,17 +6,19 @@ use gdnative::*;
 use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
 use crate::wl_gd_mod_resolver::*;
 
-
+#[derive(Debug, Clone)]
 pub struct FontHolder {
     pub main_font: DynamicFont,
 }
 
 impl FontMetric for FontHolder {
-    fn text_size(&self, _text: &str) -> (u32, u32) {
-        (0, 0)
+    fn text_size(&self, text: &str) -> (u32, u32) {
+        let s = self.main_font.get_string_size(GodotString::from_str(text));
+        (s.x as u32, s.y as u32)
     }
 }
 
+#[derive(Clone)]
 pub struct SSCGState {
     pub fonts: Rc<FontHolder>,
     pub tp:    TreePainter,

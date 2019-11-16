@@ -3,15 +3,15 @@
 [ext_resource path="res://blender_imports/ship_1.gltf" type="PackedScene" id=1]
 [ext_resource path="res://scenes/ships/ship_1.gd" type="Script" id=2]
 
-[sub_resource type="ParticlesMaterial" id=2]
+[sub_resource type="ParticlesMaterial" id=1]
 emission_shape = 2
 emission_box_extents = Vector3( 0.03, 0.01, 0.02 )
-direction = Vector3( 0, 0, -1 )
 spread = 6.46
 gravity = Vector3( 0, 0, 0 )
 initial_velocity = 0.87
+angular_velocity = 1.0
 
-[sub_resource type="SpatialMaterial" id=3]
+[sub_resource type="SpatialMaterial" id=2]
 flags_transparent = true
 params_blend_mode = 1
 albedo_color = Color( 1, 0.470588, 0, 0.219608 )
@@ -21,12 +21,12 @@ emission_energy = 1.0
 emission_operator = 0
 emission_on_uv2 = false
 
-[sub_resource type="SphereMesh" id=4]
-material = SubResource( 3 )
+[sub_resource type="SphereMesh" id=3]
+material = SubResource( 2 )
 radius = 0.011
 height = 0.008
 
-[sub_resource type="SphereShape" id=1]
+[sub_resource type="SphereShape" id=4]
 radius = 0.289018
 
 [node name="Ship" instance=ExtResource( 1 )]
@@ -38,15 +38,15 @@ transform = Transform( 0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0 )
 use_in_baked_light = true
 
 [node name="BackEngineParticles" type="Particles" parent="Ship" index="0"]
-transform = Transform( 20, 0, 0, 0, 20, 0, 0, 0, 20, 0, -0.0425324, -4.45109 )
+transform = Transform( -20, 0, -3.01992e-06, 0, 20, 0, 3.01992e-06, 0, -20, 0, -0.0425324, -4.45109 )
 cast_shadow = 0
 emitting = false
 amount = 23
 lifetime = 0.09
 speed_scale = 0.65
 visibility_aabb = AABB( -0.288646, -0.315101, -0.482572, 0.577291, 0.71321, 1.09405 )
-process_material = SubResource( 2 )
-draw_pass_1 = SubResource( 4 )
+process_material = SubResource( 1 )
+draw_pass_1 = SubResource( 3 )
 
 [node name="BackEngineLight" type="OmniLight" parent="Ship" index="1"]
 transform = Transform( 20, 0, 0, 0, 20, 0, 0, 0, 20, 0, -0.0364883, -4.55749 )
@@ -64,6 +64,6 @@ far = 4712.0
 
 [node name="CollisionShape" type="CollisionShape" parent="Area" index="0"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.103383 )
-shape = SubResource( 1 )
+shape = SubResource( 4 )
 [connection signal="area_shape_entered" from="Area" to="." method="_on_Area_area_shape_entered"]
 [connection signal="area_shape_exited" from="Area" to="." method="_on_Area_area_shape_exited"]
