@@ -1,21 +1,10 @@
 extends Spatial
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-
 var speed = 0
 var thruster_speed = 0
 var emergency_warning_timer
 var back_engine_particles
 var back_engine_light
-#func _physics_process(delta):
-	#if Input.is_action_pressed("move_forward"):
-		#speed.
-	
-#func _input(event):
-	#if event is InputEventMouseMotion:
-		#self.rotate_y(deg2rad(-event.relative.x * 0.3));
 		
 func _process(delta):
 	if Input.is_action_pressed("fly_forward"):
@@ -55,10 +44,7 @@ func _process(delta):
 	var v = self.get_global_transform().basis;
 	self.translation = self.translation + v.z.normalized() * speed
 	self.rotate_y(deg2rad(2 * thruster_speed))
-#	var n2 = self.get_node("RayCast2").get_collider();
-#	print("DO2:", n2)
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	back_engine_particles = self.find_node("BackEngineParticles")
 	back_engine_light     = self.find_node("BackEngineLight")
@@ -66,11 +52,6 @@ func _ready():
 	emergency_warning_timer = Timer.new()
 	emergency_warning_timer.connect("timeout", self, "_on_hide_warning")
 	self.add_child(emergency_warning_timer)
-	pass # Replace with function body.
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
 
 func _on_hide_warning():
 	self.get_parent().get_node("GUI").get_child(0).hide()
