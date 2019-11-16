@@ -29,7 +29,7 @@ height = 0.008
 [sub_resource type="SphereShape" id=1]
 radius = 0.289018
 
-[node name="Ship" index="0" instance=ExtResource( 1 )]
+[node name="Ship" instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0308598 )
 script = ExtResource( 2 )
 

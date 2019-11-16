@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=4]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=5]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -45,6 +46,7 @@ directional_shadow_max_distance = 20.4
 [node name="GUI" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
+script = ExtResource( 5 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -69,3 +71,4 @@ align = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
+[connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
