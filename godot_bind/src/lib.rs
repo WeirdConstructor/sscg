@@ -1,6 +1,7 @@
 mod state;
 mod system_map;
 mod wl_gd_mod_resolver;
+mod util;
 
 #[macro_use]
 extern crate lazy_static;
@@ -10,6 +11,7 @@ use gdnative::*;
 use euclid::rect;
 use euclid::vec2;
 use sscg::tree_painter::{DrawCmd, TreePainter};
+use sscg::gui::*;
 
 //use sscg::gui;
 //use sscg::logic;
@@ -18,23 +20,35 @@ use std::rc::Rc;
 //use std::cell::RefCell;
 
 use state::*;
-
-fn c2c(c: (u8, u8, u8, u8)) -> Color {
-    Color::rgba(
-        c.0 as f32 / 255.0,
-        c.1 as f32 / 255.0,
-        c.2 as f32 / 255.0,
-        c.3 as f32 / 255.0)
-}
+use util::c2c;
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Node2D)]
-#[user_data(user_data::ArcData<GUIPaintNode>)]
-pub struct GUIPaintNode { }
+#[user_data(user_data::MutexData<GUIPaintNode>)]
+pub struct GUIPaintNode {
+    win: Window,
+    cache: std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
+    w: i64,
+    h: i64,
+}
 
-fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
+fn draw_cmds(xxo: i32, yyo: i32, cache: &mut std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
+             n: &mut Node2D,
+             fh: &FontHolder,
+             cmds: &[DrawCmd]) {
     for c in cmds {
         match c {
+            DrawCmd::CacheDraw { w, h, id, cmds: cd_cmds } => {
+                if *id >= cache.len() {
+                    cache.resize(*id + 1, None)
+                }
+                cache[*id] = Some(cd_cmds.clone());
+            },
+            DrawCmd::DrawCache { x, y, w, h, id } => {
+                let my_cmds = std::mem::replace(&mut cache[*id], None);
+                draw_cmds(xxo + x, yyo + y, cache, n, fh, my_cmds.as_ref().unwrap());
+                std::mem::replace(&mut cache[*id], my_cmds);
+            },
             DrawCmd::Text { txt, align, color, x, y, w } => {
                 unsafe {
                     let size =
@@ -52,7 +66,7 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
                         };
                     n.draw_string(
                         Some(fh.main_font.to_font()),
-                        vec2(xo + *x as f32, *y as f32),
+                        vec2(xxo as f32 + xo + *x as f32, yyo as f32 + *y as f32 + fh.main_font.get_ascent() as f32),
                         GodotString::from_str(txt),
                         c2c(*color),
                         *w as i64);
@@ -61,8 +75,8 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
             DrawCmd::Circle { x, y, r, color } => {
                 unsafe {
                     n.draw_circle(
-                        vec2(*x as f32,
-                             *y as f32),
+                        vec2((xxo + *x) as f32,
+                             (yyo + *y) as f32),
                         *r as f64,
                         c2c(*color));
                 }
@@ -70,8 +84,8 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
             DrawCmd::FilledCircle { x, y, r, color } => {
                 unsafe {
                     n.draw_circle(
-                        vec2(*x as f32,
-                             *y as f32),
+                        vec2((xxo + *x) as f32,
+                             (yyo + *y) as f32),
                         *r as f64,
                         c2c(*color));
                 }
@@ -79,10 +93,10 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
             DrawCmd::Line { x, y, x2, y2, t, color } => {
                 unsafe {
                     n.draw_line(
-                        vec2(*x as f32,
-                             *y as f32),
-                        vec2(*x2 as f32,
-                             *y2 as f32),
+                        vec2((xxo + *x) as f32,
+                             (yyo + *y) as f32),
+                        vec2((xxo + *x2) as f32,
+                             (yyo + *y2) as f32),
                         c2c(*color),
                         *t as f64,
                         true);
@@ -91,8 +105,8 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
             DrawCmd::Rect { x, y, w, h, color } => {
                 unsafe {
                     n.draw_rect(
-                        rect(*x as f32,
-                             *y as f32,
+                        rect((xxo + *x) as f32,
+                             (yyo + *y) as f32,
                              *w as f32,
                              *h as f32),
                         c2c(*color),
@@ -102,8 +116,8 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
             DrawCmd::FilledRect { x, y, w, h, color } => {
                 unsafe {
                     n.draw_rect(
-                        rect(*x as f32,
-                             *y as f32,
+                        rect((xxo + *x) as f32,
+                             (yyo + *y) as f32,
                              *w as f32,
                              *h as f32),
                         c2c(*color),
@@ -117,17 +131,56 @@ fn draw_cmds(n: &mut Node2D, fh: &FontHolder, cmds: &std::vec::Vec<DrawCmd>) {
 
 #[methods]
 impl GUIPaintNode {
-    fn _init(_owner: Node2D) -> Self { Self { } }
+    fn _init(_owner: Node2D) -> Self { Self { win: Window::new(), w: 0, h: 0, cache: vec![] } }
 
     #[export]
-    fn _ready(&self, _owner: Node2D) {
+    fn _ready(&mut self, _owner: Node2D) {
         // The `godot_print!` macro works like `println!` but prints to the Godot-editor
         // output tab as well.
         godot_print!("NODE PAINT READY");
+        self.win.w = 250;
+        self.win.h = 250;
+        self.win.x = 0;
+        self.win.y = 750;
+        self.win.title = String::from("HUD");
+        let c1 = self.win.add_label(sscg::gui::Size { min_w: 100, w: 1000, min_h: 100, h: 1000, margin: 0 }, sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
+        self.win.child =
+            self.win.add_layout(
+                sscg::gui::Size { min_w: 100, w: 500, min_h: 100, h: 1000, margin: 0 },
+                BoxDir::Vert(1), &vec![c1]);
     }
 
     #[export]
-    fn _draw(&self, mut s: Node2D) {
+    fn on_resize(&mut self, mut s: Node2D, w: f64, h: f64) {
+        self.w = w as i64;
+        self.h = h as i64;
+        dbg!("RESIZE {} {}", w, h);
+        self.win.does_need_redraw();
+        unsafe { s.update(); }
+    }
+
+    #[export]
+    fn on_mouse_move(&self, mut s: Node2D, x: f64, y: f64) {
+//        dbg!("INPUT {} {}", x, y);
+    }
+
+    #[export]
+    fn on_input(&self, mut s: Node2D, character: i64) {
+        dbg!("INPUT {} {}", character);
+    }
+
+    #[export]
+    fn _draw(&mut self, mut s: Node2D) {
+//        unsafe {
+//            s.draw_rect(
+//                rect(10.0,
+//                     10.0,
+//                     400.0,
+//                     300.0),
+//                c2c((255,255, 255, 255)),
+//                true);
+//        }
+
         let mut d = SSCG.lock().unwrap();
         let d2 = d.as_mut().unwrap();
 //        if !d2.v.is_empty() {
@@ -139,23 +192,22 @@ impl GUIPaintNode {
 //            godot_print!("FO {:?}", v);
 //        }
 
+        d2.tp.clear_cmds();
+        self.win.draw(0, self.w as u32, self.h as u32, &mut d2.tp);
         let fh_rc = d2.fonts.clone();
-        if !d2.v.is_empty() {
-            draw_cmds(&mut s, &*fh_rc, &d2.v);
-            d2.v.clear();
-        }
+        draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, d2.tp.ref_cmds());
 
-        unsafe {
-            s.draw_string(
-                Some(fh_rc.main_font.to_font()),
-                vec2(50.0, 50.0),
-                GodotString::from_str("FÖRSTER"),
-                c2c((55, 0, 55, 255)),
-                100);
-//            godot_print!("DRAW: {} ", s.get_name().to_string());
-//            s.draw_rect(rect(10.0, 10.0, 200.0, 200.0), Color::rgba(255.0, 1.0, 0.0, 255.0), true);
-//            s.draw_circle(vec2(50.0, 50.0), 20.0, Color::rgb(1.0, 0.0, 1.0));
-        }
+//        unsafe {
+//            s.draw_string(
+//                Some(fh_rc.main_font.to_font()),
+//                vec2(50.0, 50.0),
+//                GodotString::from_str("FÖRSTER"),
+//                c2c((55, 0, 55, 255)),
+//                100);
+////            godot_print!("DRAW: {} ", s.get_name().to_string());
+////            s.draw_rect(rect(10.0, 10.0, 200.0, 200.0), Color::rgba(255.0, 1.0, 0.0, 255.0), true);
+////            s.draw_circle(vec2(50.0, 50.0), 20.0, Color::rgb(1.0, 0.0, 1.0));
+//        }
     }
 }
 

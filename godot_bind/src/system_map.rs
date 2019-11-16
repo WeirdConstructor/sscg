@@ -1,10 +1,11 @@
 use crate::state::SSCG;
 use gdnative::*;
-use euclid::vec3;
+use euclid::{vec2, vec3};
 use wlambda::VVal;
 use std::rc::Rc;
 use sscg::tree_painter::{DrawCmd, TreePainter};
 use crate::state::*;
+use crate::util::c2c;
 //use std::sync::{Arc, Mutex, Condvar};
 
 #[derive(NativeClass)]
@@ -12,6 +13,7 @@ use crate::state::*;
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct SystemMap {
     tmpl_station: Option<PackedScene>,
+//    cv:           Option<Control>,
 }
 
 // XXX: We assume that PackedScene is thread safe.
@@ -26,10 +28,15 @@ impl SystemMap {
         dbg!("INIT SSCGState");
         let mut f = File::new();
         f.open(GodotString::from_str("res://test.txt"), 1)
-         .expect("test.txt to be there!");
+         .expect("test.txt to be there!") ;
         let txt = f.get_as_text().to_string();
         println!("LAODED: {}", txt);
 
+//        self.cv = Some(unsafe {
+//            owner.get_node(NodePath::from_str("GUI"))
+//                 .expect("Need 'GUI' node!")
+//                 .cast::<Control>()
+//                 .expect("GUI need to be Control") });
 
         let f =
             ResourceLoader::godot_singleton().load(
@@ -103,6 +110,11 @@ impl SystemMap {
                     println!("GOT SELECTION: {}", i);
                 }
             }
+
+//            self.cv.unwrap().draw_circle(
+//                vec2(500 as f32, 1000 as f32),
+//                10.0,
+//                c2c((255, 255, 0, 255)));
         }
 
         if !sscg.update_stations { return; }
