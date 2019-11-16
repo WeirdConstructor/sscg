@@ -6,14 +6,12 @@ use std::rc::Rc;
 use sscg::tree_painter::{DrawCmd, TreePainter};
 use crate::state::*;
 use crate::util::c2c;
-//use std::sync::{Arc, Mutex, Condvar};
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Spatial)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct SystemMap {
     tmpl_station: Option<PackedScene>,
-//    cv:           Option<Control>,
 }
 
 // XXX: We assume that PackedScene is thread safe.
@@ -31,12 +29,6 @@ impl SystemMap {
          .expect("test.txt to be there!") ;
         let txt = f.get_as_text().to_string();
         println!("LAODED: {}", txt);
-
-//        self.cv = Some(unsafe {
-//            owner.get_node(NodePath::from_str("GUI"))
-//                 .expect("Need 'GUI' node!")
-//                 .cast::<Control>()
-//                 .expect("GUI need to be Control") });
 
         let f =
             ResourceLoader::godot_singleton().load(
@@ -58,8 +50,6 @@ impl SystemMap {
         let mut sscg = SSCGState::new(fh, cmds);
         sscg.setup_wlambda();
         *d = Some(sscg);
-//        let mut sscg_lck = SSCG.lock().unwrap();
-//        let sscg = sscg_lck.as_mut().unwrap();
 
         godot_print!("Scene Map Instanciated!");
         let scene = ResourceLoader::godot_singleton().load(
@@ -78,22 +68,6 @@ impl SystemMap {
         let sscg = sscg_lck.as_mut().unwrap();
 
         let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
-//        let ship_pos = vvship.get_key("pos").unwrap_or(VVal::Nul);
-//        unsafe {
-//            let mut ship =
-//                owner.get_node(NodePath::from_str("ship"))
-//                     .expect("Find 'ship' node")
-//                     .cast::<Spatial>()
-//                     .unwrap();
-//
-//            let t = vec3(
-//                -8.0 + ((ship_pos.v_f(0) as f32 * 16.0) / 10000.0),
-//                2.5,
-//                -8.0 + ((ship_pos.v_f(1) as f32 * 16.0) / 10000.0));
-//            ship.set_translation(t);
-//
-////            println!("SHIP POS: {:?}", t);
-//        }
 
         let mut entities = unsafe {
             owner.get_node(NodePath::from_str("entities"))
@@ -110,11 +84,6 @@ impl SystemMap {
                     println!("GOT SELECTION: {}", i);
                 }
             }
-
-//            self.cv.unwrap().draw_circle(
-//                vec2(500 as f32, 1000 as f32),
-//                10.0,
-//                c2c((255, 255, 0, 255)));
         }
 
         if !sscg.update_stations { return; }
