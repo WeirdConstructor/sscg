@@ -1,12 +1,11 @@
 Space Ship Collector Game - A space trading and collector game
 ==============================================================
 
-This is just a simple try for now. Getting down some ideas, playing around.
-Got the idea while watching Age of Empires and similar building/development
-games. I want to see if I can start with some small idea, and build
+This is just a simple try for now. Getting down some ideas, playing
+around.  I want to see if I can start with some small idea, and build
 upon that.
 
-# License
+# Code License
 
 This project is licensed under the GNU General Public License Version 3 or
 later.
@@ -69,6 +68,28 @@ We might find an agreement.
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in WLambda by you, shall be licensed as GPLv3 or later,
 without any additional terms or conditions.
+
+# Asset Licenses and Attribution
+
+## 3D Models
+
+### Copyright 2019 WeirdConstructor - GPLv3 or later
+
+- models/skys/sky1.blend
+- models/map/crosshair.blend
+- models/stations/space\_station\_1\*
+- models/rocks/asteroid\_1\*
+- models/ships/ship\_1\*
+
+## Images
+
+- images/Orion\_Nebula\_-\_Hubble\_2006\*
+  From Wikipedia: `https://de.wikipedia.org/wiki/Datei:Orion_Nebula_-_Hubble_2006_mosaic_18000.jpg`
+  NASA, ESA, M. Robberto (Space Telescope Science Institute/ESA)
+  and the Hubble Space Telescope Orion Treasury Project Team; 
+  Regarding copyright: NASA & Space Telescope Science Institute images are public domain;
+  this image also involved ESA, but it can be found at ESA's Hubble site,
+  which states that "The Hubble material you see on these pages is copyright-free" 
 
 # Authors
 
