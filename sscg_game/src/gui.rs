@@ -417,8 +417,10 @@ impl Window {
 
             // window background rect
             p.draw_rect_filled(
-                0, 0, padding as u32 + w_fb.w, padding as u32 + w_fb.h,
-                (0, 0, 0, 255));
+                0, padding,
+                w_fb.w - padding as u32 - corner_radius,
+                w_fb.h - padding as u32,
+                (0, 255, 0, 255));
             p.push_add_offs(padding, padding);
 
             // left round circle

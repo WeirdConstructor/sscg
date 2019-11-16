@@ -48,7 +48,7 @@ func _process(delta):
 func _ready():
 	back_engine_particles = self.find_node("BackEngineParticles")
 	back_engine_light     = self.find_node("BackEngineLight")
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN);
+	#Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN);
 	emergency_warning_timer = Timer.new()
 	emergency_warning_timer.connect("timeout", self, "_on_hide_warning")
 	self.add_child(emergency_warning_timer)

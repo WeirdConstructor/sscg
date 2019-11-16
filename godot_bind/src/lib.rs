@@ -140,14 +140,20 @@ impl GUIPaintNode {
         godot_print!("NODE PAINT READY");
         self.win.w = 250;
         self.win.h = 250;
-        self.win.x = 0;
+        self.win.x = 500;
         self.win.y = 750;
         self.win.title = String::from("HUD");
-        let c1 = self.win.add_label(sscg::gui::Size { min_w: 100, w: 1000, min_h: 100, h: 1000, margin: 0 }, sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
+        let c1 = self.win.add_label(sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 }, sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
+        let c2 = self.win.add_label(
+            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
+            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)).clickable());
+        let c3 = self.win.add_label(
+            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
+            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)).editable("."));
         self.win.child =
             self.win.add_layout(
-                sscg::gui::Size { min_w: 100, w: 500, min_h: 100, h: 1000, margin: 0 },
-                BoxDir::Vert(1), &vec![c1]);
+                sscg::gui::Size { min_w: 10, w: 500, min_h: 10, h: 1000, margin: 0 },
+                BoxDir::Vert(1), &vec![c1, c2, c3]);
     }
 
     #[export]
@@ -160,54 +166,43 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn on_mouse_move(&self, mut s: Node2D, x: f64, y: f64) {
-//        dbg!("INPUT {} {}", x, y);
+    fn on_mouse_click(&mut self, mut s: Node2D, x: f64, y: f64) {
+        self.win.handle_event(WindowEvent::Click(x as i32, y as i32));
+        if let Some(s) = self.win.collect_activated_child() {
+            dbg!("FOO", s);
+        }
+        if self.win.needs_redraw() { unsafe { s.update(); } }
     }
 
     #[export]
-    fn on_input(&self, mut s: Node2D, character: i64) {
-        dbg!("INPUT {} {}", character);
+    fn on_mouse_move(&mut self, mut s: Node2D, x: f64, y: f64) {
+        self.win.handle_event(WindowEvent::MousePos(x as i32, y as i32));
+        if self.win.needs_redraw() { unsafe { s.update(); } }
+    }
+
+    #[export]
+    fn on_input(&mut self, mut s: Node2D, character: i64) {
+        if character > 0 {
+            let c = std::char::from_u32(character as u32).unwrap_or('\0');
+            let mut charstr = String::new();
+            charstr.push(c);
+            self.win.handle_event(WindowEvent::TextInput(charstr));
+
+        } else if character < 0 {
+            self.win.handle_event(WindowEvent::Backspace);
+        }
+        if self.win.needs_redraw() { unsafe { s.update(); } }
     }
 
     #[export]
     fn _draw(&mut self, mut s: Node2D) {
-//        unsafe {
-//            s.draw_rect(
-//                rect(10.0,
-//                     10.0,
-//                     400.0,
-//                     300.0),
-//                c2c((255,255, 255, 255)),
-//                true);
-//        }
-
         let mut d = SSCG.lock().unwrap();
         let d2 = d.as_mut().unwrap();
-//        if !d2.v.is_empty() {
-//            self.cmds = std::mem::replace(&mut d2.v, std::vec::Vec::new());
-//            godot_print!("GOT IT");
-//        }
-
-//        for v in self.cmds.iter() {
-//            godot_print!("FO {:?}", v);
-//        }
 
         d2.tp.clear_cmds();
         self.win.draw(0, self.w as u32, self.h as u32, &mut d2.tp);
         let fh_rc = d2.fonts.clone();
         draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, d2.tp.ref_cmds());
-
-//        unsafe {
-//            s.draw_string(
-//                Some(fh_rc.main_font.to_font()),
-//                vec2(50.0, 50.0),
-//                GodotString::from_str("FÖRSTER"),
-//                c2c((55, 0, 55, 255)),
-//                100);
-////            godot_print!("DRAW: {} ", s.get_name().to_string());
-////            s.draw_rect(rect(10.0, 10.0, 200.0, 200.0), Color::rgba(255.0, 1.0, 0.0, 255.0), true);
-////            s.draw_circle(vec2(50.0, 50.0), 20.0, Color::rgb(1.0, 0.0, 1.0));
-//        }
     }
 }
 
