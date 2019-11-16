@@ -1,13 +1,21 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=4]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
+
+[sub_resource type="DynamicFont" id=2]
+size = 25
+outline_size = 2
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 3 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -16,12 +24,12 @@ script = SubResource( 1 )
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="ship" parent="." instance=ExtResource( 4 )]
-transform = Transform( 0.429475, 0, -0.903079, 0, 1, 0, 0.903079, 0, 0.429475, 8.17908, 0.939844, 6.95426 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19884, 0.939844, -1.1908 )
 
 [node name="entities" type="Spatial" parent="."]
 
 [node name="Sun" type="DirectionalLight" parent="."]
-transform = Transform( 0.741775, 0.518385, 0.425497, 0, -0.634455, 0.77296, 0.670649, -0.573362, -0.470623, 6.97923, 4.02086, -16.111 )
+transform = Transform( 0.741775, 0.518385, 0.425497, 0, -0.634455, 0.77296, 0.670649, -0.573362, -0.470623, 0, 0, -5.034 )
 light_energy = 0.34
 light_specular = 0.0
 shadow_enabled = true
@@ -33,3 +41,31 @@ directional_shadow_blend_splits = true
 directional_shadow_normal_bias = 0.0
 directional_shadow_bias_split_scale = 0.0
 directional_shadow_max_distance = 20.4
+
+[node name="GUI" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="DockingWarning" type="HBoxContainer" parent="GUI"]
+visible = false
+anchor_right = 1.0
+alignment = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="DockingWarningLbl" type="Label" parent="GUI/DockingWarning"]
+margin_left = 167.0
+margin_right = 857.0
+margin_bottom = 63.0
+custom_fonts/font = SubResource( 2 )
+custom_colors/font_color = Color( 1, 0, 0, 1 )
+text = "You are too fast for docking!
+Station emergency collision transport activated!"
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}

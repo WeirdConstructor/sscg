@@ -1,25 +1,59 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://blender_imports/ship_1.gltf" type="PackedScene" id=1]
 [ext_resource path="res://scenes/ships/ship_1.gd" type="Script" id=2]
+
+[sub_resource type="ParticlesMaterial" id=2]
+emission_shape = 2
+emission_box_extents = Vector3( 0.03, 0.01, 0.02 )
+direction = Vector3( 0, 0, -1 )
+spread = 6.46
+gravity = Vector3( 0, 0, 0 )
+initial_velocity = 0.87
+
+[sub_resource type="SpatialMaterial" id=3]
+flags_transparent = true
+params_blend_mode = 1
+albedo_color = Color( 1, 0.470588, 0, 0.219608 )
+emission_enabled = true
+emission = Color( 1, 0.470588, 0, 1 )
+emission_energy = 1.0
+emission_operator = 0
+emission_on_uv2 = false
+
+[sub_resource type="SphereMesh" id=4]
+material = SubResource( 3 )
+radius = 0.011
+height = 0.008
 
 [sub_resource type="SphereShape" id=1]
 radius = 0.289018
 
 [node name="Ship" index="0" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0308598 )
 script = ExtResource( 2 )
 
 [node name="Ship" parent="." index="0"]
 transform = Transform( 0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0 )
 use_in_baked_light = true
 
-[node name="Back Engine" type="OmniLight" parent="Ship" index="0"]
-transform = Transform( 100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0.712444, -3.75913 )
+[node name="BackEngineParticles" type="Particles" parent="Ship" index="0"]
+transform = Transform( 20, 0, 0, 0, 20, 0, 0, 0, 20, 0, -0.0425324, -4.45109 )
+cast_shadow = 0
+emitting = false
+amount = 23
+lifetime = 0.09
+speed_scale = 0.65
+visibility_aabb = AABB( -0.288646, -0.315101, -0.482572, 0.577291, 0.71321, 1.09405 )
+process_material = SubResource( 2 )
+draw_pass_1 = SubResource( 4 )
+
+[node name="BackEngineLight" type="OmniLight" parent="Ship" index="1"]
+transform = Transform( 20, 0, 0, 0, 20, 0, 0, 0, 20, 0, -0.0364883, -4.55749 )
 light_color = Color( 1, 0.443137, 0.313726, 1 )
-light_energy = 1.71
 light_indirect_energy = 8.0
 light_bake_mode = 2
-omni_range = 0.134766
+omni_range = 0.13458
 
 [node name="Camera" type="Camera" parent="." index="1"]
 transform = Transform( -1, -4.9056e-08, 3.86312e-07, 0, 0.992034, 0.125974, -3.89414e-07, 0.125974, -0.992034, 8.22446e-08, 0.0843845, -0.356407 )
@@ -32,3 +66,4 @@ far = 4712.0
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.103383 )
 shape = SubResource( 1 )
 [connection signal="area_shape_entered" from="Area" to="." method="_on_Area_area_shape_entered"]
+[connection signal="area_shape_exited" from="Area" to="." method="_on_Area_area_shape_exited"]
