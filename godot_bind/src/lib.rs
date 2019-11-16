@@ -6,19 +6,13 @@ mod util;
 #[macro_use]
 extern crate lazy_static;
 extern crate gdnative;
-use gdnative::*;
 
+use gdnative::*;
 use euclid::rect;
 use euclid::vec2;
 use sscg::tree_painter::{DrawCmd, TreePainter};
 use sscg::gui::*;
-
-//use sscg::gui;
-//use sscg::logic;
-
 use std::rc::Rc;
-//use std::cell::RefCell;
-
 use state::*;
 use util::c2c;
 
@@ -32,10 +26,12 @@ pub struct GUIPaintNode {
     h: i64,
 }
 
-fn draw_cmds(xxo: i32, yyo: i32, cache: &mut std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
+fn draw_cmds(xxo: i32, yyo: i32,
+             cache: &mut std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
              n: &mut Node2D,
              fh: &FontHolder,
-             cmds: &[DrawCmd]) {
+             cmds: &[DrawCmd])
+{
     for c in cmds {
         match c {
             DrawCmd::CacheDraw { w, h, id, cmds: cd_cmds } => {
@@ -66,7 +62,9 @@ fn draw_cmds(xxo: i32, yyo: i32, cache: &mut std::vec::Vec<Option<std::vec::Vec<
                         };
                     n.draw_string(
                         Some(fh.main_font.to_font()),
-                        vec2(xxo as f32 + xo + *x as f32, yyo as f32 + *y as f32 + fh.main_font.get_ascent() as f32),
+                        vec2(xxo as f32 + xo + *x as f32,
+                             yyo as f32 + *y as f32
+                             + fh.main_font.get_ascent() as f32),
                         GodotString::from_str(txt),
                         c2c(*color),
                         *w as i64);
@@ -131,7 +129,9 @@ fn draw_cmds(xxo: i32, yyo: i32, cache: &mut std::vec::Vec<Option<std::vec::Vec<
 
 #[methods]
 impl GUIPaintNode {
-    fn _init(_owner: Node2D) -> Self { Self { win: Window::new(), w: 0, h: 0, cache: vec![] } }
+    fn _init(_owner: Node2D) -> Self {
+        Self { win: Window::new(), w: 0, h: 0, cache: vec![] }
+    }
 
     #[export]
     fn _ready(&mut self, _owner: Node2D) {
@@ -143,13 +143,17 @@ impl GUIPaintNode {
         self.win.x = 500;
         self.win.y = 750;
         self.win.title = String::from("HUD");
-        let c1 = self.win.add_label(sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 }, sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
+        let c1 = self.win.add_label(
+            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
+            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
         let c2 = self.win.add_label(
             sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)).clickable());
+            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
+            .clickable());
         let c3 = self.win.add_label(
             sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)).editable("."));
+            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
+            .editable("."));
         self.win.child =
             self.win.add_layout(
                 sscg::gui::Size { min_w: 10, w: 500, min_h: 10, h: 1000, margin: 0 },
@@ -213,8 +217,6 @@ impl GUIPaintNode {
 #[user_data(user_data::ArcData<HelloWorld>)]
 pub struct HelloWorld;
 
-// __One__ `impl` block can have the `#[methods]` attribute, which will generate
-// code to automatically bind any exported methods to Godot.
 #[methods]
 impl HelloWorld {
 
@@ -223,36 +225,13 @@ impl HelloWorld {
         HelloWorld
     }
 
-//    #[export]
-
-    // In order to make a method known to Godot, the #[export] attribute has to be used.
-    // In Godot script-classes do not actually inherit the parent class.
-    // Instead they are"attached" to the parent object, called the "owner".
-    // The owner is passed to every single exposed method.
     #[export]
     fn _ready(&self, _owner: Node) {
-        // The `godot_print!` macro works like `println!` but prints to the Godot-editor
-        // output tab as well.
         godot_print!("hello, world. YE!");
     }
 
     #[export]
     fn _process(&self, _owner: Node, _delta: f64) {
-//        unsafe {
-//            if let Some(n) = owner.get_node(NodePath::from_str("Ship")) {
-//                let s : Spatial = n.cast().unwrap();
-//                godot_print!("DELTA: {} : {}", s.get_name().to_string(), delta);
-//                s.rotate_y(delta);
-//            }
-//            if let Some(n) = owner.get_node(NodePath::from_str("CanvasLayer/Node2D")) {
-//                if let Some(x) = n
-//                let s : Node2D = n.cast().unwrap();
-//                godot_print!("DELTA: {} : {}", s.get_name().to_string(), delta);
-//                s.draw_rect(rect(10.0, 10.0, 200.0, 200.0), Color::rgb(1.0, 1.0, 0.0), true);
-//                s.update();
-//                s.rotate_y(delta);
-//            }
-//        }
     }
 }
 
@@ -260,7 +239,6 @@ fn terminate(options: *mut gdnative::sys::godot_gdnative_terminate_options) {
     dbg!("*** terminate sscg native");
 }
 
-// Function that registers all exposed classes to Godot
 fn init(handle: gdnative::init::InitHandle) {
     dbg!("*** init sscg native");
     handle.add_class::<HelloWorld>();
@@ -268,7 +246,6 @@ fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<system_map::SystemMap>();
 }
 
-// macros that create the entry-points of the dynamic library.
 godot_gdnative_init!();
 godot_nativescript_init!(init);
 godot_gdnative_terminate!(terminate);
