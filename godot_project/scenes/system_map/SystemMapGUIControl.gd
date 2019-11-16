@@ -6,17 +6,19 @@ extends Control
 
 func _input(event):
 	if event is InputEventKey:
-		self.get_node("GUIDrawing").on_input(event.get_unicode())
+		if event.is_pressed():
+			if event.get_scancode() == KEY_BACKSPACE:
+				self.get_node("GUIDrawing").on_input(-1)
+			else:
+				self.get_node("GUIDrawing").on_input(event.get_unicode())
 	elif event is InputEventMouseMotion:
 		var mp = self.get_local_mouse_position()
 		self.get_node("GUIDrawing").on_mouse_move(mp.x, mp.y)
+	elif event is InputEventMouseButton:
+		if event.is_pressed():
+			var mp = self.get_local_mouse_position()
+			self.get_node("GUIDrawing").on_mouse_click(mp.x, mp.y)
 
-func _gui_input(event):
-	print("EVENT ", event)
-	if event is InputEventKey:
-		print("U ", event.get_unicode())
-
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	self.get_node("GUIDrawing").on_resize(self.rect_size.x, self.rect_size.y);
 
