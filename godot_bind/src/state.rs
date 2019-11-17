@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
 use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric};
+use sscg::wlambda_api::WindowManager;
 use gdnative::*;
 use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
 use crate::wl_gd_mod_resolver::*;
@@ -20,13 +21,14 @@ impl FontMetric for FontHolder {
 
 #[derive(Clone)]
 pub struct SSCGState {
-    pub fonts: Rc<FontHolder>,
-    pub tp:    TreePainter,
-    pub v:     std::vec::Vec<DrawCmd>,
-    pub temp_stations: std::vec::Vec<(i32, i32)>,
-    pub update_stations: bool,
-    pub wlctx: EvalContext,
-    pub state: VVal,
+    pub fonts:              Rc<FontHolder>,
+    pub tp:                 TreePainter,
+    pub v:                  std::vec::Vec<DrawCmd>,
+    pub temp_stations:      std::vec::Vec<(i32, i32)>,
+    pub update_stations:    bool,
+    pub wlctx:              EvalContext,
+    pub state:              VVal,
+    pub wm:                 Rc<RefCell<WindowManager>>,
 }
 
 // XXX: This is safe as long as it is only accessed from the
@@ -40,6 +42,14 @@ impl SSCGState {
         let genv = GlobalEnv::new_default();
         genv.borrow_mut().set_resolver(
             Rc::new(RefCell::new(GodotModuleResolver::new())));
+
+        let wm = Rc::new(RefCell::new(WindowManager::new()));
+
+        let mut sscg_wl_mod = SymbolTable::new();
+        sscg_wl_mod.set("win", window_manager_wlambda_obj(wm.clone()));
+//        sscg_wl_mod.set("win",  WindowManagerWlWrapper::vval_from(s_wm.clone()));
+        genv.borrow_mut().set_module("sscg", sscg_wl_mod);
+
         let tp = TreePainter::new(fh.clone());
         Self {
             fonts: fh,
@@ -49,6 +59,7 @@ impl SSCGState {
             tp,
             wlctx: EvalContext::new(genv),
             state: VVal::Nul,
+            wm,
         }
     }
 

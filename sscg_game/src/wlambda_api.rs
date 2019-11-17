@@ -2,7 +2,9 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use crate::logic::*;
 use crate::gui;
+#[macro_use]
 use wlambda::{VVal, StackAction, VValUserData, GlobalEnv, EvalContext, SymbolTable};
+use wlambda::set_vval_method;
 
 fn vval_to_system(v: VVal) -> Result<Rc<RefCell<System>>, StackAction> {
     match v {
@@ -307,6 +309,50 @@ impl VValUserData for SystemWlWrapper {
 pub struct WindowManager {
     pub windows: std::vec::Vec<Option<gui::Window>>,
     pub ev_cbs: std::vec::Vec<VVal>,
+}
+
+pub fn window_manager_wlambda_obj(
+    wm: std::rc::Rc<std::cell::RefCell<WindowManager>>)
+    -> VVal
+{
+    let o = VVal::map();
+
+    set_vval_method!(o, wm, set_window, Some(1), Some(3), env, argc, {
+        let idx = env.arg(0).i() as usize;
+        if argc > 1 {
+            let win = vval2win(env.arg(1));
+            let cb  = env.arg(2);
+            wm.borrow_mut().set(idx, win, cb);
+        } else {
+            wm.borrow_mut().delete(idx);
+        }
+
+        Ok(VVal::Bol(true))
+    });
+
+    set_vval_method!(o, wm, set_label, Some(3), Some(3), env, argc, {
+        let idx    = env.arg(0).i() as usize;
+        let lblref = env.arg(1).s_raw();
+        let txt    = env.arg(2).s_raw();
+
+        wm.borrow_mut().set_label_text(idx, &lblref, txt);
+
+        Ok(VVal::Bol(true))
+    });
+
+    set_vval_method!(o, wm, get_label, Some(2), Some(2), env, argc, {
+        let idx    = env.arg(0).i() as usize;
+        let lblref = env.arg(1).s_raw();
+
+        Ok(wm.borrow_mut().get_label_text(idx, &lblref))
+    });
+
+    set_vval_method!(o, wm, get_state, Some(1), Some(1), env, argc, {
+        let idx    = env.arg(0).i() as usize;
+        Ok(wm.borrow_mut().get_window_state(idx))
+    });
+
+    o
 }
 
 impl WindowManager {
