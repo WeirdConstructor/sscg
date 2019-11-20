@@ -408,6 +408,9 @@ impl Window {
             else { ts.0 };
 
         p.push_add_offs(w_fb.x as i32, w_fb.y as i32);
+        if self.needs_redraw {
+            println!("REDRAW {}", self.needs_redraw);
+        }
         p.declare_cache_draw(
             0, 0,
             padding as u32 + w_fb.w, padding as u32 + w_fb.h,
@@ -420,7 +423,7 @@ impl Window {
                 0, padding,
                 w_fb.w - padding as u32 - corner_radius,
                 w_fb.h - padding as u32,
-                (0, 255, 0, 255));
+                (0, 0, 0, 255));
             p.push_add_offs(padding, padding);
 
             // left round circle
@@ -502,7 +505,7 @@ impl Window {
     }
 
     pub fn needs_redraw(&self) -> bool { self.needs_redraw }
-    pub fn does_need_redraw(&mut self) { self.needs_redraw = true; }
+    pub fn does_need_redraw(&mut self) { println!("DOES NEED REDRAW!"); self.needs_redraw = true; }
 
     pub fn get_label_text(&self, lblref: &str) -> Option<String> {
         for c in self.widgets.iter() {
@@ -581,23 +584,25 @@ impl Window {
         let r = match ev {
             WindowEvent::MousePos(x, y) => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
+                    let prev_hc = self.hover_child;
                     self.hover_child =
                         self.get_label_at(
                             x as u32,
                             y as u32,
                             |l| { l.clickable || l.editable });
-                    true
+                    prev_hc != self.hover_child
                 } else {
                     false
                 }
             },
             WindowEvent::Click(x, y)    => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
+                    let prev_fc = self.focus_child;
                     self.activ_child =
                         self.get_label_at(x as u32, y as u32, |l: &Label| { l.clickable });
                     self.focus_child =
                         self.get_label_at(x as u32, y as u32, |l: &Label| { l.editable });
-                    true
+                    prev_fc != self.focus_child
                 } else {
                     false
                 }

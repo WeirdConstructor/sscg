@@ -363,6 +363,22 @@ impl WindowManager {
         }
     }
 
+    pub fn for_each_window<F>(&mut self, mut winfun: F)
+        where F: FnMut(&mut gui::Window) -> ()
+    {
+        for w in self.windows.iter_mut() {
+            if w.is_none() { continue; }
+            winfun(&mut *w.as_mut().unwrap())
+        }
+    }
+
+    pub fn some_win_needs_redraw(&mut self) -> bool {
+        let mut need_redraw = false;
+        self.for_each_window(
+            |win| if win.needs_redraw() { need_redraw = true });
+        need_redraw
+    }
+
     pub fn get_activated_childs(&mut self)
         -> Option<std::vec::Vec<(usize, String, VVal)>> {
 
@@ -501,11 +517,11 @@ fn color_hex24tpl(s: &str) -> (u8, u8, u8, u8) {
 
 fn vval2size(v: VVal) -> gui::Size {
     let mut s = gui::Size {
-        min_w: 0,
-        min_h: 0,
+        min_w:    0,
+        min_h:    0,
         w:     1000,
         h:     1000,
-        margin: 0,
+        margin:   0,
     };
 
     s.min_w  = v.get_key("min_w") .unwrap_or(VVal::Int(0)).i() as u32;
@@ -609,6 +625,7 @@ impl VValUserData for WindowManagerWlWrapper {
                 if !args[2].is_none() {
                     let win = vval2win(args[2].clone());
                     let cb  = args[3].clone();
+                    println!("FOO:! {}", args[2].s());
 
                     self.0.borrow_mut().set(idx as usize, win, cb);
                 } else {

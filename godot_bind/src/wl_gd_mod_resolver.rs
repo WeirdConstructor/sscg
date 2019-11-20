@@ -2,6 +2,8 @@ use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
 use gdnative::godot_print;
 use gdnative::{File, GodotString};
 use wlambda::compiler::{GlobalEnvRef, ModuleResolver, ModuleLoadError};
+use std::rc::Rc;
+use std::cell::RefCell;
 
 /// This structure implements the ModuleResolver trait and is
 /// responsible for loading modules on `!@import` for WLambda.
@@ -19,8 +21,10 @@ impl ModuleResolver for GodotModuleResolver {
     fn resolve(&mut self, global: GlobalEnvRef, path: &[String])
         -> Result<SymbolTable, ModuleLoadError>
     {
+        println!("***** GODOT RESOLVE MODULE: {:?}", path);
         let genv = GlobalEnv::new_empty_default();
         genv.borrow_mut().import_modules_from(&*global.borrow());
+        genv.borrow_mut().set_resolver(Rc::new(RefCell::new(GodotModuleResolver::new())));
         let mut ctx = EvalContext::new(genv);
         let pth = path.join("/");
 
