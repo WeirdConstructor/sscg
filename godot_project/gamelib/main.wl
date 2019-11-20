@@ -1,5 +1,6 @@
 !@import wlambda;
 !@import std std;
+!@import sscg sscg;
 
 !:global STATE = ${
     ship = ${
@@ -23,6 +24,21 @@
 };
 
 !@export init {
+    sscg:win.set_window 0 ${
+        x = 100, y = 200, w = 250, h = 250,
+        title = "Status",
+        title_color = "F00",
+        child = ${
+            t = :vbox,
+            w = 1000,
+            childs = $[
+                ${ t = :l_text,   fg = "000", bg = "0F0", text = "Test 123" },
+                ${ t = :l_button, ref = "xx", fg = "000", bg = "0F0", text = "Test 123" },
+            ],
+        }
+    } {
+        std:displayln "FOO" @;
+    };
     std:displayln "DISPLAY INIT";
     STATE
 };

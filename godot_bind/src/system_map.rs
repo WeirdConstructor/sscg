@@ -19,37 +19,39 @@ unsafe impl Send for SystemMap { }
 
 #[methods]
 impl SystemMap {
-    fn _init(_owner: Spatial) -> Self { Self { tmpl_station: None } }
-
-    #[export]
-    fn _ready(&mut self, mut owner: Spatial) {
-        dbg!("INIT SSCGState");
-        let mut f = File::new();
-        f.open(GodotString::from_str("res://test.txt"), 1)
-         .expect("test.txt to be there!") ;
-        let txt = f.get_as_text().to_string();
-        println!("LAODED: {}", txt);
-
-        let f =
+    fn _init(_owner: Spatial) -> Self {
+        let main_font_resource =
             ResourceLoader::godot_singleton().load(
                 GodotString::from_str("res://fonts/main_font_normal.tres"),
                 GodotString::from_str("DynamicFont"),
                 false);
-        let df : DynamicFont = f.and_then(|f| f.cast::<DynamicFont>()).unwrap();
+        let main_font : DynamicFont =
+            main_font_resource
+                .and_then(|font_res| font_res.cast::<DynamicFont>())
+                .unwrap();
+        let mut sscg =
+            SSCGState::new(Rc::new(FontHolder {
+                main_font
+            }));
 
-        let mut cmds = std::vec::Vec::new();
-        cmds.push(DrawCmd::Rect { x: 0, y: 0, w: 100, h: 100, color: (255, 255, 0, 255) });
-        cmds.push(DrawCmd::Rect { x: 50, y: 25, w: 100, h: 100, color: (0, 255, 0, 255) });
-        cmds.push(DrawCmd::Text { x: 100, y: 100, w: 300,
-            txt: String::from("FOFOFööß"),
-            align: 0, color: (0, 255, 0, 255) });
+        let mut global_lock = SSCG.lock().expect("Getting lock to SSCG");
+        *global_lock = Some(sscg);
 
-        let fh: Rc<FontHolder> = Rc::new(FontHolder { main_font: df });
-        let tp = TreePainter::new(fh.clone());
-        let mut d = SSCG.lock().expect("Getting lock to SSCG");
-        let mut sscg = SSCGState::new(fh, cmds);
-        sscg.setup_wlambda();
-        *d = Some(sscg);
+        dbg!("DONE INIT");
+
+        global_lock.as_mut().unwrap().setup_wlambda();
+
+        Self { tmpl_station: None }
+    }
+
+    #[export]
+    fn _ready(&mut self, mut owner: Spatial) {
+        dbg!("INIT SSCGState");
+//        let mut f = File::new();
+//        f.open(GodotString::from_str("res://test.txt"), 1)
+//         .expect("test.txt to be there!") ;
+//        let txt = f.get_as_text().to_string();
+//        println!("LAODED: {}", txt);
 
         godot_print!("Scene Map Instanciated!");
         let scene = ResourceLoader::godot_singleton().load(

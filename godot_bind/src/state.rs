@@ -3,6 +3,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric};
 use sscg::wlambda_api::WindowManager;
+use sscg::wlambda_api::window_manager_wlambda_obj;
 use gdnative::*;
 use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
 use crate::wl_gd_mod_resolver::*;
@@ -21,14 +22,13 @@ impl FontMetric for FontHolder {
 
 #[derive(Clone)]
 pub struct SSCGState {
-    pub fonts:              Rc<FontHolder>,
-    pub tp:                 TreePainter,
-    pub v:                  std::vec::Vec<DrawCmd>,
-    pub temp_stations:      std::vec::Vec<(i32, i32)>,
-    pub update_stations:    bool,
-    pub wlctx:              EvalContext,
-    pub state:              VVal,
-    pub wm:                 Rc<RefCell<WindowManager>>,
+    pub fonts:           Rc<FontHolder>,
+    pub tp:              TreePainter,
+    pub temp_stations:   std::vec::Vec<(i32, i32)>,
+    pub update_stations: bool,
+    pub wlctx:           EvalContext,
+    pub state:           VVal,
+    pub wm:              Rc<RefCell<WindowManager>>,
 }
 
 // XXX: This is safe as long as it is only accessed from the
@@ -37,7 +37,7 @@ pub struct SSCGState {
 unsafe impl Send for SSCGState { }
 
 impl SSCGState {
-    pub fn new(fh: Rc<FontHolder>, cmds: std::vec::Vec<DrawCmd>) -> Self {
+    pub fn new(fh: Rc<FontHolder>) -> Self {
         dbg!("INIT SSCGState");
         let genv = GlobalEnv::new_default();
         genv.borrow_mut().set_resolver(
@@ -53,7 +53,6 @@ impl SSCGState {
         let tp = TreePainter::new(fh.clone());
         Self {
             fonts: fh,
-            v: cmds,
             temp_stations: vec![(1, 1), (900, 500)],
             update_stations: true,
             tp,
@@ -64,6 +63,7 @@ impl SSCGState {
     }
 
     pub fn setup_wlambda(&mut self) {
+        println!("START WLAM");
         match self.wlctx.eval("!@import main main; main:init[]") {
             Ok(state) => {
                 self.state = state.clone();
@@ -71,6 +71,14 @@ impl SSCGState {
             },
             Err(e) => { godot_print!("main.wl error: {:?}", e); }
         }
+    }
+}
+
+#[macro_export]
+macro_rules! lock_sscg {
+    ($var: ident) => {
+        let mut sscg_lock = SSCG.lock().unwrap();
+        let $var = sscg_lock.as_mut().unwrap();
     }
 }
 

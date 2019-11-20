@@ -15,12 +15,12 @@ use sscg::gui::*;
 use std::rc::Rc;
 use state::*;
 use util::c2c;
+use wlambda::VVal;
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Node2D)]
 #[user_data(user_data::MutexData<GUIPaintNode>)]
 pub struct GUIPaintNode {
-    win: Window,
     cache: std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
     w: i64,
     h: i64,
@@ -130,7 +130,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
 #[methods]
 impl GUIPaintNode {
     fn _init(_owner: Node2D) -> Self {
-        Self { win: Window::new(), w: 0, h: 0, cache: vec![] }
+        Self { w: 0, h: 0, cache: vec![] }
     }
 
     #[export]
@@ -138,75 +138,115 @@ impl GUIPaintNode {
         // The `godot_print!` macro works like `println!` but prints to the Godot-editor
         // output tab as well.
         godot_print!("NODE PAINT READY");
-        self.win.w = 250;
-        self.win.h = 250;
-        self.win.x = 500;
-        self.win.y = 750;
-        self.win.title = String::from("HUD");
-        let c1 = self.win.add_label(
-            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
-        let c2 = self.win.add_label(
-            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
-            .clickable());
-        let c3 = self.win.add_label(
-            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
-            .editable("."));
-        self.win.child =
-            self.win.add_layout(
-                sscg::gui::Size { min_w: 10, w: 500, min_h: 10, h: 1000, margin: 0 },
-                BoxDir::Vert(1), &vec![c1, c2, c3]);
+
+//        self.win.w = 250;
+//        self.win.h = 250;
+//        self.win.x = 500;
+//        self.win.y = 750;
+//        self.win.title = String::from("HUD");
+//        let c1 = self.win.add_label(
+//            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
+//            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
+//        let c2 = self.win.add_label(
+//            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
+//            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
+//            .clickable());
+//        let c3 = self.win.add_label(
+//            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
+//            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
+//            .editable("."));
+//        self.win.child =
+//            self.win.add_layout(
+//                sscg::gui::Size { min_w: 10, w: 500, min_h: 10, h: 1000, margin: 0 },
+//                BoxDir::Vert(1), &vec![c1, c2, c3]);
     }
 
     #[export]
     fn on_resize(&mut self, mut s: Node2D, w: f64, h: f64) {
+        lock_sscg!(sscg);
+
         self.w = w as i64;
         self.h = h as i64;
         dbg!("RESIZE {} {}", w, h);
-        self.win.does_need_redraw();
+        sscg.wm.borrow_mut().for_each_window(|win| win.does_need_redraw());
         unsafe { s.update(); }
     }
 
     #[export]
     fn on_mouse_click(&mut self, mut s: Node2D, x: f64, y: f64) {
-        self.win.handle_event(WindowEvent::Click(x as i32, y as i32));
-        if let Some(s) = self.win.collect_activated_child() {
-            dbg!("FOO", s);
+        lock_sscg!(sscg);
+
+        sscg.wm.borrow_mut().for_each_window(
+            |win| { win.handle_event(WindowEvent::Click(x as i32, y as i32)); });
+        if sscg.wm.borrow_mut().some_win_needs_redraw(){
+            unsafe { s.update(); }
         }
-        if self.win.needs_redraw() { unsafe { s.update(); } }
     }
 
     #[export]
     fn on_mouse_move(&mut self, mut s: Node2D, x: f64, y: f64) {
-        self.win.handle_event(WindowEvent::MousePos(x as i32, y as i32));
-        if self.win.needs_redraw() { unsafe { s.update(); } }
+        lock_sscg!(sscg);
+
+        sscg.wm.borrow_mut().for_each_window(
+            |win| { win.handle_event(WindowEvent::MousePos(x as i32, y as i32)); });
+        if sscg.wm.borrow_mut().some_win_needs_redraw(){
+            unsafe { s.update(); }
+        }
     }
 
     #[export]
     fn on_input(&mut self, mut s: Node2D, character: i64) {
+        lock_sscg!(sscg);
+
         if character > 0 {
             let c = std::char::from_u32(character as u32).unwrap_or('\0');
             let mut charstr = String::new();
             charstr.push(c);
-            self.win.handle_event(WindowEvent::TextInput(charstr));
+            sscg.wm.borrow_mut().for_each_window(
+                move |win| { win.handle_event(WindowEvent::TextInput(charstr.clone())); });
 
         } else if character < 0 {
-            self.win.handle_event(WindowEvent::Backspace);
+            sscg.wm.borrow_mut().for_each_window(
+                |win| { win.handle_event(WindowEvent::Backspace); });
         }
-        if self.win.needs_redraw() { unsafe { s.update(); } }
+        if sscg.wm.borrow_mut().some_win_needs_redraw(){
+            unsafe { s.update(); }
+        }
+    }
+
+    #[export]
+    fn _process(&mut self, mut s: Node2D, delta: f64) {
+        lock_sscg!(sscg);
+
+        let acts = sscg.wm.borrow_mut().get_activated_childs();
+        if let Some(acts) = acts {
+            for (idx, lblref, cb) in acts {
+                let args = vec![
+                    VVal::Int(idx as i64),
+                    VVal::new_str_mv(lblref)
+                ];
+                if let Err(e) = sscg.wlctx.call(&cb, &args) {
+                    println!("ERROR IN WM CB: {}", e);
+                }
+            }
+            if sscg.wm.borrow_mut().some_win_needs_redraw(){
+                unsafe { s.update(); }
+            }
+        }
     }
 
     #[export]
     fn _draw(&mut self, mut s: Node2D) {
-        let mut d = SSCG.lock().unwrap();
-        let d2 = d.as_mut().unwrap();
+        lock_sscg!(sscg);
 
-        d2.tp.clear_cmds();
-        self.win.draw(0, self.w as u32, self.h as u32, &mut d2.tp);
-        let fh_rc = d2.fonts.clone();
-        draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, d2.tp.ref_cmds());
+        println!("DRAW CALLBACK!");
+        let tp = &mut sscg.tp;
+        tp.clear_cmds();
+        sscg.wm.borrow_mut().for_each_window(
+            |win| win.draw(0, self.w as u32, self.h as u32, tp));
+        let fh_rc = sscg.fonts.clone();
+        println!("DRAW CMDS {:?}", tp.ref_cmds());
+        draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, tp.ref_cmds());
     }
 }
 
