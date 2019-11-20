@@ -11,7 +11,8 @@ use crate::util::c2c;
 #[inherit(gdnative::Spatial)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct SystemMap {
-    tmpl_station: Option<PackedScene>,
+    tmpl_station:  Option<PackedScene>,
+    tmpl_asteroid: Option<PackedScene>,
 }
 
 // XXX: We assume that PackedScene is thread safe.
@@ -41,7 +42,10 @@ impl SystemMap {
 
         global_lock.as_mut().unwrap().setup_wlambda();
 
-        Self { tmpl_station: None }
+        Self {
+            tmpl_station:  None,
+            tmpl_asteroid: None,
+        }
     }
 
     #[export]
@@ -59,8 +63,16 @@ impl SystemMap {
             GodotString::from_str("PackedScene"),
             false,
         ).and_then(|s| s.cast::<PackedScene>())
-         .expect("Expected system scene and it being a PackedScene!");
+         .expect("Expected station scene and it being a PackedScene!");
         self.tmpl_station = Some(scene);
+
+        let scene = ResourceLoader::godot_singleton().load(
+            GodotString::from_str("res://scenes/entities/Asteroid_1.tscn"),
+            GodotString::from_str("PackedScene"),
+            false,
+        ).and_then(|s| s.cast::<PackedScene>())
+         .expect("Expected asteroid scene and it being a PackedScene!");
+        self.tmpl_asteroid = Some(scene);
         dbg!("READY");
     }
 
@@ -91,22 +103,32 @@ impl SystemMap {
         if !sscg.update_stations { return; }
 
         let sys_id = vvship.v_ik("system_id");
-        let sys = sscg.state.v_k("systems").v_(sys_id as usize);
+        let sys    = sscg.state.v_k("systems").v_(sys_id as usize);
+        let types  = sscg.state.v_k("entity_types");
 
         println!("DRAWING SYSTEM: {}", sys.v_sk("name"));
 
         let mut i = 0;
         sys.v_k("entities").for_each(|ent: &VVal| {
+            let vis = types.v_k(&ent.v_s_rawk("t")).v_s_rawk("visual");
             let pos = ent.v_k("pos");
             let x   = pos.v_i(0);
             let y   = pos.v_i(1);
             println!("ENT! {} {},{}", ent.s(), x, y);
             unsafe {
                 let mut ins =
-                    self.tmpl_station.as_ref().unwrap()
-                        .instance(0).unwrap()
-                        .cast::<Spatial>()
-                        .expect("Station must be a Spatial");
+                    match &vis[..] {
+                        "station" =>
+                            self.tmpl_station.as_ref().unwrap()
+                                .instance(0).unwrap()
+                                .cast::<Spatial>()
+                                .expect("Station must be a Spatial"),
+                        _ | "asteroid_1" =>
+                            self.tmpl_asteroid.as_ref().unwrap()
+                                .instance(0).unwrap()
+                                .cast::<Spatial>()
+                                .expect("Station must be a Spatial"),
+                    };
                 let v = vec3(
                     -80.0 + (x as f32 * 160.0) / 10000.0,
                     1.0,

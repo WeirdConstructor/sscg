@@ -62,9 +62,17 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 	var s = area.get_child(0)
 	if speed > 0.1:
 		self.get_parent().get_node("GUI").get_child(0).show()
-		var v = self.get_global_transform().basis;
-		self.translation = self.translation + v.z.normalized() * (s.shape.radius * 2)
+		var v = self.get_global_transform().basis
+		self.translation = self.translation - v.z.normalized() * (s.shape.radius * 2)
 		emergency_warning_timer.start(2)
+		speed = 0
+		thruster_speed = 0
+	else:
+		var v = self.get_global_transform().basis
+		self.translation = self.translation - v.z.normalized() * (s.shape.radius * 0.5)
+		area.get_parent().selected = true
+		speed = 0
+		thruster_speed = 0
 
 func _on_Area_area_shape_exited(area_id, area, area_shape, self_shape):
 	pass
