@@ -2,7 +2,7 @@
 !@import std std;
 !@import sscg sscg;
 
-!:global STATE = ${
+!STATE = ${
     ship = ${
         pos       = $[5000, 2000],
         system_id = 0,
@@ -23,6 +23,25 @@
             ],
         }
     ],
+};
+!@export STATE STATE;
+
+!@export on_arrived {!(too_fast, sys_id, ent_id) = @;
+    std:displayln "ARRIVED!";
+    sscg:win.set_window 1 ${
+        x = 250, y = 250, w = 500, h = 500,
+        title = std:str:cat["Station ", sys_id, ":", ent_id],
+        title_color = "FF0",
+        child = ${
+            t = :l_button,
+            fg = "000",
+            bg = "0F0",
+            text = "Arrived!",
+            w = 1000,
+        }
+    } {||
+        sscg:win.set_window 1;
+    };
 };
 
 !@export init {

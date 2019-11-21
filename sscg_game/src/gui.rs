@@ -345,7 +345,7 @@ impl Window {
             y:            0,
             w:            0,
             h:            0,
-            needs_redraw: false,
+            needs_redraw: true,
             win_feedback: WidgetFeedback::new(),
         }
     }

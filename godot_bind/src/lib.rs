@@ -1,3 +1,4 @@
+#[macro_use]
 mod state;
 mod system_map;
 mod wl_gd_mod_resolver;
@@ -229,9 +230,10 @@ impl GUIPaintNode {
                     println!("ERROR IN WM CB: {}", e);
                 }
             }
-            if sscg.wm.borrow_mut().some_win_needs_redraw(){
-                unsafe { s.update(); }
-            }
+        }
+
+        if sscg.wm.borrow_mut().some_win_needs_redraw(){
+            unsafe { s.update(); }
         }
     }
 
@@ -247,6 +249,7 @@ impl GUIPaintNode {
         let fh_rc = sscg.fonts.clone();
         println!("DRAW CMDS {:?}", tp.ref_cmds());
         draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, tp.ref_cmds());
+        sscg.wm.borrow_mut().redraw_done();
     }
 }
 
