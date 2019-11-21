@@ -32,4 +32,4 @@ glow_intensity = 2.72
 glow_strength = 0.92
 glow_bicubic_upscale = true
 adjustment_enabled = true
-adjustment_contrast = 1.16
+adjustment_contrast = 1.3

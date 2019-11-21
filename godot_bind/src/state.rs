@@ -89,6 +89,7 @@ impl SSCGState {
         match self.wlctx.eval(r"
             !@import main main;
             !:global on_arrived = main:on_arrived;
+            !:global on_tick    = main:on_tick;
             !:global STATE      = main:STATE;
             main:init[]")
         {

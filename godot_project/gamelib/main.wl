@@ -6,6 +6,7 @@
     ship = ${
         pos       = $[5000, 2000],
         system_id = 0,
+        docked    = $f,
     },
     entity_types = ${
         station    = ${ visual = "station" },
@@ -24,10 +25,12 @@
         }
     ],
 };
+
 !@export STATE STATE;
 
 !@export on_arrived {!(too_fast, sys_id, ent_id) = @;
     std:displayln "ARRIVED!";
+    STATE.ship.docked = $t;
     sscg:win.set_window 1 ${
         x = 250, y = 250, w = 500, h = 500,
         title = std:str:cat["Station ", sys_id, ":", ent_id],
@@ -40,8 +43,13 @@
             w = 1000,
         }
     } {||
+        STATE.ship.docked = $f;
         sscg:win.set_window 1;
     };
+};
+
+!@export on_tick {
+    std:displayln "TICK";
 };
 
 !@export init {
