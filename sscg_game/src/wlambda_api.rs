@@ -309,6 +309,7 @@ impl VValUserData for SystemWlWrapper {
 pub struct WindowManager {
     pub windows: std::vec::Vec<Option<gui::Window>>,
     pub ev_cbs: std::vec::Vec<VVal>,
+    pub need_redraw: bool,
 }
 
 pub fn window_manager_wlambda_obj(
@@ -360,6 +361,7 @@ impl WindowManager {
         Self {
             windows: std::vec::Vec::new(),
             ev_cbs: std::vec::Vec::new(),
+            need_redraw: false,
         }
     }
 
@@ -373,7 +375,7 @@ impl WindowManager {
     }
 
     pub fn some_win_needs_redraw(&mut self) -> bool {
-        let mut need_redraw = false;
+        let mut need_redraw = self.need_redraw;
         self.for_each_window(
             |win| if win.needs_redraw() { need_redraw = true });
         need_redraw
@@ -457,10 +459,15 @@ impl WindowManager {
         std::rc::Rc::new(std::cell::RefCell::new(Self::new()))
     }
 
+    pub fn redraw_done(&mut self) {
+        self.need_redraw = false;
+    }
+
     pub fn delete(&mut self, idx: usize) {
         if idx >= self.windows.len() { return; }
         self.windows[idx] = None;
         self.ev_cbs[idx] = VVal::Nul;
+        self.need_redraw = true;
     }
 
     pub fn set(&mut self, idx: usize, win: gui::Window, cb: VVal) -> usize {

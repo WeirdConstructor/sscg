@@ -4,6 +4,7 @@ use euclid::{vec2, vec3};
 use wlambda::VVal;
 use std::rc::Rc;
 use sscg::tree_painter::{DrawCmd, TreePainter};
+#[macro_use]
 use crate::state::*;
 use crate::util::c2c;
 
@@ -49,6 +50,16 @@ impl SystemMap {
     }
 
     #[export]
+    fn on_ship_arrived(&mut self, mut owner: Spatial, too_fast: bool, system: i64, entity: i64) {
+        lock_sscg!(sscg);
+        sscg.call_cb(
+            "on_arrived", 
+            &vec![VVal::Bol(too_fast),
+                  VVal::Int(system),
+                  VVal::Int(entity)]);
+    }
+
+    #[export]
     fn _ready(&mut self, mut owner: Spatial) {
         dbg!("INIT SSCGState");
 //        let mut f = File::new();
@@ -78,8 +89,7 @@ impl SystemMap {
 
     #[export]
     fn _process(&mut self, mut owner: Spatial, delta: f64) {
-        let mut sscg_lck = SSCG.lock().unwrap();
-        let sscg = sscg_lck.as_mut().unwrap();
+        lock_sscg!(sscg);
 
         let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
 

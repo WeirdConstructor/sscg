@@ -57,8 +57,6 @@ func _on_hide_warning():
 	self.get_parent().get_node("GUI").get_child(0).hide()
 
 func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
-	print("SYS: ", area.get_parent().system_id)
-	print("SYSE: ", area.get_parent().entity_id)
 	var s = area.get_child(0)
 	if speed > 0.1:
 		self.get_parent().get_node("GUI").get_child(0).show()
@@ -67,12 +65,14 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 		emergency_warning_timer.start(2)
 		speed = 0
 		thruster_speed = 0
+		self.get_parent().on_ship_arrived(true, area.get_parent().system_id, area.get_parent().entity_id)
 	else:
 		var v = self.get_global_transform().basis
 		self.translation = self.translation - v.z.normalized() * (s.shape.radius * 0.5)
 		area.get_parent().selected = true
 		speed = 0
 		thruster_speed = 0
+		self.get_parent().on_ship_arrived(false, area.get_parent().system_id, area.get_parent().entity_id)
 
 func _on_Area_area_shape_exited(area_id, area, area_shape, self_shape):
 	pass
