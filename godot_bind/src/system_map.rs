@@ -14,6 +14,7 @@ use crate::util::c2c;
 pub struct SystemMap {
     tmpl_station:  Option<PackedScene>,
     tmpl_asteroid: Option<PackedScene>,
+    time_tick_sum: f64,
 }
 
 // XXX: We assume that PackedScene is thread safe.
@@ -46,6 +47,7 @@ impl SystemMap {
         Self {
             tmpl_station:  None,
             tmpl_asteroid: None,
+            time_tick_sum: 0.0,
         }
     }
 
@@ -92,6 +94,23 @@ impl SystemMap {
         lock_sscg!(sscg);
 
         let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
+
+        let mut ship = unsafe {
+            let mut ship = owner.get_node(NodePath::from_str("ship"))
+                 .expect("Find 'ship' node")
+                 .cast::<Spatial>()
+                 .unwrap();
+            ship.set(
+                GodotString::from_str("docked"),
+                Variant::from_bool(vvship.v_ik("docked") > 0));
+            ship
+        };
+
+        self.time_tick_sum += delta;
+        while self.time_tick_sum > 0.25 {
+            self.time_tick_sum -= 0.25;
+            sscg.call_cb("on_tick", &vec![]);
+        }
 
         let mut entities = unsafe {
             owner.get_node(NodePath::from_str("entities"))

@@ -1,12 +1,16 @@
 extends Spatial
 
+export var docked = false
 var speed = 0
 var thruster_speed = 0
 var emergency_warning_timer
 var back_engine_particles
 var back_engine_light
-		
+
 func _process(delta):
+	if docked:
+		return
+
 	if Input.is_action_pressed("fly_forward"):
 		speed += 0.1 * delta;
 		back_engine_particles.emitting = true;
