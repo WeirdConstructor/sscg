@@ -36,11 +36,25 @@
         title = std:str:cat["Station ", sys_id, ":", ent_id],
         title_color = "FF0",
         child = ${
-            t = :l_button,
-            fg = "000",
-            bg = "0F0",
-            text = "Arrived!",
+            t = :vbox,
             w = 1000,
+            h = 1000,
+            childs = $[
+                ${
+                    t    = :l_button,
+                    fg   = "000",
+                    bg   = "0F0",
+                    text = "Arrived!",
+                    w    = 1000,
+                },
+                ${
+                    t    = :l_button,
+                    fg   = "000",
+                    bg   = "0F0",
+                    text = "Arrived!",
+                    w    = 1000,
+                }
+            ]
         }
     } {||
         STATE.ship.docked = $f;
@@ -49,10 +63,44 @@
 };
 
 !@export on_tick {!(engine_on_secs) = @;
-    std:displayln "TICK";
+    std:displayln "TICK" engine_on_secs;
+    sscg:win.set_label 0 :speed (str engine_on_secs.speed);
+    sscg:win.set_label 0 :fuel_spent (str engine_on_secs.engine_on_secs);
 };
 
 !@export init {
+
+    sscg:win.set_window 0 ${
+        x = 0, y = 750, w = 250, h = 250,
+        title = std:str:cat["Ship"],
+        title_color = "0FF",
+        child = ${
+            t = :vbox,
+            w = 1000,
+            h = 1000,
+            childs = $[
+                ${
+                    t    = :l_text,
+                    fg   = "000",
+                    bg   = "0F0",
+                    text = "0.0",
+                    ref  = :fuel_spent,
+                    w    = 1000,
+                },
+                ${
+                    t    = :l_text,
+                    fg   = "000",
+                    bg   = "0F0",
+                    text = "0.0",
+                    ref  = :speed,
+                    w    = 1000,
+                }
+            ]
+        }
+    } {||
+        STATE.ship.docked = $f;
+        sscg:win.set_window 1;
+    };
 #    sscg:win.set_window 0 ${
 #        x = 100, y = 200, w = 250, h = 250,
 #        title = "Status",
