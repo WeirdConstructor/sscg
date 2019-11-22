@@ -64,7 +64,9 @@
 
 !@export on_tick {!(engine_on_secs) = @;
     std:displayln "TICK" engine_on_secs;
-    sscg:win.set_label 0 :speed (str engine_on_secs.speed);
+    !speed_i = std:num:ceil ~ 1000.0 * engine_on_secs.speed;
+    .speed_i = speed_i >= 100 { str speed_i } { std:str:cat speed_i " (docking)" };
+    sscg:win.set_label 0 :speed speed_i;
     sscg:win.set_label 0 :fuel_spent (str engine_on_secs.engine_on_secs);
 };
 
