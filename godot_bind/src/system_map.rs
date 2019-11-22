@@ -109,7 +109,13 @@ impl SystemMap {
         self.time_tick_sum += delta;
         while self.time_tick_sum > 0.25 {
             self.time_tick_sum -= 0.25;
-            sscg.call_cb("on_tick", &vec![]);
+            let vgodot_state = VVal::map();
+            vgodot_state.set_map_key(
+                "engine_on_secs",
+                VVal::Flt(
+                    ship.get(GodotString::from_str("engine_on_secs"))
+                        .to_double()));
+            sscg.call_cb("on_tick", &vec![vgodot_state]);
         }
 
         let mut entities = unsafe {
@@ -159,9 +165,9 @@ impl SystemMap {
                                 .expect("Station must be a Spatial"),
                     };
                 let v = vec3(
-                    -80.0 + (x as f32 * 160.0) / 10000.0,
+                    -800.0 + (x as f32 * 1600.0) / 10000.0,
                     1.0,
-                    -80.0 + (y as f32 * 160.0) / 10000.0);
+                    -800.0 + (y as f32 * 1600.0) / 10000.0);
                     println!("FO {:?}", v);
                 ins.set(
                     GodotString::from_str("system_id"),
