@@ -111,10 +111,11 @@ impl SystemMap {
             self.time_tick_sum -= 0.25;
             let vgodot_state = VVal::map();
             vgodot_state.set_map_key(
-                "engine_on_secs",
+                String::from("engine_on_secs"),
                 VVal::Flt(
-                    ship.get(GodotString::from_str("engine_on_secs"))
-                        .to_double()));
+                    unsafe {
+                    ship.get(GodotString::from_str("engine_on_secs")) 
+                        .to_f64() }));
             sscg.call_cb("on_tick", &vec![vgodot_state]);
         }
 

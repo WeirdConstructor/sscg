@@ -45,7 +45,7 @@ script = SubResource( 1 )
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="ship" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 300, 1.2, 300 )
+transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714, 300, 1.2, 300 )
 
 [node name="entities" type="Spatial" parent="."]
 
