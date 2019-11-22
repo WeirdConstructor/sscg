@@ -1,7 +1,8 @@
 extends Spatial
 
 export var docked = false
-var speed = 0
+export var speed = 0
+var engine_on_fract = 0.0
 export var engine_on_secs = 0
 var thruster_speed = 0
 var emergency_warning_timer
@@ -14,12 +15,12 @@ func _process(delta):
 
 	if Input.is_action_pressed("fly_forward"):
 		speed += 0.1 * delta;
-		engine_on_secs += delta;
+		engine_on_fract += delta;
 		back_engine_particles.emitting = true;
 		back_engine_light.light_energy = 2.0
 	elif Input.is_action_pressed("fly_stop"):
-		speed += -0.1 * delta;
-		engine_on_secs += delta;
+		speed += -0.25 * delta;
+		engine_on_fract += delta;
 		back_engine_particles.emitting = false;
 		back_engine_light.light_energy = 1.0
 	else:
@@ -30,6 +31,10 @@ func _process(delta):
 		speed = 0
 	if speed > 2:
 		speed = 2;
+		
+	while engine_on_fract > 1.0:
+		engine_on_secs += 1
+		engine_on_fract -= 1.0
 		
 	if Input.is_action_pressed("turn_left"):
 		thruster_speed += -0.1 * delta + -(0.5 * speed) * delta

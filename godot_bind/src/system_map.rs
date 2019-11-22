@@ -112,9 +112,15 @@ impl SystemMap {
             let vgodot_state = VVal::map();
             vgodot_state.set_map_key(
                 String::from("engine_on_secs"),
-                VVal::Flt(
+                VVal::Int(
                     unsafe {
                     ship.get(GodotString::from_str("engine_on_secs")) 
+                        .to_i64() }));
+            vgodot_state.set_map_key(
+                String::from("speed"),
+                VVal::Flt(
+                    unsafe {
+                    ship.get(GodotString::from_str("speed")) 
                         .to_f64() }));
             sscg.call_cb("on_tick", &vec![vgodot_state]);
         }

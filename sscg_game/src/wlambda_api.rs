@@ -470,12 +470,13 @@ impl WindowManager {
         self.need_redraw = true;
     }
 
-    pub fn set(&mut self, idx: usize, win: gui::Window, cb: VVal) -> usize {
+    pub fn set(&mut self, idx: usize, mut win: gui::Window, cb: VVal) -> usize {
         if idx >= self.windows.len() {
             self.windows.resize(idx + 1, None);
             self.ev_cbs.resize(idx + 1, VVal::Nul);
         }
         println!("SET WINDOW {}", idx);
+        win.id = idx;
         self.windows[idx] = Some(win);
         self.ev_cbs[idx]  = cb;
         idx

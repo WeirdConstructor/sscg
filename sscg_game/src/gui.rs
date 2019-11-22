@@ -301,6 +301,7 @@ impl WidgetFeedback {
 pub struct Window {
     pub title:    String,
     pub title_color: (u8, u8, u8, u8),
+    pub id:       usize,
     widgets:      std::vec::Vec<Widget>,
     feedback:     std::vec::Vec<WidgetFeedback>,
     pub child:    usize,
@@ -333,6 +334,7 @@ pub enum WindowEvent {
 impl Window {
     pub fn new() -> Self {
         Self {
+            id:           0,
             title:        String::from(""),
             title_color:  (255, 128, 128, 255),
             widgets:      std::vec::Vec::new(),

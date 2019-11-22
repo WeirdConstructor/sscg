@@ -245,7 +245,7 @@ impl GUIPaintNode {
         let tp = &mut sscg.tp;
         tp.clear_cmds();
         sscg.wm.borrow_mut().for_each_window(
-            |win| win.draw(0, self.w as u32, self.h as u32, tp));
+            |win| win.draw(win.id, self.w as u32, self.h as u32, tp));
         let fh_rc = sscg.fonts.clone();
         println!("DRAW CMDS {:?}", tp.ref_cmds());
         draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, tp.ref_cmds());
