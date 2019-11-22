@@ -165,9 +165,9 @@ impl SystemMap {
                                 .expect("Station must be a Spatial"),
                     };
                 let v = vec3(
-                    -800.0 + (x as f32 * 1600.0) / 10000.0,
+                    -1000.0 + (x as f32 * 2000.0) / 10000.0,
                     1.0,
-                    -800.0 + (y as f32 * 1600.0) / 10000.0);
+                    -1000.0 + (y as f32 * 2000.0) / 10000.0);
                     println!("FO {:?}", v);
                 ins.set(
                     GodotString::from_str("system_id"),
