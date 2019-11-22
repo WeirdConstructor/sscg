@@ -48,7 +48,7 @@
     };
 };
 
-!@export on_tick {
+!@export on_tick {!(engine_on_secs) = @;
     std:displayln "TICK";
 };
 
