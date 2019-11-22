@@ -42,14 +42,15 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19884, 0.939844, -1.1908 )
 transform = Transform( 0.741775, 0.518385, 0.425497, 0, -0.634455, 0.77296, 0.670649, -0.573362, -0.470623, 0, 0, -5.034 )
 light_specular = 0.0
 shadow_enabled = true
-shadow_bias = 0.06
-directional_shadow_split_1 = 0.003
-directional_shadow_split_2 = 0.02
-directional_shadow_split_3 = 0.46
+shadow_bias = 0.02
+shadow_reverse_cull_face = true
+directional_shadow_split_1 = 0.007
+directional_shadow_split_2 = 0.014
+directional_shadow_split_3 = 0.295
 directional_shadow_blend_splits = true
-directional_shadow_normal_bias = 0.0
+directional_shadow_normal_bias = 0.02
 directional_shadow_bias_split_scale = 0.0
-directional_shadow_max_distance = 20.4
+directional_shadow_max_distance = 32.1
 
 [node name="GUI" type="Control" parent="."]
 anchor_right = 1.0
