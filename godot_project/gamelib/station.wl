@@ -3,21 +3,37 @@
 !@import std std;
 !@import c   colors;
 !@import gui gui_common;
-!@import WID        gui_window_ids;
+!@import WID gui_window_ids;
 
-!refuel_text = {!(STATE) = @;
+!calc_refuel = {!(STATE) = @;
+    !cc_per_fuelunit = 150;
 
     !fuel_delta =
         STATE.ship_types.(STATE.ship.t).fuel_capacity
         - STATE.ship.fuel;
-    !cc_per_fuelunit = 150;
+
+    !pay_fuel_max =
+        (100.0 * STATE.player.credits) / cc_per_fuelunit | std:num:floor;
+
+    .fuel_delta = (pay_fuel_max < fuel_delta) { pay_fuel_max } { fuel_delta };
+
     !price = (float ~ fuel_delta * cc_per_fuelunit) / 100.0 | std:num:ceil;
-    gui:ml_l_vtext 500 1000 c:SE1_L
-        $[
-            std:str:cat cc_per_fuelunit "cc/Unit",
-            std:str:cat fuel_delta " fuel units",
-            std:str:cat "= " price " credits",
-        ]
+
+    ${
+        cc_per_fuelunit = cc_per_fuelunit,
+        fuel_delta      = fuel_delta,
+        price           = price,
+    }
+};
+
+!refuel_text = {!(STATE) = @;
+    !refuel = calc_refuel STATE;
+
+    gui:ml_l_vtext 500 1000 c:SE1_L $[
+        std:str:cat refuel.cc_per_fuelunit "cc/Unit",
+        std:str:cat refuel.fuel_delta " fuel units",
+        std:str:cat "= " refuel.price " credits",
+    ]
 };
 
 !show = $&&$n;
@@ -52,14 +68,17 @@
             ]
         }
     } {||
-        STATE.ship.docked = $f;
         match _1
             "refuel" {||
-                STATE.ship.fuel =
-                    STATE.ship_types.(STATE.ship.t).fuel_capacity;
-                show[ent, ent_type];
+                !refuel = calc_refuel STATE;
+                STATE.ship.fuel = STATE.ship.fuel + refuel.fuel_delta;
+                STATE.player.credits = STATE.player.credits - refuel.price;
+                show[STATE, ent, ent_type];
             }
-            {|| sscg:win.set_window WID:STATION; };
+            {||
+                sscg:win.set_window WID:STATION;
+                STATE.ship.docked = $f;
+            };
     };
 };
 

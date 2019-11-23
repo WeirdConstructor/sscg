@@ -6,4 +6,4 @@
 !@export SE1_D  "B37016";
 !@export SE1_D2 "7D4700";
 !@export SE2    "2D648F";
-!@export COM    "BBD63A";
+!@export CON    "BBD63A";
