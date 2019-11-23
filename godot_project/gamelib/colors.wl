@@ -1,0 +1,9 @@
+!@export PRI_L  "A74AA7";
+!@export PRI    "902790";
+!@export SE1    "DE983C";
+!@export SE1_L2 "FFDCAE";
+!@export SE1_L  "FFC271";
+!@export SE1_D  "B37016";
+!@export SE1_D2 "7D4700";
+!@export SE2    "2D648F";
+!@export COM    "BBD63A";
