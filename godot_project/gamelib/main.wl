@@ -37,12 +37,12 @@
         ${
             name = "Testaris 1",
             entities = $[
-                ${ t = "station",    pos = $[2000, 2000] },
-                ${ t = "station",    pos = $[ 500, 2000] },
-                ${ t = "station",    pos = $[9000, 4000] },
-                ${ t = "station",    pos = $[4000, 4000] },
-                ${ t = "asteroid_1", pos = $[ 300,  300] },
-                ${ t = "asteroid_1", pos = $[6500, 6500] },
+                ${ t = "station",    name = "Station 1", pos = $[2000, 2000] },
+                ${ t = "station",    name = "Station 2", pos = $[ 500, 2000] },
+                ${ t = "station",    name = "Station 3", pos = $[9000, 4000] },
+                ${ t = "station",    name = "Station 4", pos = $[4000, 4000] },
+                ${ t = "asteroid_1", name = "Asteroid 1", pos = $[ 300,  300] },
+                ${ t = "asteroid_1", name = "Asteroid 2", pos = $[6500, 6500] },
             ],
         }
     ],
@@ -78,18 +78,36 @@ STATE.code.recalc_ship_cargo = {
 # - display cargo space
 # - leave menu
 # - start mining
+!:global on_tick_mining_update = $n;
 !show_asteroid_win = $&&$n;
 .*show_asteroid_win = {!(ent, ent_type) = @;
     sscg:win.set_window WID:STATION ${
         x = 250, y = 250, w = 500, h = 500,
-        title = std:str:cat["Asteroidx ", ent],
+        title = ent.name,
         title_color = c:PRI_L,
         child = ${
             t = :vbox,
             w = 1000,
             h = 1000,
+            spacing = 10,
             childs = $[
-                ${ t = :hbox, spacing = 5, w = 1000, h = 500, childs = $[
+                ${ t = :hbox, spacing = 5, w = 1000, childs = $[
+                    ${ t = :l_text, text = "", w = 333, fg = "F00", bg = "000" },
+                    ${ t = :l_text, text = "Current", w = 333, fg = c:SE2_L, bg = "000" },
+                    ${ t = :l_text, text = "Ship Max", w = 333, fg = c:SE2_L, bg = "000" },
+                ]},
+                ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
+
+                    ${ t = :l_text, text = "m³",                                         w = 333, fg = c:SE2_L, bg = "000" },
+                    ${ t = :l_text, ref = :m3, text = STATE.ship.cargo.m3,                          w = 333, fg = c:SE1_L, bg = "000" },
+                    ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_m3, w = 333, fg = c:SE2, bg = "000" },
+                ]},
+                ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
+                    ${ t = :l_text, text = "kg³",                                        w = 333, fg = c:SE2_L, bg = "000" },
+                    ${ t = :l_text, ref = :kg, text = STATE.ship.cargo.kg,                          w = 333, fg = c:SE1_L, bg = "000" },
+                    ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_kg, w = 333, fg = c:SE2, bg = "000" },
+                ]},
+                ${ t = :hbox, spacing = 5, w = 1000, h = 700, childs = $[
                     ${ t = :r_button,
                        text = "Start mining",
                        ref = :start_mining,
@@ -109,6 +127,10 @@ STATE.code.recalc_ship_cargo = {
         match _1
             "start_mining" {||
                 STATE.player.is_mining = $t;
+                .on_tick_mining_update = {
+                    sscg:win.set_label WID:STATION :m3 STATE.ship.cargo.m3;
+                    sscg:win.set_label WID:STATION :kg STATE.ship.cargo.kg;
+                };
             }
             {||
                 STATE.player.is_mining = $f;
@@ -168,11 +190,13 @@ STATE.code.recalc_ship_cargo = {
 
 !@export on_tick {!(ship_action_state) = @;
     (bool STATE.player.is_mining) {
-        !capacity_units = STATE.code.calc_unit_capacity_for_good :rock;
+        !capacity_units =
+            STATE.code.calc_unit_capacity_for_good :rock;
         (capacity_units > 0) {
             STATE.ship.cargo.goods.rock =
                 STATE.ship.cargo.goods.rock + 1;
             STATE.code.recalc_ship_cargo[];
+            on_tick_mining_update[];
         }
     };
 
@@ -199,8 +223,7 @@ STATE.code.recalc_ship_cargo = {
         std:str:cat STATE.ship.fuel " / " ship_type.fuel_capacity;
     sscg:win.set_label WID:STATUS :credits STATE.player.credits;
     sscg:win.set_label WID:STATUS :cargo_load ~
-        std:str:cat
-            (STATE.ship.cargo.m3) " / " STATE.ship.cargo.kg;
+        std:str:cat (STATE.ship.cargo.m3) " / " STATE.ship.cargo.kg;
 };
 
 !@export init {
