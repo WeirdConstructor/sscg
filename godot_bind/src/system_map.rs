@@ -178,7 +178,6 @@ impl SystemMap {
                     -1000.0 + (x as f32 * 2000.0) / 10000.0,
                     1.0,
                     -1000.0 + (y as f32 * 2000.0) / 10000.0);
-                    println!("FO {:?}", v);
                 ins.set(
                     GodotString::from_str("system_id"),
                     Variant::from_i64(sys_id));
