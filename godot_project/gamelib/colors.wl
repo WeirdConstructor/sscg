@@ -5,5 +5,9 @@
 !@export SE1_L  "FFC271";
 !@export SE1_D  "B37016";
 !@export SE1_D2 "7D4700";
+!@export SE2_L2 "94B7D2";
+!@export SE2_L  "4F80A5";
 !@export SE2    "2D648F";
+!@export SE2_D  "154A73";
+!@export SE2_D2 "052F50";
 !@export CON    "BBD63A";

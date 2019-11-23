@@ -41,7 +41,7 @@
 
     sscg:win.set_window WID:STATION ${
         x = 250, y = 250, w = 500, h = 500,
-        title = std:str:cat["Station ", ent],
+        title = ent.name,
         title_color = c:PRI_L,
         child = ${
             t = :vbox,

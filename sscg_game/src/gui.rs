@@ -215,10 +215,6 @@ impl Widget {
         match self {
             Widget::Layout(_id, _size, c) => {
                 let border = c.border;
-                p.draw_rect_filled(0, 0, mw, border as u32, c.border_color);
-                p.draw_rect_filled(0, mh as i32 - border, mw, border as u32, c.border_color);
-                p.draw_rect_filled(0, 0, border as u32, mh, c.border_color);
-                p.draw_rect_filled(mw as i32 - border, 0, border as u32, mh, c.border_color);
                 p.push_add_offs(border * 2, border * 2);
 
                 match c.dir {
@@ -263,6 +259,11 @@ impl Widget {
                 };
 
                 p.pop_offs();
+
+                p.draw_rect_filled(0, 0, mw, border as u32, c.border_color);
+                p.draw_rect_filled(0, mh as i32 - border, mw, border as u32, c.border_color);
+                p.draw_rect_filled(0, 0, border as u32, mh, c.border_color);
+                p.draw_rect_filled(mw as i32 - border, 0, border as u32, mh, c.border_color);
             },
             Widget::Label(id, _size, lbl) => {
                 let mut bg_color =
