@@ -1,5 +1,6 @@
 extends Spatial
 
+export var no_fuel = false
 export var docked = false
 export var speed = 0
 var engine_on_fract = 0.0
@@ -27,11 +28,15 @@ func _process(delta):
 		speed += -0.03 * delta;
 		back_engine_particles.emitting = false;
 		back_engine_light.light_energy = 1.0
+		
 	if speed < 0:
 		speed = 0
 	if speed > 2:
 		speed = 2;
-		
+
+	if no_fuel && speed > 0.2:
+		speed = 0.2;
+
 	while engine_on_fract > 1.0:
 		engine_on_secs += 1
 		engine_on_fract -= 1.0

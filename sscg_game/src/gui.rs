@@ -7,6 +7,18 @@ pub enum Widget {
     Label(usize, Size, Label),
 }
 
+fn calc_m_wo_spacing(child_count: usize, spacing: u32, border: i32, mw: u32) -> u32 {
+    let mw = if mw < (4 * border) as u32 { 0 } else { mw - (4 * border) as u32 };
+    let mut child_spacings =
+        if child_count <= 1 { 0 }
+        else { child_count - 1 };
+    let mut mw_wo_spacing =
+        mw as i32 - (child_spacings as u32 * spacing) as i32;
+
+    if mw_wo_spacing < 0 { 0 }
+    else { mw_wo_spacing as u32 }
+}
+
 impl Widget {
     pub fn id(&self) -> usize {
         match self {
@@ -202,14 +214,27 @@ impl Widget {
         let (mut mw, mut mh) = (w_fb.w, w_fb.h);
         match self {
             Widget::Layout(_id, _size, c) => {
+                let border = c.border;
+                p.draw_rect_filled(0, 0, mw, border as u32, c.border_color);
+                p.draw_rect_filled(0, mh as i32 - border, mw, border as u32, c.border_color);
+                p.draw_rect_filled(0, 0, border as u32, mh, c.border_color);
+                p.draw_rect_filled(mw as i32 - border, 0, border as u32, mh, c.border_color);
+                p.push_add_offs(border * 2, border * 2);
+
                 match c.dir {
                     BoxDir::Vert(spacing) => {
                         let mut offs = 0;
+                        let mh_wo_spacing =
+                            calc_m_wo_spacing(c.childs.len(), spacing, border, mh);
+                        let mw_wo_border =
+                            if mw < (4 * border) as u32 { 0 }
+                            else { mw - (4 * border) as u32 };
+
                         for c_id in c.childs.iter() {
                             if offs > 0 { offs += spacing as i32; }
                             p.push_add_offs(0, offs);
                             let (w, h) =
-                                win.widgets[*c_id].draw(win, fb, mw, mh, p);
+                                win.widgets[*c_id].draw(win, fb, mw_wo_border, mh_wo_spacing, p);
                             if w > mw { mw = w }
                             p.pop_offs();
                             offs += h as i32;
@@ -218,18 +243,26 @@ impl Widget {
                     },
                     BoxDir::Hori(spacing) => {
                         let mut offs = 0;
+                        let mw_wo_spacing =
+                            calc_m_wo_spacing(c.childs.len(), spacing, border, mw);
+                        let mh_wo_border =
+                            if mh < (4 * border) as u32 { 0 }
+                            else { mh - (4 * border) as u32 };
+
                         for c_id in c.childs.iter() {
                             if offs > 0 { offs += spacing as i32; }
                             p.push_add_offs(offs, 0);
                             let (w, h) =
-                                win.widgets[*c_id].draw(win, fb, mw, mh, p);
+                                win.widgets[*c_id].draw(win, fb, mw_wo_spacing, mh_wo_border, p);
                             if h > mh { mh = h }
                             p.pop_offs();
                             offs += w as i32;
                         }
                         if offs as u32 > mw { mw = offs as u32; }
                     },
-                }
+                };
+
+                p.pop_offs();
             },
             Widget::Label(id, _size, lbl) => {
                 let mut bg_color =
@@ -411,7 +444,7 @@ impl Window {
 
         p.push_add_offs(w_fb.x as i32, w_fb.y as i32);
         if self.needs_redraw {
-            println!("REDRAW {}", self.needs_redraw);
+            //d// println!("REDRAW {}", self.needs_redraw);
         }
         p.declare_cache_draw(
             0, 0,
@@ -489,11 +522,13 @@ impl Window {
         (self.win_feedback.w, self.win_feedback.h)
     }
 
-    pub fn add_layout(&mut self, s: Size, dir: BoxDir, c: &[usize]) -> usize {
+    pub fn add_layout(&mut self, s: Size, dir: BoxDir, border: i32, border_color: (u8, u8, u8, u8), c: &[usize]) -> usize {
         let id = self.widgets.len();
         self.widgets.push(Widget::Layout(id, s, Layout {
             dir,
             childs: c.to_vec(),
+            border,
+            border_color,
         }));
         self.does_need_redraw();
         id
@@ -507,7 +542,7 @@ impl Window {
     }
 
     pub fn needs_redraw(&self) -> bool { self.needs_redraw }
-    pub fn does_need_redraw(&mut self) { println!("DOES NEED REDRAW!"); self.needs_redraw = true; }
+    pub fn does_need_redraw(&mut self) { self.needs_redraw = true; }
 
     pub fn get_label_text(&self, lblref: &str) -> Option<String> {
         for c in self.widgets.iter() {
@@ -659,8 +694,10 @@ pub enum BoxDir {
 
 #[derive(Debug, Clone)]
 pub struct Layout {
-    dir:        BoxDir,
-    childs:     std::vec::Vec<usize>,
+    dir:            BoxDir,
+    childs:         std::vec::Vec<usize>,
+    border:         i32,
+    border_color:   (u8, u8, u8, u8),
 }
 
 #[derive(Debug, Clone)]

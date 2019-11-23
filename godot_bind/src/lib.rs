@@ -241,13 +241,13 @@ impl GUIPaintNode {
     fn _draw(&mut self, mut s: Node2D) {
         lock_sscg!(sscg);
 
-        println!("DRAW CALLBACK!");
+        //d// println!("DRAW CALLBACK!");
         let tp = &mut sscg.tp;
         tp.clear_cmds();
         sscg.wm.borrow_mut().for_each_window(
             |win| win.draw(win.id, self.w as u32, self.h as u32, tp));
         let fh_rc = sscg.fonts.clone();
-        println!("DRAW CMDS {:?}", tp.ref_cmds());
+        //d// println!("DRAW CMDS {:?}", tp.ref_cmds());
         draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, tp.ref_cmds());
         sscg.wm.borrow_mut().redraw_done();
     }

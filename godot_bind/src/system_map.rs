@@ -101,6 +101,9 @@ impl SystemMap {
                  .cast::<Spatial>()
                  .unwrap();
             ship.set(
+                GodotString::from_str("no_fuel"),
+                Variant::from_bool(vvship.v_ik("fuel") <= 0));
+            ship.set(
                 GodotString::from_str("docked"),
                 Variant::from_bool(vvship.v_ik("docked") > 0));
             ship

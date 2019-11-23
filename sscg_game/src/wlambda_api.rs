@@ -553,15 +553,17 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
         "vbox" => {
             return win.add_layout(
                 vval2size(v.clone()),
-                gui::BoxDir::Vert(
-                    v.get_key("spacing").unwrap_or(VVal::Int(0)).i() as u32),
+                gui::BoxDir::Vert(v.v_ik("spacing") as u32),
+                v.v_ik("border") as i32,
+                color_hex24tpl(&v.v_s_rawk("border_color")),
                 &childs);
         },
         "hbox" => {
             return win.add_layout(
                 vval2size(v.clone()),
-                gui::BoxDir::Hori(
-                    v.get_key("spacing").unwrap_or(VVal::Int(0)).i() as u32),
+                gui::BoxDir::Hori(v.v_ik("spacing") as u32),
+                v.v_ik("border") as i32,
+                color_hex24tpl(&v.v_s_rawk("border_color")),
                 &childs);
         },
         _ => ()
@@ -569,14 +571,12 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
 
     let lbl =
         gui::Label::new(
-            &v.get_key("text").unwrap_or(VVal::new_str("")).s_raw(),
-            color_hex24tpl(
-                &v.get_key("fg").unwrap_or(VVal::new_str("")).s_raw()),
-            color_hex24tpl(
-                &v.get_key("bg").unwrap_or(VVal::new_str("")).s_raw()))
-        .lblref(&v.get_key("ref").unwrap_or(VVal::new_str("")).s_raw());
+            &v.v_s_rawk("text"),
+            color_hex24tpl(&v.v_s_rawk("fg")),
+            color_hex24tpl(&v.v_s_rawk("bg")))
+        .lblref(&v.v_s_rawk("ref"));
 
-    let lbl = match &v.get_key("t").unwrap_or(VVal::Nul).s_raw()[..] {
+    let lbl = match &v.v_s_rawk("t")[..] {
         "l_button" => lbl.left().clickable(),
         "r_button" => lbl.right().clickable(),
         "c_button" => lbl.center().clickable(),
