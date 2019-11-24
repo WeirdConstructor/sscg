@@ -79,7 +79,7 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 		self.get_parent().get_node("GUI").get_child(0).show()
 		var v = self.get_global_transform().basis
 		self.translation = self.translation - v.z.normalized() * (s.shape.radius * 2)
-		emergency_warning_timer.start(2)
+		emergency_warning_timer.start(5)
 		speed = 0
 		thruster_speed = 0
 		self.get_parent().on_ship_arrived(true, area.get_parent().system_id, area.get_parent().entity_id)

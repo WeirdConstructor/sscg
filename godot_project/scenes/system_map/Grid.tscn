@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://materials/Wireframe.material" type="Material" id=1]
+[ext_resource path="res://scenes/system_map/MeshGridGenerator.gd" type="Script" id=2]
+
+[node name="Grid" type="Spatial"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 53.788, 0 )
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+material_override = ExtResource( 1 )
+cast_shadow = 0
+script = ExtResource( 2 )
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, 1, 0, -1, -4.37114e-008, 21.29, 100, 11.6 )
+far = 3978.4
