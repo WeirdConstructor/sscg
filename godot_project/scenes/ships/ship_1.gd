@@ -70,6 +70,16 @@ func _process(delta):
 	var v = self.get_global_transform().basis;
 	self.translation = self.translation + v.z.normalized() * speed
 	self.rotate_y(deg2rad(2 * thruster_speed))
+	
+	if self.translation.x > 1000.0:
+		self.translation.x -= 2000.0
+	if self.translation.x < -1000.0:
+		self.translation.x += 2000.0
+	if self.translation.z > 1000.0:
+		self.translation.z -= 2000.0
+	if self.translation.z < -1000.0:
+		self.translation.z += 2000.0
+
 
 func _ready():
 	back_engine_particles = self.find_node("BackEngineParticles")
