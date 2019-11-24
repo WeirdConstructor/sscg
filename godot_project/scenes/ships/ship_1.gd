@@ -10,32 +10,41 @@ var emergency_warning_timer
 var back_engine_particles
 var back_engine_light
 
+var safe_dock_speed         = 0.1;
+var max_speed               = 2.0;
+var no_fuel_max_speed       = 0.2;
+var accel                   = 0.1;
+var decel                   = 0.25;
+var max_space_wind_friction = 0.04;
+
 func _process(delta):
 	if docked:
 		return
 
 	if Input.is_action_pressed("fly_forward"):
-		speed += 0.1 * delta;
+		speed += accel * delta;
 		engine_on_fract += delta;
 		back_engine_particles.emitting = true;
 		back_engine_light.light_energy = 2.0
 	elif Input.is_action_pressed("fly_stop"):
-		speed += -0.25 * delta;
+		speed += -decel * delta;
 		engine_on_fract += delta;
 		back_engine_particles.emitting = false;
 		back_engine_light.light_energy = 1.0
 	else:
-		speed += -0.03 * delta;
+		var friction_x = (speed / max_speed)
+		var friction = (friction_x * max_space_wind_friction) + (friction_x * (0.1 * max_space_wind_friction));
+		speed += -friction * delta;
 		back_engine_particles.emitting = false;
 		back_engine_light.light_energy = 1.0
 		
 	if speed < 0:
 		speed = 0
-	if speed > 2:
-		speed = 2;
+	if speed > max_speed:
+		speed = max_speed;
 
-	if no_fuel && speed > 0.2:
-		speed = 0.2;
+	if no_fuel && speed > no_fuel_max_speed:
+		speed = no_fuel_max_speed;
 
 	while engine_on_fract > 1.0:
 		engine_on_secs += 1
@@ -75,7 +84,7 @@ func _on_hide_warning():
 
 func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 	var s = area.get_child(0)
-	if speed > 0.1:
+	if speed > safe_dock_speed:
 		self.get_parent().get_node("GUI").get_child(0).show()
 		var v = self.get_global_transform().basis
 		self.translation = self.translation - v.z.normalized() * (s.shape.radius * 2)
