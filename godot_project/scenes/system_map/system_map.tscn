@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
@@ -6,6 +6,7 @@
 [ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=4]
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=6]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=7]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -134,4 +135,7 @@ shadow_bias = 3.57
 shadow_reverse_cull_face = true
 omni_range = 2500.0
 omni_shadow_detail = 0
+
+[node name="Grid" parent="." instance=ExtResource( 7 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
