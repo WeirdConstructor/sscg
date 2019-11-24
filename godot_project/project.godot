@@ -44,7 +44,10 @@ turn_left={
 
 [rendering]
 
-quality/directional_shadow/size=8192
+quality/directional_shadow/size=2048
+quality/shadow_atlas/size=2048
+quality/shadows/filter_mode=0
+quality/voxel_cone_tracing/high_quality=false
 environment/default_clear_color=Color( 0.0862745, 0, 0.0823529, 1 )
-quality/filters/msaa=2
+quality/filters/msaa=1
 environment/default_environment="res://default_env.tres"
