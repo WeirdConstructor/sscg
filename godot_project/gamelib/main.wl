@@ -229,23 +229,23 @@ STATE.code.recalc_ship_cargo = {
 !@export init {
 
     !status_value = {!(lbl, ref) = @;
-        ${ t = "hbox", w = 1000, spacing = 5, childs = $[
-            ${ t = :l_text, fg = "000", bg = "0F0",
+        ${ t = "hbox", w = 1000, spacing = 2, childs = $[
+            ${ t = :r_text, fg = "000", bg = c:PRI_L,
                text = lbl, w = 500 },
-            ${ t = :r_text, fg = "000", bg = "0F0",
+            ${ t = :r_text, fg = "000", bg = c:PRI_L,
                text = "", ref = ref, w = 500 },
         ] }
     };
 
     sscg:win.set_window WID:STATUS ${
-        x = 0, y = 700, w = 300, h = 300,
+        x = 0, y = 720, w = 300, h = 280,
         title = std:str:cat["Ship"],
-        title_color = "0FF",
+        title_color = c:PRI,
         child = ${
             t = :vbox,
             w = 1000,
             h = 1000,
-            spacing = 5,
+            spacing = 2,
             childs = $[
                 status_value "Engine Time" :engine_on_secs,
                 status_value "Speed"       :speed,
