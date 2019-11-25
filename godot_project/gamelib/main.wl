@@ -7,7 +7,11 @@
 
 !STATE = ${
     good_types = ${
-        rock = ${ kg_p_m3 = 1800, unit_kg = 100, },
+        rock = ${
+            kg_p_m3     = 1800,
+            unit_kg     = 100,
+            baseprice   = 10,
+        },
     },
     ship_types = ${
         scout_mk1 = ${
@@ -18,6 +22,7 @@
         },
     },
     player = ${
+        base_tax        = 0.2,
         credits         = 1000,
     },
     ship = ${
@@ -37,12 +42,13 @@
         ${
             name = "Testaris 1",
             entities = $[
-                ${ t = "station",    name = "Station 1", pos = $[2000, 2000] },
-                ${ t = "station",    name = "Station 2", pos = $[ 500, 2000] },
-                ${ t = "station",    name = "Station 3", pos = $[9000, 4000] },
-                ${ t = "station",    name = "Station 4", pos = $[4000, 4000] },
+                ${ t = "station",    name = "Station 1",  pos = $[2000, 2000] },
+                ${ t = "station",    name = "Station 2",  pos = $[ 500, 2000] },
+                ${ t = "station",    name = "Station 3",  pos = $[9000, 4000] },
+                ${ t = "station",    name = "Station 4",  pos = $[4000, 4000] },
                 ${ t = "asteroid_1", name = "Asteroid 1", pos = $[ 300,  300] },
                 ${ t = "asteroid_1", name = "Asteroid 2", pos = $[6500, 6500] },
+#                ${ t = "station", name = "Asteroid 2", pos = $[6500, 6500] },
             ],
         }
     ],
@@ -50,6 +56,16 @@
 };
 
 !@export STATE STATE;
+
+STATE.code.sell_ship_cargo_good = {!(good_t) = @;
+    !good_units  = STATE.ship.cargo.goods.(good_t);
+    !units_money = STATE.good_types.(good_t).baseprice * good_units;
+    STATE.player.credits =
+        STATE.player.credits
+        + (float units_money) * (1.0 - STATE.player.base_tax);
+    STATE.ship.cargo.goods.(good_t) = $n;
+    STATE.code.recalc_ship_cargo[];
+};
 
 STATE.code.calc_unit_capacity_for_good = {!(good_t) = @;
     !good_type  = STATE.good_types.(good_t);
@@ -257,5 +273,9 @@ STATE.code.recalc_ship_cargo = {
     } {||};
 
     std:displayln "DISPLAY INIT";
+
+#    STATE.ship.cargo.goods.rock = 100;
+#    STATE.code.recalc_ship_cargo[];
+
     STATE
 };

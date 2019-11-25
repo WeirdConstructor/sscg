@@ -47,6 +47,7 @@
             t = :vbox,
             w = 1000,
             h = 1000,
+            spacing = 10,
             childs = $[
                 ${ t = "hbox", border = 1, border_color = c:SE1_D2,
                    w = 1000,
@@ -58,13 +59,27 @@
                         refuel_text[STATE]
                    ]
                 },
-                ${
-                    t    = :l_button,
-                    fg   = "000",
-                    bg   = c:SE1,
-                    text = "Arrived!",
-                    w    = 1000,
-                }
+                ${ t = "hbox", w = 1000, h = 800, spacing = 2, childs = $[
+                    ${ t = "vbox", w = 500, h = 1000, childs = $[
+                        ${
+                            t    = :r_button,
+                            fg   = "000",
+                            bg   = c:SE2,
+                            text = "Sell Rocks",
+                            ref  = :sell_rocks,
+                            w    = 1000,
+                        }
+                    ]},
+                    ${ t = "vbox", w = 500, h = 1000, childs = $[
+                        ${
+                            t    = :l_button,
+                            fg   = "000",
+                            bg   = c:SE1,
+                            text = "Depart",
+                            w    = 1000,
+                        }
+                    ]}
+                ]},
             ]
         }
     } {||
@@ -74,6 +89,9 @@
                 STATE.ship.fuel = STATE.ship.fuel + refuel.fuel_delta;
                 STATE.player.credits = STATE.player.credits - refuel.price;
                 show[STATE, ent, ent_type];
+            }
+            "sell_rocks" {||
+                STATE.code.sell_ship_cargo_good :rock;
             }
             {||
                 sscg:win.set_window WID:STATION;
