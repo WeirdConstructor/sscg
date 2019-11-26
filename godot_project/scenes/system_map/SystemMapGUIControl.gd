@@ -4,6 +4,8 @@ extends Control
 # var a = 2
 # var b = "text"
 
+var fps_label
+
 func _input(event):
 	if event is InputEventKey:
 		if event.is_pressed():
@@ -19,7 +21,11 @@ func _input(event):
 			var mp = self.get_local_mouse_position()
 			self.get_node("GUIDrawing").on_mouse_click(mp.x, mp.y)
 
+func _process(delta):
+	fps_label.text = "FPS: " + str(Engine.get_frames_per_second())
+
 func _ready():
+	fps_label = self.get_node("FPS")
 	self.get_node("GUIDrawing").on_resize(self.rect_size.x, self.rect_size.y);
 
 func _on_GUI_resized():
