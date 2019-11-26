@@ -113,6 +113,20 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="FPS" type="Label" parent="GUI"]
+anchor_right = 1.0
+margin_left = 900.0
+margin_top = 2.0
+margin_right = -3.0
+margin_bottom = 20.0
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
+text = "FPS: 00.00"
+align = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="Sun Sphere" type="MeshInstance" parent="."]
 transform = Transform( 100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0 )
 layers = 2
