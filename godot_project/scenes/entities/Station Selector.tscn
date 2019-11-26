@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://scenes/entities/StationSelector.gd" type="Script" id=1]
 [ext_resource path="res://Station.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/utility/BillboardLabel.tscn" type="PackedScene" id=3]
 
 [sub_resource type="SphereShape" id=1]
 radius = 7.13551
@@ -17,3 +18,5 @@ input_ray_pickable = false
 [node name="CollisionShape" type="CollisionShape" parent="Area"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.26347, 0 )
 shape = SubResource( 1 )
+
+[node name="BillboardLabel" parent="." instance=ExtResource( 3 )]

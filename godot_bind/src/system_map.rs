@@ -179,6 +179,9 @@ impl SystemMap {
                     1.0,
                     -1000.0 + (y as f32 * 2000.0) / 10000.0);
                 ins.set(
+                    GodotString::from_str("label_name"),
+                    Variant::from_str(ent.v_s_rawk("name")));
+                ins.set(
                     GodotString::from_str("system_id"),
                     Variant::from_i64(sys_id));
                 ins.set(
