@@ -156,6 +156,23 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
+!@export on_saved_godot_state {!(state) = @;
+    std:displayln "STATE:" state;
+};
+
+!@export on_ready {
+    std:displayln "GAME READY!";
+    sscg:game.cmd :load_state ${
+        engine_on_fract = 0.0,
+        engine_on_secs  = 0.0,
+        thruster_speed  = 0.0,
+        speed           = 0.0,
+        x               = 0,
+        y               = 0,
+        rot_z           = 0,
+    };
+};
+
 !@export on_arrived {!(too_fast, sys_id, ent_id) = @;
     std:displayln "ARRIVED!";
     (bool too_fast) {
@@ -204,6 +221,30 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
+!open_menu = {
+    sscg:win.set_window WID:MAIN_MENU ${
+        x = 200, y = 200, w = 550, h = 550,
+        title = std:str:cat["Main Menu"],
+        title_color = c:CON,
+        child = ${
+            t = :vbox,
+            w = 1000,
+            h = 1000,
+            spacing = 10,
+            childs = $[
+                ${ t = :l_button, fg = "000", bg = "0F0",
+                   w = 1000, h = 500, text = "Save", ref = "save" },
+                ${ t = :l_button, fg = "000", bg = "0F0",
+                   w = 1000, h = 500, text = "Close", ref = "close" },
+            ],
+        },
+    } {||
+        match _1
+            "save" {|| sscg:game.cmd "save_state" $n; }
+            {|| sscg:win.set_window WID:MAIN_MENU; };
+    };
+};
+
 !@export on_tick {!(ship_action_state) = @;
     (bool STATE.player.is_mining) {
         !capacity_units =
@@ -228,7 +269,7 @@ STATE.code.recalc_ship_cargo = {
         STATE.ship.fuel = 0;
     };
 
-    std:displayln "TICK" ship_type;
+    #d# std:displayln "TICK" ship_type;
 
     !speed_i = std:num:ceil ~ 1000.0 * ship_action_state.speed;
     .speed_i = speed_i >= 100 { str speed_i } { std:str:cat "(docking) " speed_i };
@@ -268,9 +309,13 @@ STATE.code.recalc_ship_cargo = {
                 status_value "Fuel"        :fuel,
                 status_value "Credits"     :credits,
                 status_value "Cargo m³/kg" :cargo_load,
+                ${ t = :l_button, text = "Menu", w = 1000, bg = c:CON, fg = "000", ref = "menu" },
             ]
         }
-    } {||};
+    } {||
+        match _1
+            "menu" {|| open_menu[]; };
+    };
 
     std:displayln "DISPLAY INIT";
 

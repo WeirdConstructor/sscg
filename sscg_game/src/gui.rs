@@ -619,9 +619,12 @@ impl Window {
     }
 
     pub fn handle_event(&mut self, ev: WindowEvent) -> bool {
+        let mut handled = false;
         let r = match ev {
             WindowEvent::MousePos(x, y) => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
+                    handled = true;
+
                     let prev_hc = self.hover_child;
                     self.hover_child =
                         self.get_label_at(
@@ -635,6 +638,8 @@ impl Window {
             },
             WindowEvent::Click(x, y)    => {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
+                    handled = true;
+
                     let prev_fc = self.focus_child;
                     self.activ_child =
                         self.get_label_at(x as u32, y as u32, |l: &Label| { l.clickable });
@@ -650,6 +655,7 @@ impl Window {
                     match &mut self.widgets[id] {
                         Widget::Label(_, _, lbl) => {
                             let new = lbl.text.clone() + &s;
+                            handled = true;
                             if let Ok(rx) = Regex::new(&lbl.edit_regex) {
                                 if let Some(_) = rx.find(&new) {
                                     lbl.text = new;
@@ -665,6 +671,7 @@ impl Window {
                 if let Some(id) = self.focus_child {
                     match &mut self.widgets[id] {
                         Widget::Label(_, _, lbl) => {
+                            handled = true;
                             if !lbl.text.is_empty() {
                                 lbl.text =
                                     lbl.text.chars()
@@ -683,7 +690,7 @@ impl Window {
             self.does_need_redraw();
         }
 
-        r
+        handled
     }
 }
 

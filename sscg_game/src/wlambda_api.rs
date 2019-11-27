@@ -365,6 +365,26 @@ impl WindowManager {
         }
     }
 
+    pub fn for_each_window_reverse<F>(&mut self, mut winfun: F)
+        where F: FnMut(&mut gui::Window) -> ()
+    {
+        for w in self.windows.iter_mut().rev() {
+            if w.is_none() { continue; }
+            winfun(&mut *w.as_mut().unwrap())
+        }
+    }
+
+    pub fn for_each_window_stop_on_true<F>(&mut self, mut winfun: F)
+        where F: FnMut(&mut gui::Window) -> bool
+    {
+        for w in self.windows.iter_mut() {
+            if w.is_none() { continue; }
+            if winfun(&mut *w.as_mut().unwrap()) {
+                break;
+            }
+        }
+    }
+
     pub fn for_each_window<F>(&mut self, mut winfun: F)
         where F: FnMut(&mut gui::Window) -> ()
     {
