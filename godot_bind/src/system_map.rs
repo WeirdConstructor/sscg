@@ -6,7 +6,7 @@ use std::rc::Rc;
 use sscg::tree_painter::{DrawCmd, TreePainter};
 #[macro_use]
 use crate::state::*;
-use crate::util::c2c;
+use crate::util::{variant2vval, vval2variant, c2c};
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Spatial)]
@@ -18,11 +18,12 @@ pub struct SystemMap {
 }
 
 // XXX: We assume that PackedScene is thread safe.
+//      And that the SystemMap Scene is always loaded!
 unsafe impl Send for SystemMap { }
 
 #[methods]
 impl SystemMap {
-    fn _init(_owner: Spatial) -> Self {
+    fn _init(owner: Spatial) -> Self {
         let main_font_resource =
             ResourceLoader::godot_singleton().load(
                 GodotString::from_str("res://fonts/main_font_normal.tres"),
@@ -111,6 +112,25 @@ impl SystemMap {
 
         self.time_tick_sum += delta;
         while self.time_tick_sum > 0.25 {
+            let cmds = std::mem::replace(&mut sscg.cmd_queue, std::vec::Vec::new());
+            for cmd in cmds {
+                let cmd_str = cmd.v_s_raw(0);
+                match &cmd_str[..] {
+                    "save_state" => {
+                        let v = unsafe { ship.call(GodotString::from_str("sscg_save"), &vec![]) };
+                        let vv = variant2vval(&v);
+                        sscg.call_cb("on_saved_godot_state", &vec![vv]);
+                    },
+                    "load_state" => {
+                        let v = vval2variant(&cmd.v_(1));
+                        unsafe { ship.call(GodotString::from_str("sscg_load"), &vec![v]) };
+                    },
+                    _ => {
+                        godot_print!("Unknown WLambda->Godot Command: {}", cmd_str);
+                    },
+                }
+            }
+
             self.time_tick_sum -= 0.25;
             let vgodot_state = VVal::map();
             vgodot_state.set_map_key(

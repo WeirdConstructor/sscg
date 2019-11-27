@@ -29,6 +29,7 @@ pub struct SSCGState {
     pub wlctx:           EvalContext,
     pub cb_arrived:      VVal,
     pub state:           VVal,
+    pub cmd_queue:       std::vec::Vec<VVal>,
     pub wm:              Rc<RefCell<WindowManager>>,
 }
 
@@ -61,6 +62,7 @@ impl SSCGState {
             wlctx:           EvalContext::new(genv),
             cb_arrived:      VVal::Nul,
             state:           VVal::Nul,
+            cmd_queue:       std::vec::Vec::new(),
         }
     }
 

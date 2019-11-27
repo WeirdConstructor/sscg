@@ -17,6 +17,27 @@ var accel                   = 0.1;
 var decel                   = 0.25;
 var max_space_wind_friction = 0.04;
 
+func sscg_save():
+	return {
+		"speed": speed,
+		"engine_on_fract": engine_on_fract,
+		"engine_on_secs": engine_on_secs,
+		"thruster_speed": thruster_speed,
+		"x": int(((self.translation.x + 1000.0) * 10000.0) / 2000.0),
+		"y": int(((self.translation.z + 1000.0) * 10000.0) / 2000.0),
+		"rot_z": self.rotation.y,
+	}
+
+func sscg_load(state):
+	speed           = state["speed"]
+	engine_on_fract = state["engine_on_fract"]
+	engine_on_secs  = state["engine_on_secs"]
+	thruster_speed  = state["thruster_speed"]
+	self.translation.x = -1000.0 + (float(state["x"]) * 2000.0) / 10000.0
+	self.translation.y = 1.2
+	self.translation.z = -1000.0 + (float(state["y"]) * 2000.0) / 10000.0
+	self.rotation.y = state["rot_z"]
+
 func _process(delta):
 	if docked:
 		return
