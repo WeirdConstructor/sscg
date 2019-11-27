@@ -61,6 +61,34 @@ impl SSCGState {
             cmd_queue.borrow_mut().push(v);
             Ok(VVal::Nul)
         });
+        set_vval_method!(o, cmd_queue, write_savegame, Some(2), Some(2), env, argc, {
+            let filename = env.arg(0).s_raw();
+            let state    = env.arg(1);
+
+            let savegame_url = format!("user://{}.json", filename);
+
+            let mut f = File::new();
+            match f.open(GodotString::from_str(savegame_url.clone()), 2) {
+                Ok(_) => {
+                    match state.to_json(false) {
+                        Ok(s) => {
+                            f.store_string(GodotString::from_str(s));
+                        },
+                        Err(e) => {
+                            return Ok(VVal::err_msg(
+                                        &format!("Couldn't save game '{}': {:?}", savegame_url, e)));
+                        },
+                    }
+                },
+                Err(e) => {
+                    f.close();
+                    return Ok(VVal::err_msg(
+                            &format!("Couldn't save game '{}': {:?}", savegame_url, e)));
+                }
+            }
+            f.close();
+            Ok(VVal::Bol(true))
+        });
         sscg_wl_mod.set("game", o);
         genv.borrow_mut().set_module("sscg", sscg_wl_mod);
 
