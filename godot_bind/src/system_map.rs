@@ -64,7 +64,7 @@ impl SystemMap {
 
     #[export]
     fn _ready(&mut self, mut owner: Spatial) {
-        dbg!("INIT SSCGState");
+        dbg!("READY SystemMap");
 //        let mut f = File::new();
 //        f.open(GodotString::from_str("res://test.txt"), 1)
 //         .expect("test.txt to be there!") ;
@@ -87,7 +87,11 @@ impl SystemMap {
         ).and_then(|s| s.cast::<PackedScene>())
          .expect("Expected asteroid scene and it being a PackedScene!");
         self.tmpl_asteroid = Some(scene);
+
         dbg!("READY");
+
+        lock_sscg!(sscg);
+        sscg.call_cb("on_ready", &vec![]);
     }
 
     #[export]
@@ -112,7 +116,7 @@ impl SystemMap {
 
         self.time_tick_sum += delta;
         while self.time_tick_sum > 0.25 {
-            let cmds = std::mem::replace(&mut sscg.cmd_queue, std::vec::Vec::new());
+            let cmds = std::mem::replace(&mut *sscg.cmd_queue.borrow_mut(), std::vec::Vec::new());
             for cmd in cmds {
                 let cmd_str = cmd.v_s_raw(0);
                 match &cmd_str[..] {

@@ -15,7 +15,7 @@ var max_speed               = 2.0;
 var no_fuel_max_speed       = 0.2;
 var accel                   = 0.1;
 var decel                   = 0.25;
-var max_space_wind_friction = 0.04;
+var max_space_wind_friction = 0.001;
 
 func sscg_save():
 	return {

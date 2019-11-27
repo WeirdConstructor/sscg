@@ -177,8 +177,8 @@ impl GUIPaintNode {
     fn on_mouse_click(&mut self, mut s: Node2D, x: f64, y: f64) {
         lock_sscg!(sscg);
 
-        sscg.wm.borrow_mut().for_each_window(
-            |win| { win.handle_event(WindowEvent::Click(x as i32, y as i32)); });
+        sscg.wm.borrow_mut().for_each_window_stop_on_true(
+            |win| { win.handle_event(WindowEvent::Click(x as i32, y as i32)) });
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
             unsafe { s.update(); }
         }
@@ -188,8 +188,8 @@ impl GUIPaintNode {
     fn on_mouse_move(&mut self, mut s: Node2D, x: f64, y: f64) {
         lock_sscg!(sscg);
 
-        sscg.wm.borrow_mut().for_each_window(
-            |win| { win.handle_event(WindowEvent::MousePos(x as i32, y as i32)); });
+        sscg.wm.borrow_mut().for_each_window_stop_on_true(
+            |win| { win.handle_event(WindowEvent::MousePos(x as i32, y as i32)) });
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
             unsafe { s.update(); }
         }
@@ -203,12 +203,12 @@ impl GUIPaintNode {
             let c = std::char::from_u32(character as u32).unwrap_or('\0');
             let mut charstr = String::new();
             charstr.push(c);
-            sscg.wm.borrow_mut().for_each_window(
-                move |win| { win.handle_event(WindowEvent::TextInput(charstr.clone())); });
+            sscg.wm.borrow_mut().for_each_window_stop_on_true(
+                move |win| { win.handle_event(WindowEvent::TextInput(charstr.clone())) });
 
         } else if character < 0 {
-            sscg.wm.borrow_mut().for_each_window(
-                |win| { win.handle_event(WindowEvent::Backspace); });
+            sscg.wm.borrow_mut().for_each_window_stop_on_true(
+                |win| { win.handle_event(WindowEvent::Backspace) });
         }
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
             unsafe { s.update(); }
@@ -244,7 +244,7 @@ impl GUIPaintNode {
         //d// println!("DRAW CALLBACK!");
         let tp = &mut sscg.tp;
         tp.clear_cmds();
-        sscg.wm.borrow_mut().for_each_window(
+        sscg.wm.borrow_mut().for_each_window_reverse(
             |win| win.draw(win.id, self.w as u32, self.h as u32, tp));
         let fh_rc = sscg.fonts.clone();
         //d// println!("DRAW CMDS {:?}", tp.ref_cmds());

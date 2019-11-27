@@ -13,6 +13,5 @@ func _process(delta):
 
 func update_label():
 	var lbl = self.get_parent().label_name
-	print("UPDATE LABEL: ", lbl)
 	self.get_child(0).get_child(0).text = lbl
 	self.get_child(0).get_child(0).update()
