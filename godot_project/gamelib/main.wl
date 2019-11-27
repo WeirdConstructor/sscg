@@ -158,6 +158,15 @@ STATE.code.recalc_ship_cargo = {
 
 !@export on_saved_godot_state {!(state) = @;
     std:displayln "STATE:" state;
+
+    on_error {||
+        std:displayln "ERROR WRITING SAVEGAME: " @
+    } ~ sscg:game.write_savegame "sv1" ${
+        version     = 1,
+        player      = STATE.player,
+        ship        = STATE.ship,
+        ship_dyn    = state,
+    };
 };
 
 !@export on_ready {
