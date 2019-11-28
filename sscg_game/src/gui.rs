@@ -432,7 +432,7 @@ impl Window {
             w_fb.w = min_size_due_to_decor;
         }
         if w_fb.h <= min_size_due_to_decor {
-            w_fb.h = min_size_due_to_decor;
+            w_fb.h = (2 * padding as u32) + (2 * corner_radius);
         }
 
         // adjust text width
@@ -449,7 +449,8 @@ impl Window {
         }
         p.declare_cache_draw(
             0, 0,
-            padding as u32 + w_fb.w, padding as u32 + w_fb.h,
+            w_fb.w,
+            w_fb.h,
             id, self.needs_redraw);
         if self.needs_redraw {
             self.needs_redraw = false;
@@ -464,12 +465,16 @@ impl Window {
 
             // left round circle
             p.draw_dot(
-                corner_radius as i32, corner_radius as i32, corner_radius,
+                corner_radius as i32,
+                corner_radius as i32,
+                corner_radius,
                 title_color);
             // extension of left circle to text
             p.draw_rect_filled(
                 corner_radius as i32, 0,
-                2 * corner_radius + 1, 2 * corner_radius + 1, title_color);
+                2 * corner_radius + 1,
+                2 * corner_radius + 1,
+                title_color);
             // title text
             let text_pos = 3 * corner_radius as i32 + text_lr_pad;
             p.draw_text(
@@ -499,7 +504,7 @@ impl Window {
                 title_color);
 
             let ww = w_fb.w - (1 * corner_radius + (3 * padding) as u32);
-            let wh = w_fb.h - (2 * corner_radius + (3 * padding) as u32);
+            let wh = w_fb.h - (2 * corner_radius + (2 * padding) as u32);
 
             p.push_add_offs(0, padding as i32 + 2 * corner_radius as i32);
 
