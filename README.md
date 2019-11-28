@@ -1,5 +1,5 @@
-Space Ship Collector Game - A space trading and collector game
-==============================================================
+Space Ship Cargo Game - A space trading and collector game
+==========================================================
 
 This is just a simple try for now. Getting down some ideas, playing
 around.  I want to see if I can start with some small idea, and build
