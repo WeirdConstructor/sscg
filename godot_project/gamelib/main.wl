@@ -242,7 +242,9 @@ STATE.code.recalc_ship_cargo = {
             spacing = 10,
             childs = $[
                 ${ t = :l_button, fg = "000", bg = "0F0",
-                   w = 1000, h = 500, text = "Save", ref = "save" },
+                   w = 1000, h = 250, text = "Load", ref = "load" },
+                ${ t = :l_button, fg = "000", bg = "0F0",
+                   w = 1000, h = 250, text = "Save", ref = "save" },
                 ${ t = :l_button, fg = "000", bg = "0F0",
                    w = 1000, h = 500, text = "Close", ref = "close" },
             ],
@@ -250,6 +252,16 @@ STATE.code.recalc_ship_cargo = {
     } {||
         match _1
             "save" {|| sscg:game.cmd "save_state" $n; }
+            "load" {||
+                !state =
+                    on_error {|| std:displayln "Couldn't load savegame: " @ }
+                        ~ sscg:game.read_savegame "sv1";
+                (bool state) {
+                    STATE.player = state.player;
+                    STATE.ship   = state.ship;
+                    sscg:game.cmd "load_state" state.ship_dyn;
+                };
+            }
             {|| sscg:win.set_window WID:MAIN_MENU; };
     };
 };

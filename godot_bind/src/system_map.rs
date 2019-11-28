@@ -121,13 +121,17 @@ impl SystemMap {
                 let cmd_str = cmd.v_s_raw(0);
                 match &cmd_str[..] {
                     "save_state" => {
-                        let v = unsafe { ship.call(GodotString::from_str("sscg_save"), &vec![]) };
+                        let v = unsafe {
+                            ship.call(GodotString::from_str("sscg_save"),
+                                      &vec![]) };
                         let vv = variant2vval(&v);
                         sscg.call_cb("on_saved_godot_state", &vec![vv]);
                     },
                     "load_state" => {
                         let v = vval2variant(&cmd.v_(1));
-                        unsafe { ship.call(GodotString::from_str("sscg_load"), &vec![v]) };
+                        unsafe {
+                            ship.call(GodotString::from_str("sscg_load"),
+                                      &vec![v]) };
                     },
                     _ => {
                         godot_print!("Unknown WLambda->Godot Command: {}", cmd_str);

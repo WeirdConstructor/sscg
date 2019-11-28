@@ -61,6 +61,31 @@ impl SSCGState {
             cmd_queue.borrow_mut().push(v);
             Ok(VVal::Nul)
         });
+        set_vval_method!(o, cmd_queue, read_savegame, Some(1), Some(1), env, argc, {
+            let filename = env.arg(0).s_raw();
+
+            let savegame_url = format!("user://{}.json", filename);
+
+            let mut f = File::new();
+            match f.open(GodotString::from_str(savegame_url.clone()), 1) {
+                Ok(_) => {
+                    let txt = f.get_as_text().to_string();
+                    match VVal::from_json(&txt) {
+                        Ok(v) => Ok(v),
+                        Err(e) => {
+                            Ok(VVal::err_msg(
+                                &format!("Couldn't load game '{}': {:?}",
+                                         savegame_url, e)))
+                        }
+                    }
+                },
+                Err(e) => {
+                    Ok(VVal::err_msg(
+                        &format!("Couldn't load game '{}': {:?}",
+                                 savegame_url, e)))
+                }
+            }
+        });
         set_vval_method!(o, cmd_queue, write_savegame, Some(2), Some(2), env, argc, {
             let filename = env.arg(0).s_raw();
             let state    = env.arg(1);
