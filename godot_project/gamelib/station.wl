@@ -39,49 +39,39 @@
 !show = $&&$n;
 .*show = {!(STATE, ent, ent_type) = @;
 
-    sscg:win.set_window WID:STATION ${
-        x = 250, y = 250, w = 500, h = 500,
-        title = ent.name,
-        title_color = c:PRI_L,
-        child = ${
-            t = :vbox,
-            w = 1000,
-            h = 1000,
-            spacing = 10,
-            childs = $[
-                ${ t = "hbox", border = 1, border_color = c:SE1_D2,
-                   w = 1000,
-                   h = 200,
-                   spacing = 10,
-                   childs = $[
-                        ${ t = :l_button, text = "Refuel", ref = :refuel,
-                           w = 500, h = 1000, fg = "000", bg = c:SE1 },
-                        refuel_text[STATE]
-                   ]
-                },
-                ${ t = "hbox", w = 1000, h = 800, spacing = 2, childs = $[
-                    ${ t = "vbox", w = 500, h = 1000, childs = $[
-                        ${
-                            t    = :r_button,
-                            fg   = "000",
-                            bg   = c:SE2,
-                            text = "Sell Rocks",
-                            ref  = :sell_rocks,
-                            w    = 1000,
-                        }
-                    ]},
-                    ${ t = "vbox", w = 500, h = 1000, childs = $[
-                        ${
-                            t    = :l_button,
-                            fg   = "000",
-                            bg   = c:SE1,
-                            text = "Depart",
-                            w    = 1000,
-                        }
-                    ]}
+    gui:dialog_window WID:STATION ent.name {
+        $[
+            gui:hpanel 300 {
+               $[
+                    ${ t = :l_button, text = "Refuel", ref = :refuel,
+                       w = 500, h = 1000, fg = "000", bg = c:SE1 },
+                    refuel_text[STATE]
+               ]
+            },
+            gui:hpanel 700 { $[
+                ${ t = "vbox", w = 500, h = 1000, childs = $[
+                    ${
+                        t    = :r_button,
+                        fg   = "000",
+                        bg   = c:SE2,
+                        text = "Sell Rocks",
+                        ref  = :sell_rocks,
+                        w    = 1000,
+                        h    = 1000,
+                    }
                 ]},
-            ]
-        }
+                ${ t = "vbox", w = 500, h = 1000, childs = $[
+                    ${
+                        t    = :l_button,
+                        fg   = "000",
+                        bg   = c:SE1,
+                        text = "Depart",
+                        w    = 1000,
+                        h    = 1000,
+                    }
+                ]}
+            ] },
+        ]
     } {||
         match _1
             "refuel" {||
