@@ -4,6 +4,7 @@
 !@import c          colors;
 !@import e_station  station;
 !@import WID        gui_window_ids;
+!@import gui        gui_common;
 
 !STATE = ${
     good_types = ${
@@ -97,48 +98,28 @@ STATE.code.recalc_ship_cargo = {
 !:global on_tick_mining_update = $n;
 !show_asteroid_win = $&&$n;
 .*show_asteroid_win = {!(ent, ent_type) = @;
-    sscg:win.set_window WID:STATION ${
-        x = 250, y = 250, w = 500, h = 500,
-        title = ent.name,
-        title_color = c:PRI_L,
-        child = ${
-            t = :vbox,
-            w = 1000,
-            h = 1000,
-            spacing = 10,
-            childs = $[
-                ${ t = :hbox, spacing = 5, w = 1000, childs = $[
-                    ${ t = :l_text, text = "", w = 333, fg = "F00", bg = "000" },
-                    ${ t = :l_text, text = "Current", w = 333, fg = c:SE2_L, bg = "000" },
-                    ${ t = :l_text, text = "Ship Max", w = 333, fg = c:SE2_L, bg = "000" },
-                ]},
-                ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
-
-                    ${ t = :l_text, text = "m³",                                         w = 333, fg = c:SE2_L, bg = "000" },
-                    ${ t = :l_text, ref = :m3, text = STATE.ship.cargo.m3,                          w = 333, fg = c:SE1_L, bg = "000" },
-                    ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_m3, w = 333, fg = c:SE2, bg = "000" },
-                ]},
-                ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
-                    ${ t = :l_text, text = "kg³",                                        w = 333, fg = c:SE2_L, bg = "000" },
-                    ${ t = :l_text, ref = :kg, text = STATE.ship.cargo.kg,                          w = 333, fg = c:SE1_L, bg = "000" },
-                    ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_kg, w = 333, fg = c:SE2, bg = "000" },
-                ]},
-                ${ t = :hbox, spacing = 5, w = 1000, h = 700, childs = $[
-                    ${ t = :r_button,
-                       text = "Start mining",
-                       ref = :start_mining,
-                       fg = "000",
-                       bg = c:SE2,
-                       w = 500, h = 1000 },
-                    ${ t = :l_button,
-                       text = "Leave",
-                       ref = :leave,
-                       fg = "000",
-                       bg = c:SE1,
-                       w = 500, h = 1000 },
-                ]},
-            ]
-        }
+    gui:dialog_window WID:STATION ent.name {
+        $[
+            ${ t = :hbox, spacing = 5, w = 1000, childs = $[
+                ${ t = :l_text, text = "", w = 333, fg = "F00", bg = "000" },
+                ${ t = :l_text, text = "Current", w = 333, fg = c:SE2_L, bg = "000" },
+                ${ t = :l_text, text = "Ship Max", w = 333, fg = c:SE2_L, bg = "000" },
+            ]},
+            ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
+                ${ t = :l_text, text = "m³",                                         w = 333, fg = c:SE2_L, bg = "000" },
+                ${ t = :l_text, ref = :m3, text = STATE.ship.cargo.m3,                          w = 333, fg = c:SE1_L, bg = "000" },
+                ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_m3, w = 333, fg = c:SE2, bg = "000" },
+            ]},
+            ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
+                ${ t = :l_text, text = "kg³",                                        w = 333, fg = c:SE2_L, bg = "000" },
+                ${ t = :l_text, ref = :kg, text = STATE.ship.cargo.kg,                          w = 333, fg = c:SE1_L, bg = "000" },
+                ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_kg, w = 333, fg = c:SE2, bg = "000" },
+            ]},
+            ${ t = :hbox, spacing = 5, w = 1000, h = 700, childs = $[
+                gui:action_button 500 1000 :start_mining "Start mining",
+                gui:button 500 1000 :depart "Depart",
+            ]},
+        ]
     } {||
         match _1
             "start_mining" {||

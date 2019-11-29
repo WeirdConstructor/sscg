@@ -32,11 +32,21 @@
 !@export hpanel = {!(h, child_cb) = @;
     ${
         t            = "hbox",
-        border       = 1,
-        border_color = c:SE1_D2,
+#        border       = 1,
+#        border_color = c:SE1_D2,
         w            = 1000,
         h            = h,
         spacing      = 10,
         childs       = child_cb[],
     }
+};
+
+!@export button = {!(w, h, ref, text) = @;
+    ${ t = :l_button, text = text, ref = ref,
+       w = w, h = h, fg = "000", bg = c:SE2 }
+};
+
+!@export action_button = {!(w, h, ref, text) = @;
+    ${ t = :r_button, text = text, ref = ref,
+       w = w, h = h, fg = "000", bg = c:SE1 }
 };
