@@ -41,35 +41,13 @@
 
     gui:dialog_window WID:STATION ent.name {
         $[
-            gui:hpanel 300 {
-               $[
-                    ${ t = :l_button, text = "Refuel", ref = :refuel,
-                       w = 500, h = 1000, fg = "000", bg = c:SE1 },
-                    refuel_text[STATE]
-               ]
-            },
+            gui:hpanel 300 { $[
+                gui:action_button 500 1000 :refuel "Refuel",
+                refuel_text STATE,
+            ] },
             gui:hpanel 700 { $[
-                ${ t = "vbox", w = 500, h = 1000, childs = $[
-                    ${
-                        t    = :r_button,
-                        fg   = "000",
-                        bg   = c:SE2,
-                        text = "Sell Rocks",
-                        ref  = :sell_rocks,
-                        w    = 1000,
-                        h    = 1000,
-                    }
-                ]},
-                ${ t = "vbox", w = 500, h = 1000, childs = $[
-                    ${
-                        t    = :l_button,
-                        fg   = "000",
-                        bg   = c:SE1,
-                        text = "Depart",
-                        w    = 1000,
-                        h    = 1000,
-                    }
-                ]}
+                gui:action_button 500 1000 :sell_rocks "Sell rocks",
+                gui:button        500 1000 :depart "Depart",
             ] },
         ]
     } {||
