@@ -23,7 +23,7 @@
             t       = :vbox,
             w       = 1000,
             h       = 1000,
-            spacing = 0,
+            spacing = 5,
             childs  = child_fun[],
         },
     } ev_cb;
@@ -32,12 +32,20 @@
 !@export hpanel = {!(h, child_cb) = @;
     ${
         t            = "hbox",
-#        border       = 1,
-#        border_color = c:SE1_D2,
+        border       = 1,
+        border_color = c:SE1_D2,
+        margin       = 5,
         w            = 1000,
         h            = h,
         spacing      = 10,
-        childs       = child_cb[],
+        childs       = $[
+            ${ t       = "hbox",
+               h       = 1000,
+               w       = 1000,
+               margin  = 5,
+               spacing = 5,
+               childs  = child_cb[] },
+        ]
     }
 };
 
