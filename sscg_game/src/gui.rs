@@ -725,13 +725,11 @@ pub struct Size {
 impl Size {
     pub fn size(&self, max_w: u32, max_h: u32) -> (u32, u32) {
         let margin2 = self.margin * 2;
-        let rw = p2r(max_w, self.w as i32) + margin2;
-        let rh = p2r(max_h, self.h as i32) + margin2;
+        let rw = p2r(max_w, self.w as i32) - margin2;
+        let rh = p2r(max_h, self.h as i32) - margin2;
         (
-            if rw < (self.min_w + margin2) { self.min_w + margin2 }
-            else { rw },
-            if rh < (self.min_h + margin2) { self.min_h + margin2 }
-            else { rh },
+            if rw < self.min_w { self.min_w } else { rw },
+            if rh < self.min_h { self.min_h } else { rh },
         )
     }
 }
