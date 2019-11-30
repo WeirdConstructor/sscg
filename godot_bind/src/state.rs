@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
-use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric};
+use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric, FontSize};
 use sscg::wlambda_api::WindowManager;
 use sscg::wlambda_api::window_manager_wlambda_obj;
 use gdnative::*;
@@ -11,12 +11,16 @@ use crate::wl_gd_mod_resolver::*;
 
 #[derive(Debug, Clone)]
 pub struct FontHolder {
-    pub main_font: DynamicFont,
+    pub main_font:  DynamicFont,
+    pub small_font: DynamicFont,
 }
 
 impl FontMetric for FontHolder {
-    fn text_size(&self, text: &str) -> (u32, u32) {
-        let s = self.main_font.get_string_size(GodotString::from_str(text));
+    fn text_size(&self, text: &str, fs: FontSize) -> (u32, u32) {
+        let s = match fs {
+            FontSize::Normal => self.main_font.get_string_size(GodotString::from_str(text)),
+            FontSize::Small  => self.small_font.get_string_size(GodotString::from_str(text)),
+        };
         (s.x as u32, s.y as u32)
     }
 }

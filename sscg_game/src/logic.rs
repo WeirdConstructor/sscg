@@ -310,6 +310,11 @@ impl EventRouter {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Hash, Copy)]
+pub enum FontSize {
+    Normal,
+    Small,
+}
 
 pub trait GamePainter {
     fn push_offs(&mut self, xo: i32, yo: i32);
@@ -330,7 +335,7 @@ pub trait GamePainter {
     fn draw_circle(&mut self, xo: i32, yo: i32, r: u32, color: (u8, u8, u8, u8));
     fn draw_line(&mut self, xo: i32, yo: i32, x2o: i32, y2o: i32, t: u32,
                  color: (u8, u8, u8, u8));
-    fn text_size(&mut self, txt: &str) -> (u32, u32);
+    fn text_size(&mut self, txt: &str, fs: FontSize) -> (u32, u32);
     fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32);
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool);
     fn texture_size(&mut self, idx: usize) -> (u32, u32);
@@ -338,7 +343,8 @@ pub trait GamePainter {
                  fg: (u8, u8, u8, u8),
                  bg: Option<(u8, u8, u8, u8)>,
                  align: i32,
-                 txt: &str);
+                 txt: &str,
+                 fs: FontSize);
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -543,7 +549,7 @@ impl Ship {
             p.draw_text(
                 x - 100, y + 10, 200,
                 (255, 0, 255, 255), None,
-                0, &self.notify_txt);
+                0, &self.notify_txt, FontSize::Normal);
         }
     }
 }
@@ -623,8 +629,8 @@ impl Entity {
         if self.redraw {
             self.redraw = false;
             p.texture(t_id, 0, 0, false);
-            p.draw_text(1, tw + (tw / 2) + 20 + 2, 2 * tw as u32, (0, 0, 0, 255),       None, 0, &self.name);
-            p.draw_text(0, tw + (tw / 2) + 20,     2 * tw as u32, (255, 255, 255, 255), None, 0, &self.name);
+            p.draw_text(1, tw + (tw / 2) + 20 + 2, 2 * tw as u32, (0, 0, 0, 255),       None, 0, &self.name, FontSize::Normal);
+            p.draw_text(0, tw + (tw / 2) + 20,     2 * tw as u32, (255, 255, 255, 255), None, 0, &self.name, FontSize::Normal);
             if self.is_highlighted {
                 p.draw_circle(tw, tw, 30, (255, 0, 0, 255));
             }

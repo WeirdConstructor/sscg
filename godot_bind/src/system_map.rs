@@ -29,13 +29,23 @@ impl SystemMap {
                 GodotString::from_str("res://fonts/main_font_normal.tres"),
                 GodotString::from_str("DynamicFont"),
                 false);
+        let small_font_resource =
+            ResourceLoader::godot_singleton().load(
+                GodotString::from_str("res://fonts/main_font_small.tres"),
+                GodotString::from_str("DynamicFont"),
+                false);
         let main_font : DynamicFont =
             main_font_resource
                 .and_then(|font_res| font_res.cast::<DynamicFont>())
                 .unwrap();
+        let small_font : DynamicFont =
+            small_font_resource
+                .and_then(|font_res| font_res.cast::<DynamicFont>())
+                .unwrap();
         let mut sscg =
             SSCGState::new(Rc::new(FontHolder {
-                main_font
+                main_font,
+                small_font,
             }));
 
         let mut global_lock = SSCG.lock().expect("Getting lock to SSCG");

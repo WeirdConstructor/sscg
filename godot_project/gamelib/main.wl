@@ -16,10 +16,11 @@
     },
     ship_types = ${
         scout_mk1 = ${
-            fuel_capacity   = 1000,
-            fuel_per_sec    = 7,
-            cargo_max_m3    = 2000,
-            cargo_max_kg    = 10000,
+            fuel_capacity       = 1000,
+            fuel_per_sec        = 7,
+            max_kg_fuel_factor  = 200,
+            cargo_max_m3        = 2000,
+            cargo_max_kg        = 10000,
         },
     },
     player = ${
@@ -259,13 +260,21 @@ STATE.code.recalc_ship_cargo = {
         }
     };
 
-    !engine_on_delta = ship_action_state.engine_on_secs - STATE.ship.engine_on_secs;
+    !engine_on_delta =
+        ship_action_state.engine_on_secs - STATE.ship.engine_on_secs;
     STATE.ship.engine_on_secs = ship_action_state.engine_on_secs;
 
     !typ = STATE.ship.t;
     !ship_type = STATE.ship_types.(typ);
 
-    STATE.ship.fuel = STATE.ship.fuel - ship_type.fuel_per_sec * engine_on_delta;
+    !fuel_usage_factor =
+        (STATE.ship.cargo.kg * ship_type.max_kg_fuel_factor)
+        / ship_type.cargo_max_kg;
+    .fuel_usage_factor = fuel_usage_factor + 100;
+
+    STATE.ship.fuel =
+        STATE.ship.fuel
+        - (fuel_usage_factor * ship_type.fuel_per_sec * engine_on_delta) / 100;
     (STATE.ship.fuel <= 0) {
         display_fuel_out_warning[];
         STATE.ship.fuel = 0;
@@ -278,6 +287,7 @@ STATE.code.recalc_ship_cargo = {
 
     sscg:win.set_label WID:STATUS :speed speed_i;
     sscg:win.set_label WID:STATUS :engine_on_secs (str STATE.ship.engine_on_secs);
+    sscg:win.set_label WID:STATUS :fuel_usage ~ std:str:cat fuel_usage_factor "%";
     sscg:win.set_label WID:STATUS :fuel ~
         std:str:cat STATE.ship.fuel " / " ship_type.fuel_capacity;
     sscg:win.set_label WID:STATUS :credits STATE.player.credits;
@@ -289,9 +299,11 @@ STATE.code.recalc_ship_cargo = {
 
     !status_value = {!(lbl, ref) = @;
         ${ t = "hbox", w = 1000, spacing = 2, childs = $[
-            ${ t = :r_text, fg = "000", bg = c:PRI_L,
+            ${ t = :r_label, fg = "000", bg = c:PRI_L,
+               font = :small,
                text = lbl, w = 500 },
-            ${ t = :r_text, fg = "000", bg = c:PRI_L,
+            ${ t = :r_label, fg = "000", bg = c:PRI_L,
+               font = :small,
                text = "", ref = ref, w = 500 },
         ] }
     };
@@ -311,6 +323,7 @@ STATE.code.recalc_ship_cargo = {
                 status_value "Fuel"        :fuel,
                 status_value "Credits"     :credits,
                 status_value "Cargo m³/kg" :cargo_load,
+                status_value "Fuel usage"  :fuel_usage,
                 ${ t = :l_button, text = "Menu", w = 1000, bg = c:CON, fg = "000", ref = "menu" },
             ]
         }

@@ -11,7 +11,7 @@ extern crate gdnative;
 use gdnative::*;
 use euclid::rect;
 use euclid::vec2;
-use sscg::tree_painter::{DrawCmd, TreePainter};
+use sscg::tree_painter::{DrawCmd, TreePainter, FontSize};
 use sscg::gui::*;
 use std::rc::Rc;
 use state::*;
@@ -46,10 +46,15 @@ fn draw_cmds(xxo: i32, yyo: i32,
                 draw_cmds(xxo + x, yyo + y, cache, n, fh, my_cmds.as_ref().unwrap());
                 std::mem::replace(&mut cache[*id], my_cmds);
             },
-            DrawCmd::Text { txt, align, color, x, y, w } => {
+            DrawCmd::Text { txt, align, color, x, y, w, fs } => {
                 unsafe {
-                    let size =
-                        fh.main_font.get_string_size(GodotString::from(txt));
+                    let font : &DynamicFont =
+                        match fs {
+                            FontSize::Normal => &fh.main_font,
+                            FontSize::Small  => &fh.small_font,
+                        };
+                    let size = font.get_string_size(GodotString::from(txt));
+
                     let xo =
                         if *w as f32 > size.x  {
                             match *align {
@@ -62,10 +67,10 @@ fn draw_cmds(xxo: i32, yyo: i32,
                             0.0
                         };
                     n.draw_string(
-                        Some(fh.main_font.to_font()),
+                        Some(font.to_font()),
                         vec2(xxo as f32 + xo + *x as f32,
                              yyo as f32 + *y as f32
-                             + fh.main_font.get_ascent() as f32),
+                             + font.get_ascent() as f32),
                         GodotString::from_str(txt),
                         c2c(*color),
                         *w as i64);
