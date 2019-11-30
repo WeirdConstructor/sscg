@@ -12,5 +12,5 @@ cast_shadow = 0
 script = ExtResource( 2 )
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-008, 1, 0, -1, -4.37114e-008, 21.29, 100, 11.6 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 21.29, 100, 11.6 )
 far = 3978.4

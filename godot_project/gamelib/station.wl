@@ -55,7 +55,7 @@
                 !refuel = calc_refuel STATE;
                 STATE.ship.fuel = STATE.ship.fuel + refuel.fuel_delta;
                 STATE.player.credits = STATE.player.credits - refuel.price;
-                show[STATE, ent, ent_type];
+                show STATE ent ent_type;
             }
             "sell_rocks" {||
                 STATE.code.sell_ship_cargo_good :rock;
