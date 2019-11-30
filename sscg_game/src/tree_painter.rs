@@ -2,6 +2,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use crate::logic::GamePainter;
 
+pub use crate::logic::FontSize;
+
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum DrawCmd {
     ClipRectOff,
@@ -13,13 +15,13 @@ pub enum DrawCmd {
     Line         { x: i32, y: i32, x2: i32, y2: i32, t: u32, color: (u8, u8, u8, u8) },
     TextureCrop  { txt_idx: usize, x: i32, y: i32, w: u32, h: u32, },
     Texture      { txt_idx: usize, x: i32, y: i32, centered: bool },
-    Text         { txt: String, align: i32, color: (u8, u8, u8, u8), x: i32, y: i32, w: u32 },
+    Text         { txt: String, align: i32, color: (u8, u8, u8, u8), x: i32, y: i32, w: u32, fs: FontSize },
     CacheDraw    { w: u32, h: u32, id: usize, cmds: std::vec::Vec<DrawCmd> },
     DrawCache    { x: i32, y: i32, w: u32, h: u32, id: usize },
 }
 
 pub trait FontMetric {
-    fn text_size(&self, text: &str) -> (u32, u32);
+    fn text_size(&self, text: &str, fs: FontSize) -> (u32, u32);
 }
 
 #[derive(Clone)]
@@ -163,8 +165,8 @@ impl GamePainter for TreePainter {
             color,
         });
     }
-    fn text_size(&mut self, txt: &str) -> (u32, u32) {
-        self.text_metric.text_size(txt)
+    fn text_size(&mut self, txt: &str, fs: FontSize) -> (u32, u32) {
+        self.text_metric.text_size(txt, fs)
     }
     fn texture_crop(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32) {
         self.cmds.push(DrawCmd::TextureCrop {
@@ -190,9 +192,10 @@ impl GamePainter for TreePainter {
                  fg: (u8, u8, u8, u8),
                  bg: Option<(u8, u8, u8, u8)>,
                  align: i32,
-                 txt: &str) {
+                 txt: &str,
+                 fs: FontSize) {
         if let Some(c) = bg {
-            let fm = self.text_size(txt);
+            let fm = self.text_size(txt, fs);
             self.cmds.push(DrawCmd::FilledRect {
                 x:      self.offs.0 + xo,
                 y:      self.offs.1 + yo,
@@ -208,6 +211,7 @@ impl GamePainter for TreePainter {
             w:      max_w,
             color:  fg,
             txt:    txt.to_string(),
+            fs,
             align,
         });
     }

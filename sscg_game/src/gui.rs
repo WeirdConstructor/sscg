@@ -1,5 +1,6 @@
 use regex::Regex;
 use crate::logic::GamePainter;
+use crate::logic::FontSize;
 
 #[derive(Debug, Clone)]
 pub enum Widget {
@@ -55,7 +56,7 @@ impl Widget {
         lbl: &Label,
         bg_color: (u8, u8, u8, u8),
         th: u32,
-        mw: &mut u32, mh: &mut u32, p: &mut P)
+        mw: &mut u32, mh: &mut u32, fs: FontSize, p: &mut P)
         where P: GamePainter {
 
         let border_pad = 4;
@@ -72,7 +73,7 @@ impl Widget {
         p.draw_text(
             border_pad as i32, ((*mh - th) / 2) as i32,
             text_field_width, lbl.fg_color,
-            None, lbl.align, &lbl.text);
+            None, lbl.align, &lbl.text, fs);
     }
 
     pub fn draw_label_multiline<P>(
@@ -80,7 +81,7 @@ impl Widget {
         lbl: &Label,
         bg_color: (u8, u8, u8, u8),
         _tw: u32, _th: u32,
-        mw: &mut u32, mh: &mut u32, p: &mut P)
+        mw: &mut u32, mh: &mut u32, fs: FontSize, p: &mut P)
         where P: GamePainter {
 
         let txt = &lbl.text;
@@ -90,7 +91,7 @@ impl Widget {
         let mut lines : std::vec::Vec<(i32, i32, String)> = vec![];
         for c in txt.chars() {
             line.push(c);
-            let (tw, th) = p.text_size(&line);
+            let (tw, th) = p.text_size(&line, fs);
             if (y as u32 + th) > *mh { line = String::from(""); break; }
             if tw > *mw {
                 if line.len() > 1 { line.pop(); }
@@ -119,7 +120,7 @@ impl Widget {
         for (x, y, l) in lines.iter() {
             p.draw_text(
                 *x, *y + yo as i32, *mw,
-                lbl.fg_color, None, lbl.align, &l);
+                lbl.fg_color, None, lbl.align, &l, fs);
         }
     }
 
@@ -128,7 +129,7 @@ impl Widget {
         lbl: &Label,
         bg_color: (u8, u8, u8, u8),
         _tw: u32, th: u32,
-        mw: &mut u32, mh: &mut u32, p: &mut P)
+        mw: &mut u32, mh: &mut u32, fs: FontSize, p: &mut P)
         where P: GamePainter {
 
         if lbl.clickable {
@@ -193,15 +194,16 @@ impl Widget {
                 xo, 0, text_width, *mh, bg_color);
             p.draw_text(
                 xo, ((*mh - th) / 2) as i32, text_width as u32,
-                lbl.fg_color, None, lbl.align, &lbl.text);
+                lbl.fg_color, None, lbl.align, &lbl.text, fs);
         } else {
-            let text_field_width = *mw;
+            let border_pad = 4;
+            let text_field_width = *mw - 2 * border_pad;
             p.draw_rect_filled(
-                0, 0, text_field_width, *mh, lbl.bg_color);
+                0, 0, text_field_width + 2 * border_pad, *mh, lbl.bg_color);
             p.draw_text(
-                0, ((*mh - th) / 2) as i32,
+                border_pad as i32, ((*mh - th) / 2) as i32,
                 text_field_width, lbl.fg_color,
-                None, lbl.align, &lbl.text);
+                None, lbl.align, &lbl.text, fs);
         }
 
     }
@@ -277,7 +279,8 @@ impl Widget {
                 }
 
                 let txt = lbl.text.clone();
-                let (tw, th) = p.text_size(&txt);
+                let (tw, th) = p.text_size(&txt, lbl.font_size);
+                //d// println!("TEXTS {}|{:?} => {},{}", txt, lbl.font_size, tw, th);
 
                 if mw == 0 { mw = max_w; }
                 if mw == 0 { mw = th; }
@@ -286,14 +289,14 @@ impl Widget {
 
                 if lbl.editable {
                     self.draw_label_editable(
-                        lbl, bg_color, th, &mut mw, &mut mh, p);
+                        lbl, bg_color, th, &mut mw, &mut mh, lbl.font_size, p);
 
                 } else if lbl.wrap && tw > mw {
                     self.draw_label_multiline(
-                        lbl, bg_color, tw, th, &mut mw, &mut mh, p);
+                        lbl, bg_color, tw, th, &mut mw, &mut mh, lbl.font_size, p);
 
                 } else {
-                    self.draw_label(lbl, bg_color, tw, th, &mut mw, &mut mh, p);
+                    self.draw_label(lbl, bg_color, tw, th, &mut mw, &mut mh, lbl.font_size, p);
                 }
             },
         }
@@ -416,7 +419,7 @@ impl Window {
             }
         }
 
-        let mut ts = p.text_size(&self.title);
+        let mut ts = p.text_size(&self.title, FontSize::Normal);
         let corner_radius   : u32 = ts.1 / 2;
         let text_lr_pad     : i32 = 4;
         let padding         : i32 = 4;
@@ -479,7 +482,7 @@ impl Window {
             let text_pos = 3 * corner_radius as i32 + text_lr_pad;
             p.draw_text(
                 text_pos, 0, ts.0,
-                title_color, None, 1, &self.title);
+                title_color, None, 1, &self.title, FontSize::Normal);
             let after_text = text_pos + text_lr_pad + ts.0 as i32;
             let after_text_to_win_max_x = w_fb.w as i32 - after_text;
             // rectangle from text end to right circle
@@ -748,6 +751,7 @@ pub struct Label {
     editable:   bool,
     edit_regex: String,
     clickable:  bool,
+    font_size:  FontSize,
     hlt_color:  (u8, u8, u8, u8),
     fg_color:   (u8, u8, u8, u8),
     bg_color:   (u8, u8, u8, u8),
@@ -767,6 +771,7 @@ impl Label {
             hlt_color: (255 - fg.0, 255 - fg.1, 255 - fg.2, fg.3),
             fg_color:  fg,
             bg_color:  bg,
+            font_size: FontSize::Normal,
         }
     }
 
@@ -782,6 +787,16 @@ impl Label {
 
     pub fn center(mut self) -> Self {
         self.align = 0;
+        self
+    }
+
+    pub fn normal_font(mut self) -> Self {
+        self.font_size = FontSize::Normal;
+        self
+    }
+
+    pub fn small_font(mut self) -> Self {
+        self.font_size = FontSize::Small;
         self
     }
 

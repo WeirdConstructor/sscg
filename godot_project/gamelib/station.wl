@@ -31,6 +31,7 @@
 
     gui:ml_l_vtext 500 1000 c:SE1_L $[
         std:str:cat refuel.cc_per_fuelunit "cc/Unit",
+        std:str:cat STATE.player.credits " available credits",
         std:str:cat refuel.fuel_delta " fuel units",
         std:str:cat "= " refuel.price " credits",
     ]
@@ -39,18 +40,16 @@
 !show = $&&$n;
 .*show = {!(STATE, ent, ent_type) = @;
 
-    gui:dialog_window WID:STATION ent.name {
-        $[
-            gui:hpanel 300 { $[
-                gui:action_button 500 1000 :refuel "Refuel",
-                refuel_text STATE,
-            ] },
-            gui:hpanel 700 { $[
-                gui:action_button 500 1000 :sell_rocks "Sell rocks",
-                gui:button        500 1000 :depart "Depart",
-            ] },
-        ]
-    } {||
+    gui:dialog_window WID:STATION ent.name { $[
+        gui:hpanel 300 { $[
+            gui:action_button 500 1000 :refuel "Refuel",
+            refuel_text STATE,
+        ] },
+        gui:hpanel 700 { $[
+            gui:action_button 500 1000 :sell_rocks "Sell rocks",
+            gui:button        500 1000 :depart "Depart",
+        ] },
+    ] } {||
         match _1
             "refuel" {||
                 !refuel = calc_refuel STATE;

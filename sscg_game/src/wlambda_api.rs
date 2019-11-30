@@ -589,12 +589,17 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
         _ => ()
     }
 
-    let lbl =
+    let mut lbl =
         gui::Label::new(
             &v.v_s_rawk("text"),
             color_hex24tpl(&v.v_s_rawk("fg")),
             color_hex24tpl(&v.v_s_rawk("bg")))
         .lblref(&v.v_s_rawk("ref"));
+
+    if &v.v_s_rawk("font")[..] == "small" {
+        println!("SMALLL FONT SELECTED!");
+        lbl = lbl.small_font();
+    }
 
     let lbl = match &v.v_s_rawk("t")[..] {
         "l_button" => lbl.left().clickable(),
