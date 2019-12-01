@@ -586,6 +586,23 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
                 color_hex24tpl(&v.v_s_rawk("border_color")),
                 &childs);
         },
+        "canvas" => {
+            let mut cv = gui::Canvas::new();
+            println!("CCCCCCCCCCCCCCCCC {}", v.s());
+            for elem in v.clone().v_k("cmds").iter() {
+                match &elem.v_s_raw(0)[..] {
+                    "circle" => {
+                        cv.push(gui::CanvasCmd::Circle(
+                            elem.v_i(1) as i32,
+                            elem.v_i(2) as i32,
+                            elem.v_i(3) as u32,
+                            color_hex24tpl(&v.v_s_raw(4))));
+                    },
+                    _ => {},
+                }
+            }
+            return win.add_canvas(vval2size(v.clone()), cv);
+        },
         _ => ()
     }
 

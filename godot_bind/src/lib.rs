@@ -78,6 +78,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
             },
             DrawCmd::Circle { x, y, r, color } => {
                 unsafe {
+                    println!("CIRCLE: {},{},{} : {:?}", x, y, r, color);
                     n.draw_circle(
                         vec2((xxo + *x) as f32,
                              (yyo + *y) as f32),
