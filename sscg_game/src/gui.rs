@@ -6,6 +6,7 @@ use crate::logic::FontSize;
 pub enum Widget {
     Layout(usize, Size, Layout),
     Label(usize, Size, Label),
+    Canvas(usize, Size, Canvas),
 }
 
 fn calc_m_wo_spacing(child_count: usize, spacing: u32, border: i32, mw: u32) -> u32 {
@@ -25,6 +26,7 @@ impl Widget {
         match self {
             Widget::Layout(id, _, _) => *id,
             Widget::Label(id, _, _)  => *id,
+            Widget::Canvas(id, _, _) => *id,
         }
     }
     pub fn calc_feedback<P>(&self, max_w: u32, max_h: u32, p: &mut P)
@@ -37,6 +39,10 @@ impl Widget {
                 (*id, l.size(max_w, max_h))
             },
             Widget::Label(id, l, _)  => {
+                p.push_add_offs(l.margin as i32, l.margin as i32);
+                (*id, l.size(max_w, max_h))
+            },
+            Widget::Canvas(id, l, _)  => {
                 p.push_add_offs(l.margin as i32, l.margin as i32);
                 (*id, l.size(max_w, max_h))
             },
@@ -299,6 +305,38 @@ impl Widget {
                     self.draw_label(lbl, bg_color, tw, th, &mut mw, &mut mh, lbl.font_size, p);
                 }
             },
+            Widget::Canvas(id, _size, cv) => {
+                let min = if mw < mh { mw } else { mh };
+                println!("CANVAAAAAAAAAAAAAS {:?}\n", cv);
+                for cmd in cv.cmds.iter() {
+                    match cmd {
+                        CanvasCmd::Circle( x, y, r, clr ) => {
+                            let x = p2r(min, *x);
+                            let y = p2r(min, *y);
+                            let r = p2r(min, *r as i32);
+                            p.draw_circle(x as i32, y as i32, r, *clr);
+                        },
+                        CanvasCmd::CircleFilled( x, y, r, clr ) => {
+                            let x = p2r(min, *x);
+                            let y = p2r(min, *y);
+                            let r = p2r(min, *r as i32);
+                            p.draw_circle(x as i32, y as i32, r, *clr);
+                        },
+                        CanvasCmd::Line( x1, y1, x2, y2, t, clr ) => {
+                            p.draw_line(
+                                p2r(min, *x1) as i32,
+                                p2r(min, *y1) as i32,
+                                p2r(min, *x2) as i32,
+                                p2r(min, *y2) as i32,
+                                *t,
+                                *clr);
+                        },
+                        CanvasCmd::Rect( x1, y1, rw, rh, clr ) => { },
+                        CanvasCmd::RectFilled( x1, y1, rw, rh, clr ) => { },
+                        CanvasCmd::Hitbox( x1, y1, rw, rh, tag ) => { },
+                    }
+                }
+            },
         }
         p.pop_offs();
         w_fb.w = mw;
@@ -543,6 +581,13 @@ impl Window {
         id
     }
 
+    pub fn add_canvas(&mut self, s: Size, cv: Canvas) -> usize {
+        let id = self.widgets.len();
+        self.widgets.push(Widget::Canvas(id, s, cv));
+        self.does_need_redraw();
+        id
+    }
+
     pub fn add_label(&mut self, s: Size, l: Label) -> usize {
         let id = self.widgets.len();
         self.widgets.push(Widget::Label(id, s, l));
@@ -737,9 +782,29 @@ impl Size {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum CanvasCmd {
+    Circle(i32, i32, u32, (u8, u8, u8, u8)),
+    CircleFilled(i32, i32, u32, (u8, u8, u8, u8)),
+    Line(i32, i32, i32, i32, u32, (u8, u8, u8, u8)),
+    Rect(i32, i32, u32, u32, (u8, u8, u8, u8)),
+    RectFilled(i32, i32, u32, u32, (u8, u8, u8, u8)),
+    Hitbox(i32, i32, u32, u32, String),
+}
 
-#[derive(Debug, Copy, Clone)]
-pub enum LabelStyle {
+#[derive(Debug, Clone)]
+pub struct Canvas {
+    cmds: std::vec::Vec<CanvasCmd>,
+}
+
+impl Canvas {
+    pub fn new() -> Self {
+        Self { cmds: vec![], }
+    }
+
+    pub fn push(&mut self, cmd: CanvasCmd) {
+        self.cmds.push(cmd);
+    }
 }
 
 #[derive(Debug, Clone)]

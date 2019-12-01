@@ -116,10 +116,17 @@ STATE.code.recalc_ship_cargo = {
                 ${ t = :l_text, ref = :kg, text = STATE.ship.cargo.kg,                          w = 333, fg = c:SE1_L, bg = "000" },
                 ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_kg, w = 333, fg = c:SE2, bg = "000" },
             ]},
-            ${ t = :hbox, spacing = 5, w = 1000, h = 700, childs = $[
+            ${ t = :hbox, spacing = 5, w = 1000, h = 300, childs = $[
                 gui:action_button 500 1000 :start_mining "Start mining",
                 gui:button 500 1000 :depart "Depart",
             ]},
+            ${ t = :canvas,
+                w = 1000,
+                h = 400,
+                cmds = $[
+                    $[:circle, 500, 500, 100, "F00"],
+                ],
+            },
         ]
     } {||
         match _1

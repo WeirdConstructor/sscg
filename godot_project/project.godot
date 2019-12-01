@@ -19,6 +19,12 @@ config/name="Space Ship Cargo Game"
 run/main_scene="res://scenes/system_map/system_map.tscn"
 config/icon="res://icon.png"
 
+[display]
+
+window/size/width=1280
+window/size/height=720
+window/stretch/aspect="expand"
+
 [input]
 
 fly_stop={

@@ -2,6 +2,7 @@
 ========================
 
 * Feature: Added an FPS counter in the top right.
+* Change: Aspect ratio is now expanded and default window size is at 1280x720 now.
 
 0.3.0 alpha (2019-11-26)
 ========================
