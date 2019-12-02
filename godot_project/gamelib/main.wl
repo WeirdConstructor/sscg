@@ -123,8 +123,9 @@ STATE.code.recalc_ship_cargo = {
             ${ t = :canvas,
                 w = 1000,
                 h = 400,
+                ref = "map",
                 cmds = $[
-                    $[:circle, 500, 500, 100, "F00"],
+                    $[:circle, 10, 500, 500, 100, "F00"],
                 ],
             },
         ]
