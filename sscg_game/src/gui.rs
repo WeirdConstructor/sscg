@@ -54,6 +54,7 @@ impl Widget {
             y: pos.1 as u32,
             w: mw,
             h: mh,
+            sub: None,
         }
     }
 
@@ -307,16 +308,37 @@ impl Widget {
             },
             Widget::Canvas(id, _size, cv) => {
                 let min = if mw < mh { mw } else { mh };
-                println!("CANVAAAAAAAAAAAAAS {:?}\n", cv);
+
+                let mut hovered = false;
+                if let Some(hchld_id) = win.hover_child {
+                    if *id == hchld_id { hovered = true; }
+                }
+
                 for cmd in cv.cmds.iter() {
                     match cmd {
-                        CanvasCmd::Circle( x, y, r, clr ) => {
+                        CanvasCmd::Circle( sid, x, y, r, clr ) => {
                             let x = p2r(min, *x);
                             let y = p2r(min, *y);
                             let r = p2r(min, *r as i32);
-                            p.draw_circle(x as i32, y as i32, r, *clr);
+
+                            let mut clr = *clr;
+
+                            if let Some(sid) = sid {
+                                let x = if x < r { 0 } else { x - r };
+                                let y = if y < r { 0 } else { y - r };
+                                w_fb.add_sub_fb(*sid, x, y, 2 * r, 2 * r);
+
+                                if let Some(schld_id) = win.hover_sub_child {
+                                    if schld_id == *sid {
+                                        clr = (255 - clr.0, 255 - clr.1,
+                                               255 - clr.2, clr.3);
+                                    }
+                                }
+                            }
+
+                            p.draw_circle(x as i32, y as i32, r, clr);
                         },
-                        CanvasCmd::CircleFilled( x, y, r, clr ) => {
+                        CanvasCmd::CircleFilled( sid, x, y, r, clr ) => {
                             let x = p2r(min, *x);
                             let y = p2r(min, *y);
                             let r = p2r(min, *r as i32);
@@ -331,9 +353,22 @@ impl Widget {
                                 *t,
                                 *clr);
                         },
-                        CanvasCmd::Rect( x1, y1, rw, rh, clr ) => { },
-                        CanvasCmd::RectFilled( x1, y1, rw, rh, clr ) => { },
-                        CanvasCmd::Hitbox( x1, y1, rw, rh, tag ) => { },
+                        CanvasCmd::Rect( sid, x1, y1, rw, rh, clr ) => {
+                            p.draw_rect(
+                                p2r(min, *x1) as i32,
+                                p2r(min, *y1) as i32,
+                                p2r(min, *rw as i32),
+                                p2r(min, *rh as i32),
+                                *clr);
+                        },
+                        CanvasCmd::RectFilled( sid, x1, y1, rw, rh, clr ) => {
+                            p.draw_rect_filled(
+                                p2r(min, *x1) as i32,
+                                p2r(min, *y1) as i32,
+                                p2r(min, *rw as i32),
+                                p2r(min, *rh as i32),
+                                *clr);
+                        },
                     }
                 }
             },
@@ -346,13 +381,22 @@ impl Widget {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct WidgetFeedback {
     id: usize,
     x:  u32,
     y:  u32,
     w:  u32,
     h:  u32,
+    sub: Option<std::vec::Vec<WidgetFeedback>>,
+}
+
+fn set_fb_vec(v: &mut std::vec::Vec<WidgetFeedback>, fb: WidgetFeedback) {
+    if fb.id >= v.len() {
+        v.resize(fb.id + 1, WidgetFeedback::new());
+    }
+    let id = fb.id;
+    v[id] = fb;
 }
 
 impl WidgetFeedback {
@@ -363,7 +407,32 @@ impl WidgetFeedback {
             y: 0,
             w: 0,
             h: 0,
+            sub: None,
         }
+    }
+
+    pub fn offs(&mut self, x: u32, y: u32) {
+        self.x += x;
+        self.y += y;
+        if let Some(ref mut sv) = self.sub {
+            for s in sv.iter_mut() {
+                s.offs(x, y);
+            }
+        }
+    }
+
+    pub fn add_sub_fb(&mut self, id: usize, x: u32, y: u32, w: u32, h: u32) {
+        if self.sub.is_none() {
+            self.sub = Some(vec![]);
+        }
+        let fb = Self::from(id, self.x + x, self.y + y, w, h);
+        if let Some(ref mut sv) = self.sub {
+            set_fb_vec(sv, fb);
+        }
+    }
+
+    pub fn from(id: usize, x: u32, y: u32, w: u32, h: u32) -> Self {
+        Self { id, x, y, w, h, sub: None }
     }
 
     pub fn is_inside(&self, x: u32, y: u32) -> bool {
@@ -382,7 +451,9 @@ pub struct Window {
     pub child:    usize,
     focus_child:  Option<usize>,
     hover_child:  Option<usize>,
+    hover_sub_child: Option<usize>,
     activ_child:  Option<usize>,
+    activ_sub_child: Option<usize>,
     pub x:        i32,
     pub y:        i32,
     pub w:        i32,
@@ -409,21 +480,23 @@ pub enum WindowEvent {
 impl Window {
     pub fn new() -> Self {
         Self {
-            id:           0,
-            title:        String::from(""),
-            title_color:  (255, 128, 128, 255),
-            widgets:      std::vec::Vec::new(),
-            feedback:     std::vec::Vec::new(),
-            child:        0,
-            focus_child:  None,
-            hover_child:  None,
-            activ_child:  None,
-            x:            0,
-            y:            0,
-            w:            0,
-            h:            0,
-            needs_redraw: true,
-            win_feedback: WidgetFeedback::new(),
+            id:                 0,
+            title:              String::from(""),
+            title_color:        (255, 128, 128, 255),
+            widgets:            std::vec::Vec::new(),
+            feedback:           std::vec::Vec::new(),
+            child:              0,
+            focus_child:        None,
+            hover_child:        None,
+            hover_sub_child:    None,
+            activ_child:        None,
+            activ_sub_child:    None,
+            x:                  0,
+            y:                  0,
+            w:                  0,
+            h:                  0,
+            needs_redraw:       true,
+            win_feedback:       WidgetFeedback::new(),
         }
     }
 
@@ -555,8 +628,7 @@ impl Window {
             p.pop_offs();
             p.pop_offs();
             for f in feedback.iter_mut() {
-                f.x += w_fb.x;
-                f.y += w_fb.y;
+                f.offs(w_fb.x, w_fb.y);
             }
             self.feedback = feedback;
             self.win_feedback = w_fb;
@@ -646,6 +718,12 @@ impl Window {
         if let Some(idx) = self.activ_child {
             self.activ_child = None;
             match &self.widgets[idx] {
+                Widget::Canvas(_, _, cv) => {
+                    if let Some(sidx) = self.activ_sub_child {
+                        self.activ_sub_child = None;
+                        return Some(format!("{}:{}", cv.cbref, sidx));
+                    }
+                },
                 Widget::Label(_, _, lbl) => { return Some(lbl.lblref.clone()); }
                 _ => (),
             }
@@ -653,15 +731,34 @@ impl Window {
         None
     }
 
-    pub fn get_label_at<P>(&self, x: u32, y: u32, p: P) -> Option<usize>
+    pub fn get_widget_at<P>(&self, x: u32, y: u32, p: P) -> Option<(usize, Option<usize>)>
         where P: Fn(&Label) -> bool {
 
         for (idx, fb) in self.feedback.iter().enumerate() {
             match &self.widgets[idx] {
+                Widget::Canvas(_, _, lbl) => {
+                    if fb.is_inside(x as u32, y as u32) {
+                        if let Some(ref sfb) = fb.sub {
+                            for c in sfb.iter() {
+                                if c.is_inside(x as u32, y as u32) {
+                                    return Some((fb.id, Some(c.id)));
+                                }
+                            }
+                        }
+                        return Some((fb.id, None));
+                    }
+                },
                 Widget::Label(_, _, lbl) => {
                     if p(&lbl) {
                         if fb.is_inside(x as u32, y as u32) {
-                            return Some(fb.id);
+                            if let Some(ref sfb) = fb.sub {
+                                for c in sfb.iter() {
+                                    if c.is_inside(x as u32, y as u32) {
+                                        return Some((fb.id, Some(c.id)));
+                                    }
+                                }
+                            }
+                            return Some((fb.id, None));
                         }
                     }
                 }
@@ -678,13 +775,29 @@ impl Window {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
                     handled = true;
 
-                    let prev_hc = self.hover_child;
+                    let prev_hc     = self.hover_child;
+                    let prev_hc_sub = self.hover_sub_child;
+
                     self.hover_child =
-                        self.get_label_at(
-                            x as u32,
-                            y as u32,
-                            |l| { l.clickable || l.editable });
+                        if let Some((child, sub)) =
+                            self.get_widget_at(
+                                x as u32,
+                                y as u32,
+                                |l| { l.clickable || l.editable })
+                        {
+                            self.hover_sub_child = sub;
+                            Some(child)
+                        } else {
+                            self.hover_sub_child = None;
+                            None
+                        };
+
+                    //d// println!("HOVER: {:?} | {:?}",
+                    //d//          self.hover_child,
+                    //d//          self.hover_sub_child);
+
                     prev_hc != self.hover_child
+                    || prev_hc_sub != self.hover_sub_child
                 } else {
                     false
                 }
@@ -694,11 +807,29 @@ impl Window {
                     handled = true;
 
                     let prev_fc = self.focus_child;
+                    let prev_act_sub = self.activ_sub_child;
+
                     self.activ_child =
-                        self.get_label_at(x as u32, y as u32, |l: &Label| { l.clickable });
+                        if let Some((child, sub)) =
+                            self.get_widget_at(
+                                x as u32, y as u32, |l: &Label| { l.clickable })
+                        {
+                            self.activ_sub_child = sub;
+                            Some(child)
+                        } else {
+                            self.activ_sub_child = None;
+                            None
+                        };
+
                     self.focus_child =
-                        self.get_label_at(x as u32, y as u32, |l: &Label| { l.editable });
+                        if let Some((child, _)) =
+                            self.get_widget_at(
+                                x as u32, y as u32, |l: &Label| { l.editable })
+                        { Some(child) }
+                        else { None };
+
                     prev_fc != self.focus_child
+                    || prev_act_sub != self.activ_sub_child
                 } else {
                     false
                 }
@@ -784,22 +915,22 @@ impl Size {
 
 #[derive(Debug, Clone)]
 pub enum CanvasCmd {
-    Circle(i32, i32, u32, (u8, u8, u8, u8)),
-    CircleFilled(i32, i32, u32, (u8, u8, u8, u8)),
-    Line(i32, i32, i32, i32, u32, (u8, u8, u8, u8)),
-    Rect(i32, i32, u32, u32, (u8, u8, u8, u8)),
-    RectFilled(i32, i32, u32, u32, (u8, u8, u8, u8)),
-    Hitbox(i32, i32, u32, u32, String),
+    Circle(      Option<usize>, i32, i32, u32, (u8, u8, u8, u8)),
+    CircleFilled(Option<usize>, i32, i32, u32, (u8, u8, u8, u8)),
+    Line(        i32, i32,      i32, i32, u32, (u8, u8, u8, u8)),
+    Rect(        Option<usize>, i32, i32, u32, u32, (u8, u8, u8, u8)),
+    RectFilled(  Option<usize>, i32, i32, u32, u32, (u8, u8, u8, u8)),
 }
 
 #[derive(Debug, Clone)]
 pub struct Canvas {
     cmds: std::vec::Vec<CanvasCmd>,
+    cbref: String,
 }
 
 impl Canvas {
-    pub fn new() -> Self {
-        Self { cmds: vec![], }
+    pub fn new(cbref: String) -> Self {
+        Self { cmds: vec![], cbref }
     }
 
     pub fn push(&mut self, cmd: CanvasCmd) {
