@@ -600,7 +600,21 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
                             elem.v_i(2) as i32,
                             elem.v_i(3) as i32,
                             elem.v_i(4) as u32,
-                            color_hex24tpl(&v.v_s_raw(5))));
+                            color_hex24tpl(&elem.v_s_raw(5))));
+                    },
+                    "text" => {
+                        cv.push(gui::CanvasCmd::Text(
+                            id,
+                            elem.v_i(2) as i32,
+                            elem.v_i(3) as i32,
+                            elem.v_i(4) as u32, // w
+                            elem.v_i(5) as i32, // align
+                            elem.v_s_raw(6),
+                            match elem.v_i(7) {
+                                -1 => gui::FontSize::Small,
+                                _  => gui::FontSize::Normal,
+                            },
+                            color_hex24tpl(&elem.v_s_raw(8))));
                     },
                     _ => {},
                 }
