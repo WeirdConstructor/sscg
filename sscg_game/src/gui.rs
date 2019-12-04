@@ -1,6 +1,6 @@
 use regex::Regex;
 use crate::logic::GamePainter;
-use crate::logic::FontSize;
+pub use crate::logic::FontSize;
 
 #[derive(Debug, Clone)]
 pub enum Widget {
@@ -337,6 +337,13 @@ impl Widget {
                             }
 
                             p.draw_circle(x as i32, y as i32, r, clr);
+                        },
+                        CanvasCmd::Text( sid, x, y, w, align, s, fs, clr) => {
+                            let x = p2r(min, *x);
+                            let y = p2r(min, *y);
+                            let w = p2r(min, *w as i32);
+                            p.draw_text(
+                                x as i32, y as i32, w, *clr, None, *align, &s, *fs);
                         },
                         CanvasCmd::CircleFilled( sid, x, y, r, clr ) => {
                             let x = p2r(min, *x);
@@ -920,6 +927,7 @@ pub enum CanvasCmd {
     Line(        i32, i32,      i32, i32, u32, (u8, u8, u8, u8)),
     Rect(        Option<usize>, i32, i32, u32, u32, (u8, u8, u8, u8)),
     RectFilled(  Option<usize>, i32, i32, u32, u32, (u8, u8, u8, u8)),
+    Text(        Option<usize>, i32, i32, u32, i32, String, FontSize, (u8, u8, u8, u8)),
 }
 
 #[derive(Debug, Clone)]
