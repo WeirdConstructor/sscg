@@ -38,6 +38,7 @@
     },
     entity_types = ${
         station    = ${ visual = "station",    gui = "station"  },
+        stargate   = ${ visual = "stargate",   gui = "stargate" },
         asteroid_1 = ${ visual = "asteroid_1", gui = "asteroid" },
     },
     systems = $[
@@ -48,6 +49,7 @@
                 ${ t = "station",    name = "Station 2",  pos = $[ 500, 2000] },
                 ${ t = "station",    name = "Station 3",  pos = $[9000, 4000] },
                 ${ t = "station",    name = "Station 4",  pos = $[4000, 4000] },
+                ${ t = "stargate",   name = "Stargate Alpha",  pos = $[200, 200] },
                 ${ t = "asteroid_1", name = "Asteroid 1", pos = $[ 300,  300] },
                 ${ t = "asteroid_1", name = "Asteroid 2", pos = $[6500, 6500] },
 #                ${ t = "station", name = "Asteroid 2", pos = $[6500, 6500] },

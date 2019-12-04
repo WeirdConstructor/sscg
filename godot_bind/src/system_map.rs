@@ -14,6 +14,7 @@ use crate::util::{variant2vval, vval2variant, c2c};
 pub struct SystemMap {
     tmpl_station:  Option<PackedScene>,
     tmpl_asteroid: Option<PackedScene>,
+    tmpl_gate:     Option<PackedScene>,
     time_tick_sum: f64,
 }
 
@@ -58,6 +59,7 @@ impl SystemMap {
         Self {
             tmpl_station:  None,
             tmpl_asteroid: None,
+            tmpl_gate:     None,
             time_tick_sum: 0.0,
         }
     }
@@ -97,6 +99,14 @@ impl SystemMap {
         ).and_then(|s| s.cast::<PackedScene>())
          .expect("Expected asteroid scene and it being a PackedScene!");
         self.tmpl_asteroid = Some(scene);
+
+        let scene = ResourceLoader::godot_singleton().load(
+            GodotString::from_str("res://scenes/entities/Stargate.tscn"),
+            GodotString::from_str("PackedScene"),
+            false,
+        ).and_then(|s| s.cast::<PackedScene>())
+         .expect("Expected stargate scene and it being a PackedScene!");
+        self.tmpl_gate = Some(scene);
 
         dbg!("READY");
 
@@ -206,6 +216,11 @@ impl SystemMap {
                                 .instance(0).unwrap()
                                 .cast::<Spatial>()
                                 .expect("Station must be a Spatial"),
+                        "stargate" =>
+                            self.tmpl_gate.as_ref().unwrap()
+                                .instance(0).unwrap()
+                                .cast::<Spatial>()
+                                .expect("Stargate must be a Spatial"),
                         _ | "asteroid_1" =>
                             self.tmpl_asteroid.as_ref().unwrap()
                                 .instance(0).unwrap()
