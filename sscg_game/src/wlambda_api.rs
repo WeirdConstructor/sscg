@@ -600,7 +600,48 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
                             elem.v_i(2) as i32,
                             elem.v_i(3) as i32,
                             elem.v_i(4) as u32,
-                            color_hex24tpl(&v.v_s_raw(5))));
+                            color_hex24tpl(&elem.v_s_raw(5))));
+                    },
+                    "text" => {
+                        cv.push(gui::CanvasCmd::Text(
+                            id,
+                            elem.v_i(2) as i32,
+                            elem.v_i(3) as i32,
+                            elem.v_i(4) as u32, // w
+                            elem.v_i(5) as i32, // align
+                            elem.v_s_raw(6),
+                            match elem.v_i(7) {
+                                -1 => gui::FontSize::Small,
+                                _  => gui::FontSize::Normal,
+                            },
+                            color_hex24tpl(&elem.v_s_raw(8))));
+                    },
+                    "rect" => {
+                        cv.push(gui::CanvasCmd::Rect(
+                            id,
+                            elem.v_i(2) as i32,
+                            elem.v_i(3) as i32,
+                            elem.v_i(4) as u32,
+                            elem.v_i(5) as u32,
+                            color_hex24tpl(&elem.v_s_raw(6))));
+                    },
+                    "rect_filled" => {
+                        cv.push(gui::CanvasCmd::RectFilled(
+                            id,
+                            elem.v_i(2) as i32,
+                            elem.v_i(3) as i32,
+                            elem.v_i(4) as u32,
+                            elem.v_i(5) as u32,
+                            color_hex24tpl(&elem.v_s_raw(6))));
+                    },
+                    "line" => {
+                        cv.push(gui::CanvasCmd::Line(
+                            elem.v_i(2) as i32,
+                            elem.v_i(3) as i32,
+                            elem.v_i(4) as i32,
+                            elem.v_i(5) as i32,
+                            elem.v_i(6) as u32,
+                            color_hex24tpl(&elem.v_s_raw(7))));
                     },
                     _ => {},
                 }

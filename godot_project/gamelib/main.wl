@@ -127,11 +127,16 @@ STATE.code.recalc_ship_cargo = {
                 h = 400,
                 ref = "map",
                 cmds = $[
-                    $[:circle, 10, 500, 500, 100, "F00"],
+                    $[:circle,      10, 500, 500, 100, "F00"],
+                    $[:line,        11, 500, 500, 600, 900, 4, "FF0"],
+                    $[:rect,        20, 200,   0, 100, 200, "9F3"],
+                    $[:rect_filled, 20, 300,   0, 100, 200, "FF3"],
+                    $[:text,        12, 600, 900, 1000, 1, "Test", 0, "FFF"],
                 ],
             },
         ]
     } {||
+        std:displayln @;
         match _1
             "start_mining" {||
                 STATE.player.is_mining = $t;
