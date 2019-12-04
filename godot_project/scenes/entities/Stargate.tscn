@@ -1,0 +1,79 @@
+[gd_scene load_steps=9 format=2]
+
+[ext_resource path="res://scenes/entities/Stargate.gd" type="Script" id=1]
+[ext_resource path="res://scenes/utility/BillboardLabel.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/utility/BillboardLabel.gd" type="Script" id=3]
+
+[sub_resource type="CylinderShape" id=6]
+radius = 1.00384
+height = 0.278445
+
+[sub_resource type="CylinderMesh" id=1]
+top_radius = 0.95
+bottom_radius = 0.95
+height = 0.033
+
+[sub_resource type="SpatialMaterial" id=4]
+flags_transparent = true
+flags_disable_ambient_light = true
+albedo_color = Color( 0.321569, 0.713726, 1, 0.321569 )
+emission_enabled = true
+emission = Color( 0.356863, 0.909804, 1, 1 )
+emission_energy = 5.17
+emission_operator = 0
+emission_on_uv2 = false
+
+[sub_resource type="SpatialMaterial" id=5]
+albedo_color = Color( 0.572549, 0.572549, 0.572549, 1 )
+
+[sub_resource type="Animation" id=3]
+resource_name = "GateIdleEffect"
+tracks/0/type = "value"
+tracks/0/path = NodePath("Spatial/MeshInstance:material/0")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray(  ),
+"transitions": PoolRealArray(  ),
+"update": 0,
+"values": [  ]
+}
+
+[node name="Stargate" type="Spatial"]
+script = ExtResource( 1 )
+
+[node name="Spatial" type="Spatial" parent="."]
+transform = Transform( 6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0 )
+
+[node name="Area" type="Area" parent="Spatial"]
+
+[node name="CollisionShape" type="CollisionShape" parent="Spatial/Area"]
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 0.00769234, 0.0615381, 0.00831175 )
+shape = SubResource( 6 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Spatial"]
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 0.0141354, 0.0642053, 0 )
+mesh = SubResource( 1 )
+material/0 = SubResource( 4 )
+
+[node name="CSGCylinder" type="CSGCylinder" parent="Spatial"]
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 0.0105959, 0.0637785, 0.00964618 )
+operation = 2
+height = 0.210371
+sides = 32
+material = SubResource( 5 )
+
+[node name="CSGCylinder2" type="CSGCylinder" parent="Spatial/CSGCylinder"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.00611913, 0 )
+operation = 2
+radius = 0.94177
+height = 0.285303
+sides = 32
+
+[node name="BillboardLabel" type="Spatial" parent="." instance=ExtResource( 2 )]
+script = ExtResource( 3 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/GateIdleEffect = SubResource( 3 )
