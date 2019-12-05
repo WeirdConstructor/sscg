@@ -41,11 +41,11 @@
 .*show = {!(STATE, ent, ent_type) = @;
 
     gui:dialog_window WID:STATION ent.name { $[
-        gui:hpanel 300 { $[
+        gui:hpanel 700 { $[
             gui:action_button 500 1000 :refuel "Refuel",
             refuel_text STATE,
         ] },
-        gui:hpanel 700 { $[
+        gui:hpanel 300 { $[
             gui:action_button 500 1000 :sell_rocks "Sell rocks",
             gui:button        500 1000 :depart "Depart",
         ] },
