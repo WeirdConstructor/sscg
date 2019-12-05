@@ -122,18 +122,18 @@ STATE.code.recalc_ship_cargo = {
                 gui:action_button 500 1000 :start_mining "Start mining",
                 gui:button 500 1000 :depart "Depart",
             ]},
-            ${ t = :canvas,
-                w = 1000,
-                h = 400,
-                ref = "map",
-                cmds = $[
-                    $[:circle,      10, 500, 500, 100, "F00"],
-                    $[:line,        11, 500, 500, 600, 900, 4, "FF0"],
-                    $[:rect,        20, 200,   0, 100, 200, "9F3"],
-                    $[:rect_filled, 20, 300,   0, 100, 200, "FF3"],
-                    $[:text,        12, 600, 900, 1000, 1, "Test", 0, "FFF"],
-                ],
-            },
+#            ${ t = :canvas,
+#                w = 1000,
+#                h = 400,
+#                ref = "map",
+#                cmds = $[
+#                    $[:circle,      10, 500, 500, 100, "F00"],
+#                    $[:line,        11, 500, 500, 600, 900, 4, "FF0"],
+#                    $[:rect,        20, 200,   0, 100, 200, "9F3"],
+#                    $[:rect_filled, 20, 300,   0, 100, 200, "FF3"],
+#                    $[:text,        12, 600, 900, 1000, 1, "Test", 0, "FFF"],
+#                ],
+#            },
         ]
     } {||
         std:displayln @;
