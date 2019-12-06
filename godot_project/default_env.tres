@@ -11,14 +11,13 @@ panorama = SubResource( 1 )
 [resource]
 background_mode = 2
 background_sky = SubResource( 2 )
-ambient_light_color = Color( 0.239216, 0.239216, 0.239216, 1 )
+ambient_light_color = Color( 0.2, 0.160784, 0.180392, 1 )
 ambient_light_sky_contribution = 0.0
 fog_color = Color( 0, 0, 0, 1 )
 fog_depth_begin = 0.0
 tonemap_mode = 3
 auto_exposure_scale = 0.1
 auto_exposure_max_luma = 9.99
-ssao_enabled = true
 ssao_radius = 11.4
 ssao_intensity = 2.5
 ssao_intensity2 = 0.0

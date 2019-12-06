@@ -1,4 +1,3 @@
-#!@import sscg sscg;
 !@import std std;
 !@import wlambda;
 

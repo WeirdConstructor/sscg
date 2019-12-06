@@ -34,11 +34,12 @@ resource_local_to_scene = true
 emission_shape = 2
 emission_box_extents = Vector3( 10, 5, 10 )
 gravity = Vector3( 0, 0, 0 )
+angular_velocity = 1.05
 linear_accel = 50.0
 scale = 0.1
 scale_random = 1.0
 
-[sub_resource type="SpatialMaterial" id=7]
+[sub_resource type="SpatialMaterial" id=6]
 resource_local_to_scene = true
 flags_transparent = true
 albedo_color = Color( 1, 1, 1, 0.109804 )
@@ -48,22 +49,22 @@ emission_energy = 0.46
 emission_operator = 0
 emission_on_uv2 = false
 
-[sub_resource type="SphereMesh" id=6]
+[sub_resource type="SphereMesh" id=7]
 resource_local_to_scene = true
-material = SubResource( 7 )
+material = SubResource( 6 )
 radius = 0.04
 height = 10.0
 
-[node name="Ship" index="0" instance=ExtResource( 1 )]
+[node name="Ship" instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0308598 )
 script = ExtResource( 2 )
 
 [node name="Ship" parent="." index="0"]
-transform = Transform( 0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0 )
+transform = Transform( 0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, -0.121388, 0.256606 )
 use_in_baked_light = true
 
 [node name="BackEngineParticles" type="Particles" parent="Ship" index="0"]
-transform = Transform( -20, 0, -3.01992e-006, 0, 20, 0, 3.01992e-006, 0, -20, 0, -0.0425324, -4.45109 )
+transform = Transform( -20, 0, -3.01992e-06, 0, 20, 0, 3.01992e-06, 0, -20, 0, -0.0425324, -4.45109 )
 cast_shadow = 0
 emitting = false
 amount = 23
@@ -81,7 +82,7 @@ light_bake_mode = 2
 omni_range = 0.13458
 
 [node name="Camera" type="Camera" parent="." index="1"]
-transform = Transform( -1, -4.9056e-008, 3.86312e-007, 0, 0.992034, 0.125974, -3.89414e-007, 0.125974, -0.992034, 8.22446e-008, 0.0843845, -0.356407 )
+transform = Transform( -1, -4.9056e-08, 3.86312e-07, 0, 0.992034, 0.125974, -3.89414e-07, 0.125974, -0.992034, 8.22446e-08, 0.0843845, -0.356407 )
 fov = 81.7
 far = 4712.0
 
@@ -92,13 +93,13 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.103383 )
 shape = SubResource( 4 )
 
 [node name="FlightParticles" type="Particles" parent="." index="3"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 0, 0, 16.2368 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 16.2368 )
 visible = false
 amount = 75
 lifetime = 1.91
 randomness = 1.0
 visibility_aabb = AABB( -3.53625, -6.19132, -2.95606, 6.93676, 12.3826, 5.91213 )
 process_material = SubResource( 5 )
-draw_pass_1 = SubResource( 6 )
+draw_pass_1 = SubResource( 7 )
 [connection signal="area_shape_entered" from="Area" to="." method="_on_Area_area_shape_entered"]
 [connection signal="area_shape_exited" from="Area" to="." method="_on_Area_area_shape_exited"]

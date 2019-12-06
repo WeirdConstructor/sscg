@@ -141,11 +141,23 @@ light_cull_mask = 4294967293
 shadow_bias = 3.57
 shadow_reverse_cull_face = true
 omni_range = 4000.0
+omni_attenuation = 0.0185814
+omni_shadow_detail = 0
+
+[node name="Detail Light2" type="OmniLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1000, -1000, -1000 )
+light_color = Color( 0, 0.231373, 0.164706, 1 )
+light_cull_mask = 4294967293
+shadow_bias = 3.57
+shadow_reverse_cull_face = true
+omni_range = 4000.0
+omni_attenuation = 0.0185814
 omni_shadow_detail = 0
 
 [node name="Sun Light" type="OmniLight" parent="."]
 light_cull_mask = 4294967293
-shadow_bias = 3.57
+shadow_bias = 1.57
+shadow_contact = 11.3
 shadow_reverse_cull_face = true
 omni_range = 2500.0
 omni_shadow_detail = 0
