@@ -177,6 +177,25 @@ STATE.code.recalc_ship_cargo = {
         y               = 0,
         rot_z           = 0,
     };
+
+    sscg:win.set_window WID:OUTOFFUEL ${
+        x = 250, y = 250, w = 500, h = 500,
+        title = std:str:cat["Out Of Fuel"],
+        title_color = c:SE1,
+        child = ${
+            t = :canvas,
+            w = 1000,
+            h = 1000,
+            ref = "map",
+            cmds = $[
+                $[:circle,      10, 500, 500, 100, "F00"],
+                $[:line,        11, 500, 500, 600, 900, 4, "FF0"],
+                $[:rect,        20, 200,   0, 100, 200, "9F3"],
+                $[:rect_filled, 20, 300,   0, 100, 200, "FF3"],
+                $[:text,        12, 600, 900, 1000, 1, "Test", 0, "FFF"],
+            ],
+        },
+    };
 };
 
 !@export on_arrived {!(too_fast, sys_id, ent_id) = @;
