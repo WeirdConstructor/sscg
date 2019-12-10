@@ -47,13 +47,21 @@ const CUBE_NORMALS : [[f32; 3]; 6] = [
 ];
 
 /// Indices into the CUBE_VERTICES constant:
-const FACE_TRIANGLE_VERTEX_IDX : [[usize; 6]; 6] = [
-  [0, 1, 2,  2, 3, 0],
-  [1, 5, 6,  6, 2, 1],
-  [7, 6, 5,  5, 4, 7],
-  [4, 5, 1,  1, 0, 4],
-  [3, 2, 6,  6, 7, 3],
-  [3, 7, 4,  4, 0, 3],
+const FACE_TRIANGLE_VERTEX_IDX : [[usize; 10]; 6] = [
+// -  [0, 1, 2,  2, 3, 0],
+// -  [1, 5, 6,  6, 2, 1],
+// -  [7, 6, 5,  5, 4, 7],
+// -  [4, 5, 1,  1, 0, 4],
+// -  [3, 2, 6,  6, 7, 3],
+// -  [3, 7, 4,  4, 0, 3],
+
+// Cube Vertex Idx | relative indexes of those:
+   [0, 1, 2, 3,      2, 1, 0,  0, 3, 2, ],
+   [1, 2, 5, 6,      3, 2, 0,  0, 1, 3, ],
+   [4, 5, 6, 7,      1, 2, 3,  3, 0, 1, ],
+   [0, 1, 4, 5,      1, 3, 2,  2, 0, 1, ],
+   [2, 3, 6, 7,      2, 0, 1,  1, 3, 2, ],
+   [0, 3, 4, 7,      2, 3, 1,  1, 0, 2, ],
 ];
 
 const FACE_TRIANGLE_VERTEX_UV : [[f32; 2]; 8] = [
@@ -68,7 +76,9 @@ const FACE_TRIANGLE_VERTEX_UV : [[f32; 2]; 8] = [
 ];
 
 impl Face {
-    fn render_to_arr(&self, idxlen: &mut usize,
+    fn render_to_arr(&self,
+                     idxlen: &mut usize,
+                     vtxlen: &mut usize,
                      texture_index: usize,
                      offs: Vector3,
                      scale: f32,
@@ -99,18 +109,24 @@ impl Face {
         let u_offs = (texture_index % UV_TEXTURE_ATLAS_WIDTH) as f32;
         let v_offs = (texture_index / UV_TEXTURE_ATLAS_WIDTH) as f32;
 
-        for (i, idx) in tris.iter().rev().enumerate() {
-            uvs.set(*idxlen as i32, &vec2(
-                FACE_TRIANGLE_VERTEX_UV[*idx][0] * u_offs,
-                FACE_TRIANGLE_VERTEX_UV[*idx][1] * v_offs));
+        for i in 0..4 {
+            let idx = tris[i];
+            uvs.set(*vtxlen as i32, &vec2(
+                FACE_TRIANGLE_VERTEX_UV[idx][0] * u_offs,
+                FACE_TRIANGLE_VERTEX_UV[idx][1] * v_offs));
             let v = vec3(
-                (CUBE_VERTICES[*idx][0] + offs.x) * scale,
-                (CUBE_VERTICES[*idx][1] + offs.y) * scale,
-                (CUBE_VERTICES[*idx][2] + offs.z) * scale);
-//            collision_tris.set(*idxlen as i32, &v);
-            verts.set(*idxlen as i32, &v);
-            normals.set(*idxlen as i32, &vec3(normal[0], normal[1], normal[2]));
-            indices.set(*idxlen as i32, *idxlen as i32);
+                (CUBE_VERTICES[idx][0] + offs.x) * scale,
+                (CUBE_VERTICES[idx][1] + offs.y) * scale,
+                (CUBE_VERTICES[idx][2] + offs.z) * scale);
+//            collision_tris.set(*vtxlen as i32, &v);
+            verts.set(*vtxlen as i32, &v);
+            normals.set(*vtxlen as i32, &vec3(normal[0], normal[1], normal[2]));
+            *vtxlen += 1;
+        }
+
+        for i in 4..10 {
+            let idx = tris[i];
+            indices.set(*idxlen as i32, *vtxlen as i32 - (4 - idx as i32));
             *idxlen += 1;
         }
     }
@@ -168,7 +184,7 @@ struct Volume {
     data:       std::vec::Vec<(u8,u8)>,
 }
 
-const VOLUME_CHUNK_SIZE : usize = 32;
+const VOLUME_CHUNK_SIZE : usize = 24;
 
 impl Volume {
     fn new(offs: Vector3) -> Self {
@@ -191,12 +207,12 @@ impl Volume {
         indices.resize(6 * 6 * (VOLUME_CHUNK_SIZE * VOLUME_CHUNK_SIZE * VOLUME_CHUNK_SIZE) as i32);
 
         println!("RENDER TO:");
-        let len = self.render_to_arr(&mut verts, &mut uvs, &mut normals, &mut indices);
+        let (idxlen, vtxlen) = self.render_to_arr(&mut verts, &mut uvs, &mut normals, &mut indices);
         println!("DONE RENDER");
-        verts.resize(len as i32);
-        uvs.resize(len as i32);
-        normals.resize(len as i32);
-        indices.resize(len as i32);
+        verts  .resize(vtxlen as i32);
+        uvs    .resize(vtxlen as i32);
+        normals.resize(vtxlen as i32);
+        indices.resize(idxlen as i32);
 
         let mut arr = VariantArray::new();
         arr.push(&Variant::from_vector3_array(&verts));
@@ -216,10 +232,11 @@ impl Volume {
                      verts: &mut Vector3Array,
                      uvs: &mut Vector2Array,
                      normals: &mut Vector3Array,
-                     indices: &mut Int32Array) -> usize
+                     indices: &mut Int32Array) -> (usize, usize)
     {
         let mut va = Vector3Array::new();
-        let mut len = 0;
+        let mut idxlen = 0;
+        let mut vtxlen = 0;
 
         for y in 0..self.size {
             for z in 0..self.size {
@@ -233,16 +250,17 @@ impl Volume {
 
                     let mut v = vec3(y as f32, z as f32, x as f32);
                     v += self.offs;
-                    Face::Front. render_to_arr(&mut len, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Back.  render_to_arr(&mut len, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Top.   render_to_arr(&mut len, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Bottom.render_to_arr(&mut len, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Left.  render_to_arr(&mut len, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Right. render_to_arr(&mut len, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
+                    Face::Front. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
+                    Face::Back.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
+                    Face::Top.   render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
+                    Face::Bottom.render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
+                    Face::Left.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
+                    Face::Right. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
                 }
             }
         }
-        len
+
+        (idxlen, vtxlen)
     }
 
     fn render_to(&self, sf: &mut SurfaceTool) {
