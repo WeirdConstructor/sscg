@@ -3,6 +3,7 @@ mod state;
 mod system_map;
 mod wl_gd_mod_resolver;
 mod util;
+mod voxel_vol;
 
 #[macro_use]
 extern crate lazy_static;
@@ -259,7 +260,6 @@ impl GUIPaintNode {
     }
 }
 
-
 /// The HelloWorld "class"
 #[derive(NativeClass)]
 #[inherit(gdnative::Node)]
@@ -293,6 +293,7 @@ fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<HelloWorld>();
     handle.add_class::<GUIPaintNode>();
     handle.add_class::<system_map::SystemMap>();
+    handle.add_class::<voxel_vol::VoxVolume>();
 }
 
 godot_gdnative_init!();
