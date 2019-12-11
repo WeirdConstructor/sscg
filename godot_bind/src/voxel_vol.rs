@@ -9,6 +9,76 @@ use euclid::{vec2, vec3};
 use std::rc::Rc;
 
 #[derive(NativeClass)]
+#[inherit(gdnative::MultiMeshInstance)]
+//#[user_data(user_data::ArcData<SystemMap>)]
+pub struct InstVoxVolume {
+}
+
+#[methods]
+impl InstVoxVolume {
+    fn _init(owner: MultiMeshInstance) -> Self {
+        Self { }
+    }
+    #[export]
+    fn _ready(&mut self, mut owner: MultiMeshInstance) {
+        let mut am = ArrayMesh::new();
+        let vol = Volume::new(vec3(0., 0., 0.), 1);
+        vol.render_to_am(&mut am);
+        println!("IVV COMMITTED!");
+        unsafe {
+//            let mut mm = MultiMesh::new();
+////            let mut mm = owner.get_multimesh().unwrap();
+//            mm.set_mesh(am.cast::<Mesh>());
+////            mm.set_instance_count(0);
+//
+//            let mut t = owner.get_transform();
+//            println!("TOTO {:?}", t);
+////            mm.transform(t);
+////            t.origin.x -= 20.;
+////            t.origin.y -= 10.;
+////            mm.set_instance_transform(0, t);
+//
+////            let mut t = owner.get_transform();
+////            t.origin.x -= 10.;
+////            mm.set_instance_transform(0, t);
+////            mm.set_instance_transform(1, t);
+////
+//            mm.set_transform_format(1);
+//            mm.set_instance_count(3);
+//            let mut t = owner.get_transform();
+//            mm.set_instance_transform(0, t);
+//            owner.set_multimesh(Some(mm));
+
+            let mut mm = owner.get_multimesh().unwrap();
+            mm.set_mesh(am.cast::<Mesh>());
+            let c = 300_000;
+            mm.set_instance_count(c);
+            mm.set_instance_transform(0, owner.get_transform());
+            let mut tt = owner.get_transform();
+//            tt.origin.y += 2.0;
+//            mm.set_instance_transform(1, tt);
+            tt.origin.z += 0.;
+            for i in 0..c {
+                tt.origin.y += 1.0;
+                mm.set_instance_transform(i, tt);
+            }
+            println!("IVV DONE!");
+            owner.rotate_x((90.0_f64).to_radians());
+            owner.rotate_z((90.0_f64).to_radians());
+            owner.show();
+        }
+    }
+    #[export]
+    fn _process(&mut self, mut owner: MultiMeshInstance, delta: f64) {
+        let rot_speed = (10.0_f64).to_radians();
+        unsafe {
+//            owner.rotate_x(rot_speed * 0.1 * delta);
+//            owner.rotate_z(rot_speed * 0.1 * delta);
+        }
+    }
+}
+
+#[derive(NativeClass)]
 #[inherit(gdnative::MeshInstance)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct VoxVolume {
@@ -187,10 +257,10 @@ struct Volume {
 const VOLUME_CHUNK_SIZE : usize = 24;
 
 impl Volume {
-    fn new(offs: Vector3) -> Self {
+    fn new(offs: Vector3, size: usize) -> Self {
         Self {
             offs,
-            size: VOLUME_CHUNK_SIZE,
+            size,
             data: vec![],
         }
     }
@@ -248,14 +318,18 @@ impl Volume {
                     if !is_border {
                     }
 
+                    if y % 2 == 0 || x % 5 == 0 || z % 10 == 0 {
+//                        continue;
+                    }
+
                     let mut v = vec3(y as f32, z as f32, x as f32);
                     v += self.offs;
-                    Face::Front. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Back.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Top.   render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Bottom.render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Left.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
-                    Face::Right. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 0.2, verts, uvs, normals, indices, &mut va);
+                    Face::Front. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Back.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Top.   render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Bottom.render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Left.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Right. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
                 }
             }
         }
@@ -301,18 +375,20 @@ impl VoxVolume {
 //        sf.begin(Mesh::PRIMITIVE_TRIANGLES);
         let mut am      = ArrayMesh::new();
 
-        for x in 0..4 {
-            for y in 0..4 {
-                for z in 0..4 {
-                    println!("RENDER TO {}{}{}", x, y, z);
-                    let vol = Volume::new(vec3(
-                        x as f32 * VOLUME_CHUNK_SIZE as f32,
-                        y as f32 * VOLUME_CHUNK_SIZE as f32,
-                        z as f32 * VOLUME_CHUNK_SIZE as f32));
+        let vol = Volume::new(vec3(0., 0., 0.), 16);
+//        for x in 0..1 {
+//            for y in 0..1 {
+//                for z in 0..1 {
+//                    println!("RENDER TO {}{}{}", x, y, z);
+//                    let vol = Volume::new(vec3(
+//                        x as f32 * VOLUME_CHUNK_SIZE as f32,
+//                        y as f32 * VOLUME_CHUNK_SIZE as f32,
+//                        z as f32 * VOLUME_CHUNK_SIZE as f32),
+//                        VOLUME_CHUNK_SIZE);
                     vol.render_to_am(&mut am);
-                }
-            }
-        }
+//                }
+//            }
+//        }
 //        println!("RENDER TO:");
 //        vol.render_to_am(&mut am);
 //        println!("RENDER TO:");
@@ -328,7 +404,7 @@ impl VoxVolume {
         println!("COMMITTED!");
         unsafe {
             owner.set_mesh(am.cast::<Mesh>());
-            owner.show();
+//            owner.show();
         }
     }
     #[export]
