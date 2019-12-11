@@ -173,8 +173,8 @@ STATE.code.recalc_ship_cargo = {
         engine_on_secs  = 0.0,
         thruster_speed  = 0.0,
         speed           = 0.0,
-        x               = 0,
-        y               = 0,
+        x               = 5000,
+        y               = 4990,
         rot_z           = 0,
     };
 
