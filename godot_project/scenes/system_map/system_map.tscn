@@ -1,64 +1,34 @@
-[gd_scene load_steps=23 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=3]
-[ext_resource path="res://scenes/system_map/VoxTest.gdns" type="Script" id=4]
-[ext_resource path="res://scenes/system_map/InstVoxTest.gdns" type="Script" id=5]
-[ext_resource path="res://scenes/system_map/InstVoxTest2.gd" type="Script" id=6]
-[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=7]
-[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=8]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=9]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=10]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=4]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=5]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=6]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=7]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
 
-[sub_resource type="SpatialMaterial" id=2]
-albedo_color = Color( 0.258824, 1, 0.0509804, 1 )
-
-[sub_resource type="PrismMesh" id=3]
-
-[sub_resource type="MultiMesh" id=4]
-transform_format = 1
-instance_count = 2
-mesh = SubResource( 3 )
-transform_array = PoolVector3Array( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
-
-[sub_resource type="SpatialMaterial" id=5]
-albedo_color = Color( 0.905882, 1, 0.054902, 1 )
-
-[sub_resource type="CubeMesh" id=6]
-
-[sub_resource type="MultiMesh" id=7]
-color_format = 2
-transform_format = 1
-instance_count = 1
-mesh = SubResource( 6 )
-transform_array = PoolVector3Array( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
-color_array = PoolColorArray( 1, 1, 1, 1 )
-
-[sub_resource type="CubeMesh" id=8]
-size = Vector3( 2, 1, 2 )
-
-[sub_resource type="DynamicFont" id=9]
+[sub_resource type="DynamicFont" id=2]
 size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 8 )
+font_data = ExtResource( 5 )
 
-[sub_resource type="DynamicFont" id=10]
+[sub_resource type="DynamicFont" id=3]
 size = 12
 outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 8 )
+font_data = ExtResource( 5 )
 
-[sub_resource type="SpatialMaterial" id=11]
+[sub_resource type="SpatialMaterial" id=4]
 albedo_color = Color( 1, 0.72549, 0, 1 )
 emission_enabled = true
 emission = Color( 1, 0.72549, 0, 1 )
@@ -66,8 +36,8 @@ emission_energy = 8.14
 emission_operator = 0
 emission_on_uv2 = false
 
-[sub_resource type="SphereMesh" id=12]
-material = SubResource( 11 )
+[sub_resource type="SphereMesh" id=5]
+material = SubResource( 4 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -77,30 +47,6 @@ transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="ship" parent="." instance=ExtResource( 3 )]
 transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714, 0, 1.2, 0 )
-
-[node name="VoxTest" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -999.563, 1.32, -993.632 )
-visible = false
-material_override = SubResource( 2 )
-cast_shadow = 0
-script = ExtResource( 4 )
-
-[node name="InstVoxTest" type="MultiMeshInstance" parent="."]
-multimesh = SubResource( 4 )
-script = ExtResource( 5 )
-
-[node name="InstVoxTest2" type="MultiMeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -998.329, 0, -997.186 )
-visible = false
-material_override = SubResource( 5 )
-multimesh = SubResource( 7 )
-script = ExtResource( 6 )
-
-[node name="VoxTest2" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -999.564, -0.647283, -993.582 )
-visible = false
-mesh = SubResource( 8 )
-material/0 = null
 
 [node name="entities" type="Spatial" parent="."]
 
@@ -122,7 +68,7 @@ directional_shadow_max_distance = 32.1
 [node name="GUI" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 7 )
+script = ExtResource( 4 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -139,7 +85,7 @@ __meta__ = {
 margin_left = 167.0
 margin_right = 857.0
 margin_bottom = 63.0
-custom_fonts/font = SubResource( 9 )
+custom_fonts/font = SubResource( 2 )
 custom_colors/font_color = Color( 1, 0, 0, 1 )
 text = "You are too fast!
 Emergency collision transport activated!
@@ -150,14 +96,14 @@ __meta__ = {
 }
 
 [node name="GUIDrawing" type="Node2D" parent="GUI"]
-script = ExtResource( 9 )
+script = ExtResource( 6 )
 
 [node name="ControlsInfo" type="Label" parent="GUI"]
 margin_left = 7.35092
 margin_top = 8.08603
 margin_right = 173.351
 margin_bottom = 77.086
-custom_fonts/font = SubResource( 10 )
+custom_fonts/font = SubResource( 3 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "[A]        - Left thrusters
 [D]        - Right thrusters
@@ -173,7 +119,7 @@ margin_left = 900.0
 margin_top = 2.0
 margin_right = -3.0
 margin_bottom = 20.0
-custom_fonts/font = SubResource( 10 )
+custom_fonts/font = SubResource( 3 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "FPS: 00.00"
 align = 2
@@ -185,7 +131,7 @@ __meta__ = {
 transform = Transform( 100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0 )
 layers = 2
 cast_shadow = 0
-mesh = SubResource( 12 )
+mesh = SubResource( 5 )
 material/0 = null
 
 [node name="Detail Light" type="OmniLight" parent="."]
@@ -216,6 +162,6 @@ shadow_reverse_cull_face = true
 omni_range = 2500.0
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 10 )]
+[node name="Grid" parent="." instance=ExtResource( 7 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
