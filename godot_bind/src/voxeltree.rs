@@ -6,11 +6,11 @@ struct Voxel<C> where C: VoxelColor {
     color: C,
     /// Bits:
     /// Front,  // x,       y,      z - 1
-    /// Top,    // x,       y + 1,  z
+    /// Top,    // x,       y - 1,  z
     /// Back,   // x,       y,      z + 1
     /// Left,   // x - 1,   y,      z
     /// Right,  // x + 1,   y,      z
-    /// Bottom, // x,       y - 1,  z
+    /// Bottom, // x,       y + 1,  z
     /// - 0x01     - Front
     /// - 0x02     - Top
     /// - 0x04     - Back
@@ -27,8 +27,8 @@ fn xyz2facemask(x: usize, y: usize, z: usize) -> u8 {
     let mut mask : u8 = 0x00;
     if x == 0 { mask |= 0x08; }
     else      { mask |= 0x10; }
-    if y == 0 { mask |= 0x20; }
-    else      { mask |= 0x02; }
+    if y == 0 { mask |= 0x02; }
+    else      { mask |= 0x20; }
     if z == 0 { mask |= 0x01; }
     else      { mask |= 0x04; }
     mask
@@ -64,7 +64,7 @@ impl<C> Vol<C> where C: VoxelColor {
     }
 
     pub fn at(&self, pos: Pos) -> &Voxel<C> {
-        &self.data[pos.z * self.size * self.size + pos.y * self.size + pos.x - 1]
+        &self.data[pos.z * self.size * self.size + pos.y * self.size + pos.x]
     }
 
     pub fn get(&mut self, pos: Pos) -> &Voxel<C> {
@@ -83,8 +83,8 @@ impl<C> Vol<C> where C: VoxelColor {
             if clr2 == clr_def { faces |= 0x10; }
         }
 
-        if pos.y == 0         { faces |= 0x20; }
-        else if pos.y == last { faces |= 0x02; }
+        if pos.y == 0         { faces |= 0x02; }
+        else if pos.y == last { faces |= 0x20; }
         if pos.y > 0 && pos.y < last {
             let clr1 = self.data[pos.z * size * size + (pos.y - 1) * size].color;
             let clr2 = self.data[pos.z * size * size + (pos.y + 1) * size].color;
@@ -147,7 +147,7 @@ impl<C> Tree<C> where C: VoxelColor {
             size = size >> 1;
         }
         let mut nodes = std::vec::Vec::new();
-        nodes.resize(size, Node::default());
+        nodes.resize(alloc, Node::default());
         Self {
             nodes,
             nodes_size: vol.size >> 1,
@@ -162,12 +162,11 @@ impl<C> Tree<C> where C: VoxelColor {
     pub fn draw_level<F>(&self, level: usize, top_left: Pos, f: &mut F)
         where F: FnMut(usize, usize, usize, usize, Voxel<C>) -> ()
     {
-        let lvl_size = level << 1;
-        if lvl_size == self.vol.size {
+        if level == self.vol.size {
             for z in 0..2 {
                 for y in 0..2 {
                     for x in 0..2 {
-                        f(lvl_size, top_left.x + x, top_left.y + y, top_left.z + z,
+                        f(level, top_left.x + x, top_left.y + y, top_left.z + z,
                           *self.vol.at(Pos {
                                x: top_left.x + x,
                                y: top_left.y + y,
@@ -177,25 +176,21 @@ impl<C> Tree<C> where C: VoxelColor {
                 }
             }
         } else {
-            let n =
-                self.nodes[
-                    top_left.z * (self.vol.size >> 1) * (self.vol.size >> 1)
-                    + top_left.y * (self.vol.size >> 1)
-                    + top_left.x];
+            let n = *self.node_at(level, top_left);
             if n.empty { return; }
             if let Some(v) = n.voxel {
-                f(lvl_size, top_left.x, top_left.y, top_left.z, v);
+                f(level, top_left.x, top_left.y, top_left.z, v);
 
             } else {
                 for z in 0..2 {
                     for y in 0..2 {
                         for x in 0..2 {
                             self.draw_level(
-                                level << 1, 
+                                level << 1,
                                 Pos {
                                     x: top_left.x + x,
-                                    y: top_left.y * lvl_size + y,
-                                    z: top_left.z * lvl_size * lvl_size + z,
+                                    y: top_left.y * level + y,
+                                    z: top_left.z * level * level + z,
                                 },
                                 f);
                         }
@@ -207,6 +202,18 @@ impl<C> Tree<C> where C: VoxelColor {
 
     pub fn set(&mut self, x: usize, y: usize, z: usize, v: Voxel<C>) {
         self.vol.set(x, y, z, v);
+    }
+
+    pub fn fill(&mut self, x: usize, y: usize, z: usize,
+                w: usize, h: usize, d: usize, v: Voxel<C>)
+    {
+        for z in z..(z + d) {
+            for y in y..(y + h) {
+                for x in x..(x + 2) {
+                    self.set(x, y, z, v);
+                }
+            }
+        }
     }
 //    fn init_level(&mut self, pow: usize, offs_x: usize, offs_y: usize, offs_z: usize) {
 //        let mut size = self.vol.size;
@@ -279,12 +286,33 @@ impl<C> Tree<C> where C: VoxelColor {
             n
         };
 
-        self.nodes[
-            top_left.z * (self.vol.size >> 1) * (self.vol.size >> 1)
-            + top_left.y * (self.vol.size >> 1)
-            + top_left.x] = ret;
+        *self.node(level, top_left) = ret;
 
         ret
+    }
+
+    fn node_at(&self, level: usize, pos: Pos) -> &Node<C> {
+        let offs =
+            if level == 1 { 0 }
+            else { level * level * level };
+
+        &self.nodes[
+            offs
+            + pos.z * (level >> 1) * (level >> 1)
+            + pos.y * (level >> 1)
+            + pos.x]
+    }
+
+    fn node(&mut self, level: usize, pos: Pos) -> &mut Node<C> {
+        let offs =
+            if level == 1 { 0 }
+            else { level * level * level };
+
+        &mut self.nodes[
+            offs
+            + pos.z * (level >> 1) * (level >> 1)
+            + pos.y * (level >> 1)
+            + pos.x]
     }
 
     fn compute_voxel_node(&mut self, top_left: Pos) -> Node<C> {
@@ -346,34 +374,41 @@ mod tests {
     fn check_n1_filled() {
         let v : Vol<u8> = Vol::new(2);
         let mut t : Tree<u8> = Tree::new(8, v);
-        t.set(0, 0, 0, 10.into());
-        t.set(0, 1, 0, 10.into());
-        t.set(1, 0, 0, 10.into());
-        t.set(1, 1, 0, 10.into());
-        t.set(0, 0, 1, 10.into());
-        t.set(0, 1, 1, 10.into());
-        t.set(1, 0, 1, 10.into());
-        t.set(1, 1, 1, 10.into());
+        t.fill(0, 0, 0, 2, 2, 2, 10.into());
         let n = t.compute_node(1, Pos { x: 0, y: 0, z: 0 });
 
         assert_eq!(n.voxel.unwrap().color, 10);
         assert_eq!(n.voxel.unwrap().faces, 0x3F);
+        assert_eq!(t.nodes[0].voxel.unwrap().color, 10);
+        assert_eq!(t.nodes[0].empty, false);
+
+        let mut first : Option<(usize, usize, usize, usize, Voxel<u8>)> = None;
+        let mut last : Option<(usize, usize, usize, usize, Voxel<u8>)> = None;
+        t.draw(&mut |lvl, x, y, z, v| {
+            if first.is_none() { first = Some((lvl, x, y, z, v)); }
+            last = Some((lvl, x, y, z, v));
+        });
+        let first = first.unwrap();
+        assert_eq!((first.0, first.1, first.2, first.3), (1, 0, 0, 0));
+        assert_eq!(first.4.color, 10);
+        assert_eq!(first.4.faces, 0x3f); // all faces
+
+        let last = last.unwrap();
+        assert_eq!((last.0, last.1, last.2, last.3), (1, 0, 0, 0));
+        assert_eq!(last.4.color, 10);
+        assert_eq!(last.4.faces, 0x3f); // all faces
     }
 
     #[test]
     fn check_n1_partial_minus_1() {
         let v : Vol<u8> = Vol::new(2);
         let mut t : Tree<u8> = Tree::new(8, v);
-        t.set(0, 0, 0, 10.into());
-        t.set(0, 1, 0, 10.into());
-        t.set(1, 0, 0, 10.into());
-        t.set(1, 1, 0, 10.into());
-        t.set(0, 0, 1, 10.into());
-        t.set(0, 1, 1, 10.into());
-        t.set(1, 0, 1, 10.into());
+        t.fill(0, 0, 0, 2, 2, 2, 10.into());
         t.set(1, 1, 1, 12.into());
         let n = t.compute_node(1, Pos { x: 0, y: 0, z: 0 });
 
         assert_eq!(n.voxel, None);
+        assert_eq!(t.nodes[0].empty, false);
+        assert_eq!(t.nodes[0].voxel, None);
     }
 }
