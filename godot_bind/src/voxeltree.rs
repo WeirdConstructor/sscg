@@ -77,13 +77,15 @@ struct Pos {
 struct Node<C: VoxelColor> {
     voxel: Option<Voxel<C>>,
     pos:   Pos,
+    empty: bool,
 }
 
 impl<C> Node<C> where C: VoxelColor {
     pub fn new() -> Self {
         Self {
-            voxel: None,
-            pos: Pos::default(),
+            voxel:  None,
+            pos:    Pos::default(),
+            empty:  false,
         }
     }
 }
@@ -132,7 +134,12 @@ impl<C> Tree<C> where C: VoxelColor {
                     y: top_left.y,
                     z: top_left.z,
                 });
+            // TODO: Merge only appropriate faces!
             // merge appropriate faces (no inner faces)
+            // On top we only have a face
+            // - if any child box has a face
+            // - AND all 4 side childs are not empty
+            // - AND all 4 side childs have the same color
 
             let n1 =
                 self.compute_node(level << 1, Pos {
@@ -155,6 +162,7 @@ impl<C> Tree<C> where C: VoxelColor {
 
         let mut first       = true;
         let mut equal_color = true;
+        let mut all_empty   = true;
 
         for z in 0..2 {
             for y in 0..2 {
@@ -167,8 +175,21 @@ impl<C> Tree<C> where C: VoxelColor {
 
                     if first { color = vox.color; }
                     else if color != vox.color { equal_color = false; }
+                    if color != C::default() { all_empty = false; }
 
                     // TODO: Merge only appropriate faces!
+                    // merge appropriate faces (no inner faces)
+                    // On top we only have a face
+                    // - if any child box has a face
+                    // - AND all 4 side childs are not empty
+                    // - AND all 4 side childs have the same color
+                    // => This is an optimization that is not interesting.
+                    //
+                    // XXX:
+                    // - If any child is different or not existent,
+                    //   we have no outer faces!
+                    // - Communication of difference is done by passing up
+                    //   a node with None color and the "empty" flag not set.
 
                     faces |= vox.faces;
                 }
@@ -176,9 +197,23 @@ impl<C> Tree<C> where C: VoxelColor {
         }
 
         let mut n = Node::default();
-//        if equal_color {
-//            n.voxel.faces = faces;
-//        }
+        if !all_empty && equal_color {
+            let mut v = Voxel::default();
+            v.color = color;
+            v.faces = faces;
+
+            n.empty = false;
+            n.voxel = Some(v);
+
+        } else if !all_empty {
+            n.empty       = false;
+            n.voxel       = None;
+
+        } else {
+            n.empty       = true;
+            n.voxel       = None;
+        }
+
         n
     }
 }
