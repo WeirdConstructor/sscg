@@ -4,6 +4,7 @@ mod system_map;
 mod wl_gd_mod_resolver;
 mod util;
 mod voxel_vol;
+mod voxeltree;
 
 #[macro_use]
 extern crate lazy_static;
