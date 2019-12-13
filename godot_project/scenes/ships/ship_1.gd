@@ -38,7 +38,7 @@ func sscg_load(state):
 	self.translation.z = -1000.0 + (float(state["y"]) * 2000.0) / 10000.0
 	self.rotation.y = state["rot_z"]
 
-func _process(delta):
+func _physics_process(delta):
 	if docked:
 		return
 
