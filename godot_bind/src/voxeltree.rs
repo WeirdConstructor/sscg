@@ -1,5 +1,5 @@
-trait VoxelColor: PartialEq + Sized + Copy + Default {}
-impl<T: PartialEq + Sized + Copy + Default> VoxelColor for T {}
+trait VoxelColor: PartialEq + Sized + Copy + std::fmt::Debug + Default {}
+impl<T: PartialEq + Sized + Copy + std::fmt::Debug + Default> VoxelColor for T {}
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 struct Voxel<C> where C: VoxelColor {
@@ -143,7 +143,8 @@ impl<C> Tree<C> where C: VoxelColor {
         let mut size = vol.size >> 1;
         let mut alloc = 0;
         while size > 0 {
-            alloc += size;
+            alloc += size * size * size;
+            println!("SIZ {} {}", size, alloc);
             size = size >> 1;
         }
         let mut nodes = std::vec::Vec::new();
@@ -194,7 +195,7 @@ impl<C> Tree<C> where C: VoxelColor {
                                 },
                                 f);
                         }
-                    }
+                    }//
                 }
             }
         }
@@ -209,7 +210,7 @@ impl<C> Tree<C> where C: VoxelColor {
     {
         for z in z..(z + d) {
             for y in y..(y + h) {
-                for x in x..(x + 2) {
+                for x in x..(x + w) {
                     self.set(x, y, z, v);
                 }
             }
@@ -232,7 +233,7 @@ impl<C> Tree<C> where C: VoxelColor {
 //
     fn compute_node(&mut self, level: usize, top_left: Pos) -> Node<C> {
         let lvl_size = level << 1;
-        let ret = if lvl_size == self.vol.size {
+        let mut ret = if lvl_size == self.vol.size {
             self.compute_voxel_node(top_left)
 
         } else {
@@ -247,9 +248,9 @@ impl<C> Tree<C> where C: VoxelColor {
                 for y in 0..2 {
                     for x in 0..2 {
                         let n = self.compute_node(level << 1, Pos {
-                            x: top_left.x + x,
-                            y: top_left.y * lvl_size + y,
-                            z: top_left.z * lvl_size * lvl_size + z,
+                            x: top_left.x + (x * lvl_size),
+                            y: top_left.y + (y * lvl_size),
+                            z: top_left.z + (z * lvl_size),
                         });
 
                         if !n.empty { all_empty = false; }
@@ -258,12 +259,14 @@ impl<C> Tree<C> where C: VoxelColor {
                             else if color != v.color { equal_color = false; }
 
                             faces |= xyz2facemask(x, y, z) & v.faces;
+                            println!("RET: {:?} : {}", n, faces);
                         } else {
                             equal_color = false;
                         }
                     }
                 }
             }
+            dbg!(all_empty, equal_color, color);
 
             let mut n = Node::default();
             if !all_empty && equal_color {
@@ -286,6 +289,8 @@ impl<C> Tree<C> where C: VoxelColor {
             n
         };
 
+        ret.pos = top_left;
+
         *self.node(level, top_left) = ret;
 
         ret
@@ -304,15 +309,20 @@ impl<C> Tree<C> where C: VoxelColor {
     }
 
     fn node(&mut self, level: usize, pos: Pos) -> &mut Node<C> {
-        let offs =
-            if level == 1 { 0 }
-            else { level * level * level };
+        // With 4x4x4 voxels, the first level is 1x1x1,
+        // 2nd level is: 2x2x2 = 8
+        let offs = (level - 1) * (level - 1) * (level - 1);
 
+        println!("ACCESS {},{},{} => {}@{}", pos.x, pos.y, pos.z, 
+            pos.z * level * level
+            + pos.y * level
+            + pos.x, offs);
         &mut self.nodes[
             offs
-            + pos.z * (level >> 1) * (level >> 1)
-            + pos.y * (level >> 1)
+            + pos.z * level * level
+            + pos.y * level
             + pos.x]
+//        println!("ANOD lvl={}, pos={:?} => {:?}", level, pos, self.nodes);
     }
 
     fn compute_voxel_node(&mut self, top_left: Pos) -> Node<C> {
@@ -328,7 +338,6 @@ impl<C> Tree<C> where C: VoxelColor {
         for z in 0..2 {
             for y in 0..2 {
                 for x in 0..2 {
-                    eprintln!("{},{},{} :: {:?}", x, y, z, top_left);
                     let vox = self.vol.get(Pos {
                         x: top_left.x + x,
                         y: top_left.y + y,
@@ -340,6 +349,8 @@ impl<C> Tree<C> where C: VoxelColor {
                     if color != C::default() { all_empty = false; }
 
                     faces |= xyz2facemask(x, y, z) & vox.faces;
+                    eprintln!("{},{},{} :: {:?} :: {:x} {:x}",
+                              x, y, z, top_left, vox.faces, faces);
                 }
             }
         }
@@ -410,5 +421,19 @@ mod tests {
         assert_eq!(n.voxel, None);
         assert_eq!(t.nodes[0].empty, false);
         assert_eq!(t.nodes[0].voxel, None);
+    }
+
+    #[test]
+    fn check_n2_filled() {
+        let v : Vol<u8> = Vol::new(4);
+        let mut t : Tree<u8> = Tree::new(64, v);
+        t.fill(0, 0, 0, 4, 4, 4, 10.into());
+        let n = t.compute_node(1, Pos { x: 0, y: 0, z: 0 });
+        println!("NODES: {:?}", t.nodes);
+
+        assert_eq!(n.voxel.unwrap().color, 10);
+        assert_eq!(n.voxel.unwrap().faces, 0x3F);
+        assert_eq!(t.nodes[0].voxel.unwrap().color, 10);
+        assert_eq!(t.nodes[0].empty, false);
     }
 }
