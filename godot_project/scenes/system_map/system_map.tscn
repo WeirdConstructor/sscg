@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
@@ -7,6 +7,7 @@
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=6]
 [ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=7]
+[ext_resource path="res://scenes/system_map/MeshInstance.gdns" type="Script" id=8]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -39,6 +40,10 @@ emission_on_uv2 = false
 [sub_resource type="SphereMesh" id=5]
 material = SubResource( 4 )
 
+[sub_resource type="SpatialMaterial" id=6]
+flags_transparent = true
+albedo_color = Color( 0.235294, 1, 0.0235294, 0.796078 )
+
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
 
@@ -47,6 +52,8 @@ transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="ship" parent="." instance=ExtResource( 3 )]
 transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714, 0, 1.2, 0 )
+
+[node name="drone" type="Camera" parent="."]
 
 [node name="entities" type="Spatial" parent="."]
 
@@ -164,4 +171,9 @@ omni_shadow_detail = 0
 
 [node name="Grid" parent="." instance=ExtResource( 7 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
+
+[node name="VoxStruct" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.58833, -2.13184, 9.6887 )
+material_override = SubResource( 6 )
+script = ExtResource( 8 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
