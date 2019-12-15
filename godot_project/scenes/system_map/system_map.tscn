@@ -52,8 +52,7 @@ void fragment() {
 	if (UV.x >= 0.99) { l = 1.0; }
 	if (UV.y >= 0.99) { l = 1.0; }
 	ALBEDO = vec3(1.0, l, l);
-	EMISSION = l * vec3(1.0, 0.0, 1.0);
-	
+	EMISSION = l * 10.0 * vec3(0.4, 0, 4.0);
 }"
 
 [sub_resource type="ShaderMaterial" id=9]
