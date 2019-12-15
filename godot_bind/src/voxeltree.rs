@@ -167,7 +167,7 @@ impl<C> Node<C> where C: VoxelColor {
         Self {
             voxel:  None,
             pos:    Pos::default(),
-            empty:  false,
+            empty:  true,
         }
     }
 }
@@ -187,7 +187,7 @@ impl<C> Octree<C> where C: VoxelColor {
 
     pub fn new(node_count: usize, vol: Vol<C>) -> Self {
         let mut size = vol.size >> 1;
-        let mut alloc = 0;
+        let mut alloc = 1;
         while size > 0 {
             alloc += size * size * size;
 //            println!("SIZ {} {}", size, alloc);
@@ -203,49 +203,43 @@ impl<C> Octree<C> where C: VoxelColor {
     }
 
     pub fn draw<F>(&self, f: &mut F) where F: FnMut(usize, &Pos, Voxel<C>) -> () {
-        self.draw_level(
-            1,
-            self.vol.size,
-            Pos { x: 0, y: 0, z: 0 },
-            Pos { x: 0, y: 0, z: 0 },
-            f);
+        let mut nidx = 0;
+        self.draw_level(&mut nidx, self.vol.size, Pos { x: 0, y: 0, z: 0 }, f);
     }
 
-    pub fn draw_level<F>(&self, level: usize, size: usize, tree_pos: Pos, top_left: Pos, f: &mut F)
+    pub fn draw_level<F>(&self, nidx: &mut usize, size: usize, top_left: Pos, f: &mut F)
         where F: FnMut(usize, &Pos, Voxel<C>) -> ()
     {
-//        println!("DRAW lvl={}, size={}, tp={:?}, tl={:?}",
-//                 level, size, tree_pos, top_left);
-        if level == self.vol.size {
-//            for z in 0..2 {
-//                for y in 0..2 {
-//                    for x in 0..2 {
-//                        let npos = top_left.offs(x, y, z);
-                        f(1, &top_left, *self.vol.at(top_left));
-//                    }
-//                }
-//            }
-        } else {
-            let n = *self.node_at(level, tree_pos);
-            if n.empty { return; }
-            if let Some(v) = n.voxel {
-                f(size, &top_left, v);
+        if size == 1 {
+            let v = self.vol.at(top_left);
+            if v.color != C::default() {
+                f(1, &top_left, *v);
+            }
+            return
+        }
 
-            } else {
-                for z in 0..2 {
-                    for y in 0..2 {
-                        for x in 0..2 {
-                            self.draw_level(
-                                level << 1,
-                                size >> 1,
-                                tree_pos.offs(x, y, z),
-                                top_left.offs(
-                                    x * (size >> 1) as pint,
-                                    y * (size >> 1) as pint,
-                                    z * (size >> 1) as pint),
-                                f);
-                        }
-                    }//
+        let n = self.nodes[*nidx];
+        if n.empty { return; }
+
+        if let Some(v) = n.voxel {
+            f(size, &top_left, v);
+            return;
+        }
+
+        for z in 0..2 {
+            for y in 0..2 {
+                for x in 0..2 {
+                    if size > 2 {
+                        *nidx += 1;
+                    }
+                    self.draw_level(
+                        nidx,
+                        size >> 1,
+                        top_left.offs(
+                            (x * (size >> 1)) as pint,
+                            (y * (size >> 1)) as pint,
+                            (z * (size >> 1)) as pint),
+                        f);
                 }
             }
         }
@@ -282,130 +276,67 @@ impl<C> Octree<C> where C: VoxelColor {
 //    }
 //
     pub fn recompute(&mut self) -> Node<C> {
-        self.compute_node(1, Pos { x: 0, y: 0, z: 0 }, Pos { x: 0, y: 0, z: 0 })
+        let mut nidx = 0;
+        let n = self.compute_node(&mut nidx, self.vol.size, Pos { x: 0, y: 0, z: 0 });
+        n
     }
 
-    fn compute_node(&mut self, level: usize, tree_pos: Pos, top_left: Pos) -> Node<C> {
-        let lvl_size = level << 1;
-        let mut ret = if lvl_size == self.vol.size {
-            self.compute_voxel_node(top_left)
-
-        } else {
-            let mut n : Node<C> = Node::default();
-            let mut faces : u8 = 0x0;
-            let mut color : C = C::default();
-
-            let mut first       = true;
-            let mut equal_color = true;
-            let mut all_empty   = true;
-            for z in 0..2 {
-                for y in 0..2 {
-                    for x in 0..2 {
-                        let n = self.compute_node(
-                            level << 1,
-                            tree_pos.offs(x, y, z),
-                            top_left.offs(
-                                x * lvl_size as pint,
-                                y * lvl_size as pint,
-                                z * lvl_size as pint));
-
-                        if !n.empty { all_empty = false; }
-                        if let Some(v) = n.voxel {
-                            if first { color = v.color; first = false; }
-                            else if color != v.color { equal_color = false; }
-
-                            faces |= xyz2facemask(x, y, z) & v.faces;
-//                            println!("RET: {:?} : {}", n, faces);
-                        } else {
-                            equal_color = false;
-                        }
-                    }
-                }
-            }
-//            dbg!(all_empty, equal_color, color);
-
+    fn compute_node(&mut self, nidx: &mut usize, size: usize, top_left: Pos) -> Node<C> {
+        if size == 1 {
+            let v = self.vol.get(top_left);
             let mut n = Node::default();
-            if !all_empty && equal_color {
-                let mut v = Voxel::default();
-                v.color = color;
-                v.faces = faces;
-
-                n.empty = false;
-                n.voxel = Some(v);
-
-            } else if !all_empty {
-                n.empty       = false;
-                n.voxel       = None;
-
+            if v.color == C::default() {
+                n.empty = true;
+                n.pos = top_left;
             } else {
-                n.empty       = true;
-                n.voxel       = None;
+                n.voxel = Some(*v);
+                n.empty = false;
+                n.pos = top_left;
             }
+//            dbg!(level, size, top_left, n.voxel, n.empty);
+            return n;
 
-            n
-        };
+        }
 
-        ret.pos = tree_pos;
+        let my_nidx = *nidx;
 
-        *self.node(level, tree_pos) = ret;
-
-        ret
-    }
-
-    fn node_at(&self, level: usize, pos: Pos) -> &Node<C> {
-        let offs = (level - 1) * (level - 1) * (level - 1);
-
-        &self.nodes[
-            offs
-            + pos.z as usize * level * level
-            + pos.y as usize * level
-            + pos.x as usize]
-    }
-
-    fn node(&mut self, level: usize, pos: Pos) -> &mut Node<C> {
-        // With 4x4x4 voxels, the first level is 1x1x1,
-        // 2nd level is: 2x2x2 = 8
-        let offs = (level - 1) * (level - 1) * (level - 1);
-
-//        println!("ACCESS {},{},{} => {}@{}", pos.x, pos.y, pos.z, 
-//            pos.z * level * level
-//            + pos.y * level
-//            + pos.x, offs);
-        &mut self.nodes[
-            offs
-            + pos.z as usize * level * level
-            + pos.y as usize * level
-            + pos.x as usize]
-//        println!("ANOD lvl={}, pos={:?} => {:?}", level, pos, self.nodes);
-    }
-
-    fn compute_voxel_node(&mut self, top_left: Pos) -> Node<C> {
+        let mut n : Node<C> = Node::default();
         let mut faces : u8 = 0x0;
-        let mut color : C  = C::default();
-
-        let size = self.vol.size;
+        let mut color : C = C::default();
 
         let mut first       = true;
         let mut equal_color = true;
         let mut all_empty   = true;
-
         for z in 0..2 {
             for y in 0..2 {
                 for x in 0..2 {
-                    let vox = self.vol.get(top_left.offs(x, y, z));
+                    if size > 2 { // skip lowest level
+                        *nidx += 1;
+                    }
+                    let n = self.compute_node(
+                        nidx,
+                        size >> 1,
+                        top_left.offs(
+                            (x * (size >> 1)) as pint,
+                            (y * (size >> 1)) as pint,
+                            (z * (size >> 1)) as pint));
 
-                    if first { color = vox.color; first = false; }
-                    else if color != vox.color { equal_color = false; }
-                    if color != C::default() { all_empty = false; }
+                    if !n.empty { all_empty = false; }
+                    if let Some(v) = n.voxel {
+                        if first { color = v.color; first = false; }
+                        else if color != v.color { equal_color = false; }
 
-                    faces |= xyz2facemask(x, y, z) & vox.faces;
-//                    eprintln!("{},{},{} :: {:?} :: {:x} {:x}",
-//                              x, y, z, top_left, vox.faces, faces);
+                        faces |= v.faces;
+                    } else {
+                        equal_color = false;
+                    }
                 }
             }
         }
 
         let mut n = Node::default();
+        n.pos = top_left;
+
         if !all_empty && equal_color {
             let mut v = Voxel::default();
             v.color = color;
@@ -423,8 +354,68 @@ impl<C> Octree<C> where C: VoxelColor {
             n.voxel       = None;
         }
 
+        if size > 1 {
+            self.nodes[my_nidx] = n;
+        }
+
         n
     }
+
+    fn node_at(&self, offs: usize,  x: usize, y: usize, z: usize) -> &Node<C> {
+        &self.nodes[offs + (x * 2 * 2) + (y * 2) + x]
+    }
+
+    fn node(&mut self, offs: usize, x: usize, y: usize, z: usize) -> &mut Node<C> {
+        &mut self.nodes[offs + (x * 2 * 2) + (y * 2) + x]
+//        println!("ANOD lvl={}, pos={:?} => {:?}", level, pos, self.nodes);
+    }
+
+//    fn compute_voxel_node(&mut self, top_left: Pos) -> Node<C> {
+//        let mut faces : u8 = 0x0;
+//        let mut color : C  = C::default();
+//
+//        let size = self.vol.size;
+//
+//        let mut first       = true;
+//        let mut equal_color = true;
+//        let mut all_empty   = true;
+//
+//        for z in 0..2 {
+//            for y in 0..2 {
+//                for x in 0..2 {
+//                    let vox = self.vol.get(top_left.offs(x, y, z));
+//
+//                    if first { color = vox.color; first = false; }
+//                    else if color != vox.color { equal_color = false; }
+//                    if color != C::default() { all_empty = false; }
+//
+//                    faces |= xyz2facemask(x, y, z) & vox.faces;
+//                    eprintln!("{},{},{} :: {:?} :: {:x} {:x}",
+//                              x, y, z, top_left, vox.faces, faces);
+//                }
+//            }
+//        }
+//
+//        let mut n = Node::default();
+//        if !all_empty && equal_color {
+//            let mut v = Voxel::default();
+//            v.color = color;
+//            v.faces = faces;
+//
+//            n.empty = false;
+//            n.voxel = Some(v);
+//
+//        } else if !all_empty {
+//            n.empty       = false;
+//            n.voxel       = None;
+//
+//        } else {
+//            n.empty       = true;
+//            n.voxel       = None;
+//        }
+//
+//        n
+//    }
 }
 
 #[cfg(test)]
@@ -432,49 +423,45 @@ mod tests {
     use super::*;
 
     #[test]
-    fn check_n1_filled() {
-        let v : Vol<u8> = Vol::new(2);
-        let mut t : Octree<u8> = Octree::new(8, v);
+    fn check_octree_n1_filled() {
+        let mut t : Octree<u8> = Octree::new_from_size(2);
         t.fill(0, 0, 0, 2, 2, 2, 10.into());
         let n = t.recompute();
 
-        assert_eq!(n.voxel.unwrap().color, 10);
-        assert_eq!(n.voxel.unwrap().faces, 0x3F);
-        assert_eq!(t.nodes[0].voxel.unwrap().color, 10);
-        assert_eq!(t.nodes[0].empty, false);
-
-        let mut first : Option<(usize, Pos, Voxel<u8>)> = None;
-        let mut last : Option<(usize, Pos, Voxel<u8>)> = None;
-        t.draw(&mut |lvl, pos, v| {
-            if first.is_none() { first = Some((lvl, *pos, v)); }
-            last = Some((lvl, *pos, v));
+        let mut log = vec![];
+        t.draw(&mut |size, pos, v| {
+            log.push((size, (pos.x, pos.y, pos.z), v.color, v.faces));
         });
-        let first = first.unwrap();
-        assert_eq!((first.0, first.1.x, first.1.y, first.1.z), (2, 0, 0, 0));
-        assert_eq!(first.2.color, 10);
-        assert_eq!(first.2.faces, 0x3f); // all faces
 
-        let last = last.unwrap();
-        assert_eq!((last.0, last.1.x, last.1.y, last.1.z), (2, 0, 0, 0));
-        assert_eq!(last.2.color, 10);
-        assert_eq!(last.2.faces, 0x3f); // all faces
+        assert_eq!(log[0], (2, (0, 0, 0), 10, 63));
     }
 
     #[test]
-    fn check_n1_partial_minus_1() {
-        let v : Vol<u8> = Vol::new(2);
-        let mut t : Octree<u8> = Octree::new(8, v);
-        t.fill(0, 0, 0, 2, 2, 2, 10.into());
-        t.set(1, 1, 1, 12.into());
+    fn check_octree_n1_partial_minus_1() {
+        let mut t : Octree<u8> = Octree::new_from_size(4);
+        t.fill(0, 0, 0, 4, 4, 4, 10.into());
+        t.set(0, 0, 0, 12.into());
         let n = t.recompute();
 
-        assert_eq!(n.voxel, None);
-        assert_eq!(t.nodes[0].empty, false);
-        assert_eq!(t.nodes[0].voxel, None);
+        let mut log = vec![];
+        t.draw(&mut |size, pos, v| {
+            log.push((size, (pos.x, pos.y, pos.z), v.color, v.faces));
+        });
+        for l in log.iter() { println!("E {:?} {:x}", l, l.3); }
+
+        assert_eq!(log[0], (1, (0, 0, 0), 12, F_FRONT | F_LEFT | F_TOP));
+        assert_eq!(log[1], (1, (1, 0, 0), 10, F_FRONT | F_TOP));
+        assert_eq!(log[2], (1, (0, 1, 0), 10, F_FRONT | F_LEFT));
+        assert_eq!(log[3], (1, (1, 1, 0), 10, F_FRONT));
+        assert_eq!(log[4], (1, (0, 0, 1), 10, F_LEFT | F_TOP));
+        assert_eq!(log[5], (1, (1, 0, 1), 10, F_TOP));
+        assert_eq!(log[6], (1, (0, 1, 1), 10, F_LEFT));
+        assert_eq!(log[7], (1, (1, 1, 1), 10, 0x00));
+        assert_eq!(log[8], (2, (2, 0, 0), 10, F_RIGHT | F_FRONT | F_TOP));
     }
 
     #[test]
-    fn check_n2_filled() {
+    fn check_octree_n2_filled() {
         let v : Vol<u8> = Vol::new(4);
         let mut t : Octree<u8> = Octree::new(64, v);
         t.fill(0, 0, 0, 4, 4, 4, 10.into());
@@ -505,7 +492,7 @@ mod tests {
     }
 
     #[test]
-    fn check_n2_broken() {
+    fn check_octree_n2_broken() {
         let v : Vol<u8> = Vol::new(4);
         let mut t : Octree<u8> = Octree::new(64, v);
         t.fill(0, 0, 0, 4, 4, 4, 10.into());
@@ -615,5 +602,20 @@ mod tests {
         assert_eq!((last.0, last.1.x, last.1.y, last.1.z), (256, 0, 0, 0));
         assert_eq!(last.2.color, 11);
         assert_eq!(last.2.faces, 0x3f); // all faces
+    }
+
+
+    #[test]
+    fn check_smal() {
+        let mut ot : Octree<u8> = Octree::new_from_size(4);
+        ot.set(2, 2, 2, 1.into());
+        let n = ot.recompute();
+
+        let mut log = vec![];
+        ot.draw(&mut |size, pos, v| {
+            log.push((size, (pos.x, pos.y, pos.z), v.color, v.faces));
+        });
+
+        assert_eq!(log[0], (1, (2, 2, 2), 1, 63));
     }
 }
