@@ -34,7 +34,6 @@ resource_local_to_scene = true
 emission_shape = 2
 emission_box_extents = Vector3( 10, 5, 10 )
 gravity = Vector3( 0, 0, 0 )
-angular_velocity = 1.05
 linear_accel = 50.0
 scale = 0.1
 scale_random = 1.0
@@ -64,7 +63,7 @@ transform = Transform( 0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, -0.121388, 0.25660
 use_in_baked_light = true
 
 [node name="BackEngineParticles" type="Particles" parent="Ship" index="0"]
-transform = Transform( -20, 0, -3.01992e-06, 0, 20, 0, 3.01992e-06, 0, -20, 0, -0.0425324, -4.45109 )
+transform = Transform( -20, 0, -3.01992e-006, 0, 20, 0, 3.01992e-006, 0, -20, 0, -0.0425324, -4.45109 )
 cast_shadow = 0
 emitting = false
 amount = 23
@@ -82,7 +81,7 @@ light_bake_mode = 2
 omni_range = 0.13458
 
 [node name="Camera" type="Camera" parent="." index="1"]
-transform = Transform( -1, -4.9056e-08, 3.86312e-07, 0, 0.992034, 0.125974, -3.89414e-07, 0.125974, -0.992034, 8.22446e-08, 0.0843845, -0.356407 )
+transform = Transform( -1, -4.9056e-008, 3.86312e-007, 0, 0.992034, 0.125974, -3.89414e-007, 0.125974, -0.992034, 8.22446e-008, 0.0843845, -0.356407 )
 fov = 81.7
 far = 4712.0
 
@@ -93,7 +92,7 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.103383 )
 shape = SubResource( 4 )
 
 [node name="FlightParticles" type="Particles" parent="." index="3"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 16.2368 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 0, 0, 16.2368 )
 visible = false
 amount = 75
 lifetime = 1.91
