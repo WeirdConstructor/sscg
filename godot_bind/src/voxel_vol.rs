@@ -25,18 +25,19 @@ fn render_octree_to_am(am: &mut ArrayMesh, vt: &Octree<u8>) {
     let mut idxlen = 0;
     let mut vtxlen = 0;
 
-    let vol_max_idx : u16 = vt.vol.size as u16 - 1;
 
     vt.draw(&mut |cube_size: usize, pos: &Pos, v: Voxel<u8>| {
         println!("RENDER CUBE: {}, {:?}, {:x}", cube_size, pos, v.faces);
         if v.color == 0 { return; }
+        let vol_max_idx : u16 = vt.vol.size as u16 - cube_size as u16;
 
-        if !(  (pos.x == 0 && pos.y == 0 && pos.z == 0)
-            || (pos.x == 1 && pos.y == 0 && pos.z == 0)
-            || (pos.x == 0 && pos.y == 1 && pos.z == 0)
-            || (pos.x == 1 && pos.y == 1 && pos.z == 0)
-            || (pos.x == 0 && pos.y == 0 && pos.z == 1)
-            ) { return; }
+//        if !(  (pos.x == 0 && pos.y == 0 && pos.z == 0)
+//            || (pos.x == 1 && pos.y == 0 && pos.z == 0)
+//            || (pos.x == 0 && pos.y == 1 && pos.z == 0)
+//            || (pos.x == 1 && pos.y == 1 && pos.z == 0)
+//            || (pos.x == 0 && pos.y == 0 && pos.z == 1)
+//            || (pos.x == 1 && pos.y == 0 && pos.z == 1)
+//            ) { return; }
 
         let mut p = vec3(
             pos.x as f32,
@@ -111,17 +112,16 @@ impl InstVoxVolume {
     #[export]
     fn _ready(&mut self, mut owner: MeshInstance) {
         let mut am = ArrayMesh::new();
-        let mut ot : Octree<u8> = Octree::new_from_size(2);
-        ot.fill(0, 0, 0, 2, 2, 2, 1.into());
+        let mut ot : Octree<u8> = Octree::new_from_size(4);
+        ot.fill(0, 0, 0, 4, 4, 4, 1.into());
 //        ot.fill(0, 0, 0, 2, 2, 1, 0.into());
-        ot.set(1, 1, 1, 0.into());
+        ot.set(0, 3, 0, 0.into());
+        ot.set(1, 3, 0, 0.into());
 //        ot.set(1, 1, 1, 0.into());
         ot.recompute();
 
         render_octree_to_am(&mut am, &ot);
 
-//        let vol = Volume::new(vec3(0., 0., 0.), 1);
-//        vol.render_to_am(&mut am);
         println!("IVV COMMITTED!");
         unsafe {
             owner.set_mesh(am.cast::<Mesh>());
@@ -129,42 +129,6 @@ impl InstVoxVolume {
 //            owner.rotate_z((90.0_f64).to_radians());
             owner.show();
 
-//            let mut mm = MultiMesh::new();
-////            let mut mm = owner.get_multimesh().unwrap();
-//            mm.set_mesh(am.cast::<Mesh>());
-////            mm.set_instance_count(0);
-//
-//            let mut t = owner.get_transform();
-//            println!("TOTO {:?}", t);
-////            mm.transform(t);
-////            t.origin.x -= 20.;
-////            t.origin.y -= 10.;
-////            mm.set_instance_transform(0, t);
-//
-////            let mut t = owner.get_transform();
-////            t.origin.x -= 10.;
-////            mm.set_instance_transform(0, t);
-////            mm.set_instance_transform(1, t);
-////
-//            mm.set_transform_format(1);
-//            mm.set_instance_count(3);
-//            let mut t = owner.get_transform();
-//            mm.set_instance_transform(0, t);
-//            owner.set_multimesh(Some(mm));
-
-//            let mut mm = owner.get_multimesh().unwrap();
-//            let c = 300_000;
-//            mm.set_instance_count(c);
-//            mm.set_instance_transform(0, owner.get_transform());
-//            let mut tt = owner.get_transform();
-////            tt.origin.y += 2.0;
-////            mm.set_instance_transform(1, tt);
-//            tt.origin.z += 0.;
-//            for i in 0..c {
-//                tt.origin.y += 1.0;
-//                mm.set_instance_transform(i, tt);
-//            }
-//            println!("IVV DONE!");
         }
     }
     #[export]
@@ -248,7 +212,7 @@ impl Face {
     fn render_to_arr(&self,
                      idxlen: &mut usize,
                      vtxlen: &mut usize,
-                     texture_index: usize,
+                     color: usize,
                      offs: Vector3,
                      size: f32,
                      scale: f32,
@@ -276,14 +240,11 @@ impl Face {
             Face::Bottom => &CUBE_NORMALS[5],
         };
 
-        let u_offs = (texture_index % UV_TEXTURE_ATLAS_WIDTH) as f32;
-        let v_offs = (texture_index / UV_TEXTURE_ATLAS_WIDTH) as f32;
-
         for i in 0..4 {
             let idx = tris[i];
             uvs.set(*vtxlen as i32, &vec2(
-                FACE_TRIANGLE_VERTEX_UV[idx][0] * u_offs,
-                FACE_TRIANGLE_VERTEX_UV[idx][1] * v_offs));
+                FACE_TRIANGLE_VERTEX_UV[idx][0],
+                FACE_TRIANGLE_VERTEX_UV[idx][1]));
             let v = vec3(
                 (CUBE_VERTICES[idx][0] * size + offs.x) * scale,
                 (CUBE_VERTICES[idx][1] * size + offs.y) * scale,

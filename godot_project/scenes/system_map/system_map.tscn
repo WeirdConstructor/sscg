@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
@@ -40,9 +40,27 @@ emission_on_uv2 = false
 [sub_resource type="SphereMesh" id=5]
 material = SubResource( 4 )
 
-[sub_resource type="SpatialMaterial" id=6]
-flags_transparent = true
-albedo_color = Color( 0.235294, 1, 0.0235294, 0.796078 )
+[sub_resource type="Shader" id=8]
+code = "shader_type spatial;
+
+render_mode diffuse_burley;
+
+void fragment() {
+	float l = 0.0;
+	if (UV.x <= 0.01) { l = 1.0; }
+	if (UV.y <= 0.01) { l = 1.0; }
+	if (UV.x >= 0.99) { l = 1.0; }
+	if (UV.y >= 0.99) { l = 1.0; }
+	ALBEDO = vec3(1.0, l, l);
+	EMISSION = l * vec3(1.0, 0.0, 1.0);
+	
+}"
+
+[sub_resource type="ShaderMaterial" id=9]
+shader = SubResource( 8 )
+
+[sub_resource type="CubeMesh" id=7]
+size = Vector3( 4, 0.1, 4 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -52,8 +70,6 @@ transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 
 [node name="ship" parent="." instance=ExtResource( 3 )]
 transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714, 0, 1.2, 0 )
-
-[node name="drone" type="Camera" parent="."]
 
 [node name="entities" type="Spatial" parent="."]
 
@@ -72,7 +88,11 @@ directional_shadow_normal_bias = 0.02
 directional_shadow_bias_split_scale = 0.0
 directional_shadow_max_distance = 32.1
 
+[node name="drone" type="Camera" parent="."]
+far = 4712.0
+
 [node name="GUI" type="Control" parent="."]
+editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource( 4 )
@@ -174,6 +194,11 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
 
 [node name="VoxStruct" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.58833, -2.13184, 9.6887 )
-material_override = SubResource( 6 )
+material_override = SubResource( 9 )
 script = ExtResource( 8 )
+
+[node name="MeshInstance" type="MeshInstance" parent="VoxStruct"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.5, 2 )
+mesh = SubResource( 7 )
+material/0 = null
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
