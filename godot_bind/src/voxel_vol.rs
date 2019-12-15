@@ -7,25 +7,128 @@
 use gdnative::*;
 use euclid::{vec2, vec3};
 use std::rc::Rc;
+use crate::voxeltree::*;
+
+fn render_octree_to_am(am: &mut ArrayMesh, vt: &Octree<u8>) {
+    let mut va      = Vector3Array::new();
+    let mut verts   = Vector3Array::new();
+    let mut uvs     = Vector2Array::new();
+    let mut normals = Vector3Array::new();
+    let mut indices = Int32Array::new();
+
+    let vol_size = vt.vol.size;
+    verts  .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
+    uvs    .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
+    normals.resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
+    indices.resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
+
+    let mut idxlen = 0;
+    let mut vtxlen = 0;
+
+    let vol_max_idx : u16 = vt.vol.size as u16 - 1;
+
+    vt.draw(&mut |cube_size: usize, pos: &Pos, v: Voxel<u8>| {
+        println!("RENDER CUBE: {}, {:?}, {:x}", cube_size, pos, v.faces);
+        if v.color == 0 { return; }
+
+        if !(  (pos.x == 0 && pos.y == 0 && pos.z == 0)
+            || (pos.x == 1 && pos.y == 0 && pos.z == 0)
+            || (pos.x == 0 && pos.y == 1 && pos.z == 0)
+            || (pos.x == 1 && pos.y == 1 && pos.z == 0)
+            || (pos.x == 0 && pos.y == 0 && pos.z == 1)
+            ) { return; }
+
+        let mut p = vec3(
+            pos.x as f32,
+            (vol_max_idx - pos.y) as f32,
+            pos.z as f32);
+        if v.faces & F_FRONT > 0 {
+            Face::Front. render_to_arr(
+                &mut idxlen, &mut vtxlen, 0, p, cube_size as f32, 1.0,
+                &mut verts, &mut uvs, &mut normals, &mut indices, &mut va);
+        }
+        if v.faces & F_TOP > 0 {
+            Face::Top. render_to_arr(
+                &mut idxlen, &mut vtxlen, 0, p, cube_size as f32, 1.0,
+                &mut verts, &mut uvs, &mut normals, &mut indices, &mut va);
+        }
+        if v.faces & F_BACK > 0 {
+            Face::Back. render_to_arr(
+                &mut idxlen, &mut vtxlen, 0, p, cube_size as f32, 1.0,
+                &mut verts, &mut uvs, &mut normals, &mut indices, &mut va);
+        }
+        if v.faces & F_LEFT > 0 {
+            Face::Left. render_to_arr(
+                &mut idxlen, &mut vtxlen, 0, p, cube_size as f32, 1.0,
+                &mut verts, &mut uvs, &mut normals, &mut indices, &mut va);
+        }
+        if v.faces & F_RIGHT > 0 {
+            Face::Right. render_to_arr(
+                &mut idxlen, &mut vtxlen, 0, p, cube_size as f32, 1.0,
+                &mut verts, &mut uvs, &mut normals, &mut indices, &mut va);
+        }
+        if v.faces & F_BOTTOM > 0 {
+            Face::Bottom. render_to_arr(
+                &mut idxlen, &mut vtxlen, 0, p, cube_size as f32, 1.0,
+                &mut verts, &mut uvs, &mut normals, &mut indices, &mut va);
+        }
+    });
+
+    verts  .resize(vtxlen as i32);
+    uvs    .resize(vtxlen as i32);
+    normals.resize(vtxlen as i32);
+    indices.resize(idxlen as i32);
+
+    println!("VERTEXES={}", vtxlen);
+
+    let mut arr = VariantArray::new();
+    arr.push(&Variant::from_vector3_array(&verts));
+    arr.push(&Variant::from_vector3_array(&normals));
+    arr.push(&Variant::new()); // tangent
+    arr.push(&Variant::new()); // color
+    arr.push(&Variant::from_vector2_array(&uvs));
+    arr.push(&Variant::new()); // uv2
+    arr.push(&Variant::new()); // bones
+    arr.push(&Variant::new()); // weights
+    arr.push(&Variant::from_int32_array(&indices));
+
+    am.add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arr, VariantArray::new(), 97280);
+}
+
+
 
 #[derive(NativeClass)]
-#[inherit(gdnative::MultiMeshInstance)]
+#[inherit(gdnative::MeshInstance)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct InstVoxVolume {
 }
 
 #[methods]
 impl InstVoxVolume {
-    fn _init(owner: MultiMeshInstance) -> Self {
+    fn _init(owner: MeshInstance) -> Self {
         Self { }
     }
     #[export]
-    fn _ready(&mut self, mut owner: MultiMeshInstance) {
+    fn _ready(&mut self, mut owner: MeshInstance) {
         let mut am = ArrayMesh::new();
-        let vol = Volume::new(vec3(0., 0., 0.), 1);
-        vol.render_to_am(&mut am);
+        let mut ot : Octree<u8> = Octree::new_from_size(2);
+        ot.fill(0, 0, 0, 2, 2, 2, 1.into());
+//        ot.fill(0, 0, 0, 2, 2, 1, 0.into());
+        ot.set(1, 1, 1, 0.into());
+//        ot.set(1, 1, 1, 0.into());
+        ot.recompute();
+
+        render_octree_to_am(&mut am, &ot);
+
+//        let vol = Volume::new(vec3(0., 0., 0.), 1);
+//        vol.render_to_am(&mut am);
         println!("IVV COMMITTED!");
         unsafe {
+            owner.set_mesh(am.cast::<Mesh>());
+//            owner.rotate_x((90.0_f64).to_radians());
+//            owner.rotate_z((90.0_f64).to_radians());
+            owner.show();
+
 //            let mut mm = MultiMesh::new();
 ////            let mut mm = owner.get_multimesh().unwrap();
 //            mm.set_mesh(am.cast::<Mesh>());
@@ -49,31 +152,27 @@ impl InstVoxVolume {
 //            mm.set_instance_transform(0, t);
 //            owner.set_multimesh(Some(mm));
 
-            let mut mm = owner.get_multimesh().unwrap();
-            mm.set_mesh(am.cast::<Mesh>());
-            let c = 300_000;
-            mm.set_instance_count(c);
-            mm.set_instance_transform(0, owner.get_transform());
-            let mut tt = owner.get_transform();
-//            tt.origin.y += 2.0;
-//            mm.set_instance_transform(1, tt);
-            tt.origin.z += 0.;
-            for i in 0..c {
-                tt.origin.y += 1.0;
-                mm.set_instance_transform(i, tt);
-            }
-            println!("IVV DONE!");
-            owner.rotate_x((90.0_f64).to_radians());
-            owner.rotate_z((90.0_f64).to_radians());
-            owner.show();
+//            let mut mm = owner.get_multimesh().unwrap();
+//            let c = 300_000;
+//            mm.set_instance_count(c);
+//            mm.set_instance_transform(0, owner.get_transform());
+//            let mut tt = owner.get_transform();
+////            tt.origin.y += 2.0;
+////            mm.set_instance_transform(1, tt);
+//            tt.origin.z += 0.;
+//            for i in 0..c {
+//                tt.origin.y += 1.0;
+//                mm.set_instance_transform(i, tt);
+//            }
+//            println!("IVV DONE!");
         }
     }
     #[export]
-    fn _process(&mut self, mut owner: MultiMeshInstance, delta: f64) {
+    fn _process(&mut self, mut owner: MeshInstance, delta: f64) {
         let rot_speed = (10.0_f64).to_radians();
         unsafe {
-//            owner.rotate_x(rot_speed * 0.1 * delta);
-//            owner.rotate_z(rot_speed * 0.1 * delta);
+//            owner.rotate_x(rot_speed * 0.6 * delta);
+//            owner.rotate_z(rot_speed * 0.6 * delta);
         }
     }
 }
@@ -151,6 +250,7 @@ impl Face {
                      vtxlen: &mut usize,
                      texture_index: usize,
                      offs: Vector3,
+                     size: f32,
                      scale: f32,
                      verts: &mut Vector3Array,
                      uvs: &mut Vector2Array,
@@ -185,9 +285,9 @@ impl Face {
                 FACE_TRIANGLE_VERTEX_UV[idx][0] * u_offs,
                 FACE_TRIANGLE_VERTEX_UV[idx][1] * v_offs));
             let v = vec3(
-                (CUBE_VERTICES[idx][0] + offs.x) * scale,
-                (CUBE_VERTICES[idx][1] + offs.y) * scale,
-                (CUBE_VERTICES[idx][2] + offs.z) * scale);
+                (CUBE_VERTICES[idx][0] * size + offs.x) * scale,
+                (CUBE_VERTICES[idx][1] * size + offs.y) * scale,
+                (CUBE_VERTICES[idx][2] * size + offs.z) * scale);
 //            collision_tris.set(*vtxlen as i32, &v);
             verts.set(*vtxlen as i32, &v);
             normals.set(*vtxlen as i32, &vec3(normal[0], normal[1], normal[2]));
@@ -201,7 +301,9 @@ impl Face {
         }
     }
 
-    fn render_to(&self, texture_index: usize, offs: Vector3, scale: f32, sf: &mut SurfaceTool, collision_tris: &mut Vector3Array) {
+    fn render_to(&self, texture_index: usize, offs: Vector3, scale: f32,
+                         sf: &mut SurfaceTool,
+                         collision_tris: &mut Vector3Array) {
         let tris = match self {
             Face::Front  => &FACE_TRIANGLE_VERTEX_IDX[0],
             Face::Top    => &FACE_TRIANGLE_VERTEX_IDX[1],
@@ -247,6 +349,7 @@ impl Face {
 //    0.05f
 //};
 //---------------------------------------------------------------------------
+
 
 struct Volume {
     offs:       Vector3,
@@ -324,12 +427,12 @@ impl Volume {
 
                     let mut v = vec3(y as f32, z as f32, x as f32);
                     v += self.offs;
-                    Face::Front. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
-                    Face::Back.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
-                    Face::Top.   render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
-                    Face::Bottom.render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
-                    Face::Left.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
-                    Face::Right. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Front. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Back.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Top.   render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Bottom.render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Left.  render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, 1.0, verts, uvs, normals, indices, &mut va);
+                    Face::Right. render_to_arr(&mut idxlen, &mut vtxlen, 0, v, 1.0, 1.0, verts, uvs, normals, indices, &mut va);
                 }
             }
         }
