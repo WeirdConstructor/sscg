@@ -41,6 +41,7 @@ fn xyz2facemask(x: pint, y: pint, z: pint) -> u8 {
     else      { mask |= F_BOTTOM; }
     if z == 0 { mask |= F_FRONT;  }
     else      { mask |= F_BACK;   }
+    mask = 0xFF;
     mask
 }
 
@@ -86,28 +87,34 @@ impl<C> Vol<C> where C: VoxelColor {
 
         if pos.x == 0    { faces |= F_LEFT; }
         if pos.x == last { faces |= F_RIGHT; }
-        if pos.x > 0 && pos.x < last {
+        if pos.x > 0 {
             let clr1 = self.data[pos.z as usize * size * size + pos.y as usize * size + pos.x as usize - 1].color;
-            let clr2 = self.data[pos.z as usize * size * size + pos.y as usize * size + pos.x as usize + 1].color;
             if clr1 == clr_def { faces |= 0x08; }
-            if clr2 == clr_def { faces |= 0x10; }
+        }
+        if pos.x < last {
+            let clr1 = self.data[pos.z as usize * size * size + pos.y as usize * size + pos.x as usize + 1].color;
+            if clr1 == clr_def { faces |= 0x10; }
         }
 
         if pos.y == 0         { faces |= F_TOP; }
         else if pos.y == last { faces |= F_BOTTOM; }
-        if pos.y > 0 && pos.y < last {
+        if pos.y > 0 {
             let clr1 = self.data[pos.z as usize * size * size + (pos.y as usize - 1) * size + pos.x as usize].color;
+            if clr1 == clr_def { faces |= F_TOP; }
+        }
+        if pos.y < last {
             let clr2 = self.data[pos.z as usize * size * size + (pos.y as usize + 1) * size + pos.x as usize].color;
-            if clr1 == clr_def { faces |= F_BOTTOM; }
-            if clr2 == clr_def { faces |= F_TOP; }
+            if clr2 == clr_def { faces |= F_BOTTOM; }
         }
 
         if pos.z == 0         { faces |= F_FRONT; }
         else if pos.z == last { faces |= F_BACK; }
-        if pos.z > 0 && pos.z < last {
+        if pos.z > 0 {
             let clr1 = self.data[(pos.z as usize - 1) * size * size + pos.y as usize * size + pos.x as usize].color;
-            let clr2 = self.data[(pos.z as usize + 1) * size * size + pos.y as usize * size + pos.x as usize].color;
             if clr1 == clr_def { faces |= F_FRONT; }
+        }
+        if pos.z < last {
+            let clr2 = self.data[(pos.z as usize + 1) * size * size + pos.y as usize * size + pos.x as usize].color;
             if clr2 == clr_def { faces |= F_BACK; }
         }
 
@@ -233,9 +240,9 @@ impl<C> Octree<C> where C: VoxelColor {
                                 size >> 1,
                                 tree_pos.offs(x, y, z),
                                 top_left.offs(
-                                    x * level as pint,
-                                    y * level as pint,
-                                    z * level as pint),
+                                    x * (size >> 1) as pint,
+                                    y * (size >> 1) as pint,
+                                    z * (size >> 1) as pint),
                                 f);
                         }
                     }//
