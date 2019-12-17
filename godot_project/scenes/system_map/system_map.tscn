@@ -1,25 +1,30 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=3]
-[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=4]
-[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=5]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=6]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=7]
-[ext_resource path="res://scenes/system_map/MeshInstance.gdns" type="Script" id=8]
+[ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=4]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=5]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=6]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=7]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=8]
+[ext_resource path="res://scenes/system_map/MeshInstance.gdns" type="Script" id=9]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
 
+[sub_resource type="SphereMesh" id=10]
+radius = 0.2
+height = 0.4
+
 [sub_resource type="DynamicFont" id=2]
 size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 5 )
+font_data = ExtResource( 6 )
 
 [sub_resource type="DynamicFont" id=3]
 size = 12
@@ -27,7 +32,7 @@ outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 5 )
+font_data = ExtResource( 6 )
 
 [sub_resource type="SpatialMaterial" id=4]
 albedo_color = Color( 1, 0.72549, 0, 1 )
@@ -66,6 +71,8 @@ shader = SubResource( 6 )
 [sub_resource type="CubeMesh" id=8]
 size = Vector3( 4, 0.1, 4 )
 
+[sub_resource type="BoxShape" id=9]
+
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
 
@@ -94,12 +101,21 @@ directional_shadow_max_distance = 32.1
 
 [node name="drone" type="Camera" parent="."]
 far = 4712.0
+script = ExtResource( 4 )
+
+[node name="RayCast" type="RayCast" parent="drone"]
+enabled = true
+cast_to = Vector3( 0, 0, -20 )
+
+[node name="MeshInstance" type="MeshInstance" parent="drone"]
+mesh = SubResource( 10 )
+material/0 = null
 
 [node name="GUI" type="Control" parent="."]
 editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 4 )
+script = ExtResource( 5 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -127,7 +143,7 @@ __meta__ = {
 }
 
 [node name="GUIDrawing" type="Node2D" parent="GUI"]
-script = ExtResource( 6 )
+script = ExtResource( 7 )
 
 [node name="ControlsInfo" type="Label" parent="GUI"]
 margin_left = 7.35092
@@ -193,16 +209,23 @@ shadow_reverse_cull_face = true
 omni_range = 2500.0
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 7 )]
+[node name="Grid" parent="." instance=ExtResource( 8 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
 
 [node name="VoxStruct" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.58833, -2.13184, 9.6887 )
 material_override = SubResource( 7 )
-script = ExtResource( 8 )
+script = ExtResource( 9 )
 
 [node name="MeshInstance" type="MeshInstance" parent="VoxStruct"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.5, 2 )
 mesh = SubResource( 8 )
 material/0 = null
+
+[node name="StaticBody" type="StaticBody" parent="VoxStruct"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.99662, 0, 1.04231 )
+
+[node name="CollisionShape" type="CollisionShape" parent="VoxStruct/StaticBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.320214, 1.01542, 1.23239 )
+shape = SubResource( 9 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
