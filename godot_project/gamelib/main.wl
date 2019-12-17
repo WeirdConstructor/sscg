@@ -217,7 +217,7 @@ STATE.code.recalc_ship_cargo = {
 !open_start_info = {
     sscg:win.set_window WID:MAIN_MENU ${
         x = 200, y = 100, w = 550, h = 800,
-        title = std:str:cat["Credits"],
+        title = std:str:cat["Infomation"],
         title_color = c:CON,
         child = ${
             t = :vbox,
@@ -257,8 +257,10 @@ STATE.code.recalc_ship_cargo = {
         ] ],
         $["Artwork", $[
         ] ],
-        $["Feedback, Hints, Testing", $[
-            "Gargaj"
+        $["Feedback, Hints, Ideas and Testing", $[
+            "Gargaj",
+            "Itmuckel",
+            "Ilmuri",
         ] ],
     ];
 

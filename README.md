@@ -108,11 +108,13 @@ without any additional terms or conditions.
 
 # Credits
 
+## Feedback, Tips and Ideas
+
 - Gargaj for hints and feedback.
 - szczm for play testing and feedback. ?
 - Tom from Recall Singularity Project for throwing ideas back and forth. ?
 - Ilmuri from Recall Singularity Discord for input about graphics programming.
-- Itmuckel from Discord for feedback. ?
+- Itmuckel from Discord for feedback.
 
 # Authors
 
