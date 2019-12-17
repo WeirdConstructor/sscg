@@ -54,9 +54,9 @@ func drone_process(delta):
 		motion += forw.normalized()
 	if Input.is_action_pressed("fly_stop"):
 		motion -= forw.normalized()
-	if Input.is_action_pressed("turn_left"):
-		motion += righ.normalized()
 	if Input.is_action_pressed("turn_right"):
+		motion += righ.normalized()
+	if Input.is_action_pressed("turn_left"):
 		motion -= righ.normalized()
 	cam.set_translation(cam.get_translation() + motion.normalized() * 5 * delta)
 
