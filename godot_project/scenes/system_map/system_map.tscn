@@ -46,14 +46,18 @@ code = "shader_type spatial;
 render_mode diffuse_burley;
 
 void fragment() {
-	float l = 0.0;
-	if (UV.x <= 0.01) { l = 1.0; }
-	if (UV.y <= 0.01) { l = 1.0; }
-	if (UV.x >= 0.99) { l = 1.0; }
-	if (UV.y >= 0.99) { l = 1.0; }
-	float fact = ((0.99 - clamp(UV.x, 0.80, 0.99)) / 0.19);
-	ALBEDO = vec3(1.0, l * fact, l * fact);
-	EMISSION = l * 10.0 * vec3(0.4, 0, 4.0);
+	float xv = 0.0;
+	float yv = 0.0;
+	
+	
+	if (UV.x <= 0.01) { xv = 1.0 * (1.0 - UV.x / 0.01); }
+	if (UV.y <= 0.01) { yv = 1.0 * (1.0 - UV.y / 0.01); }
+	if (UV.x >= 0.99) { xv = 1.0 * (1.0 - (1.0 - UV.x) / 0.01); }
+	if (UV.y >= 0.99) { yv = 1.0 * (1.0 - (1.0 - UV.y) / 0.01); }
+	// float fact = ((0.99 - clamp(UV.x, 0.80, 0.99)) / 0.19);
+	//ALBEDO = mix(vec3(1.0, l, l), vec3(1.0, 1.0, 1.0), fact);
+	ALBEDO = vec3(1.0, max(xv, yv), max(xv, yv));
+	// EMISSION = l * 10.0 * vec3(0.4, 0, 4.0);
 }"
 
 [sub_resource type="ShaderMaterial" id=7]
