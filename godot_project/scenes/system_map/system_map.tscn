@@ -105,8 +105,8 @@ margin_right = 173.351
 margin_bottom = 77.086
 custom_fonts/font = SubResource( 3 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
-text = "[A]        - Left thrusters
-[D]        - Right thrusters
+text = "[A]         - Thrust to left
+[D]         - Thrust to right
 [Space] - Accelerate
 [Ctrl]     - Decelerate"
 __meta__ = {

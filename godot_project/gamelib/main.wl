@@ -166,38 +166,6 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
-!@export on_ready {
-    std:displayln "GAME READY!";
-    sscg:game.cmd :load_state ${
-        engine_on_fract = 0.0,
-        engine_on_secs  = 0.0,
-        thruster_speed  = 0.0,
-        speed           = 0.0,
-        x               = 5000,
-        y               = 4990,
-        rot_z           = 0,
-    };
-
-#    sscg:win.set_window WID:OUTOFFUEL ${
-#        x = 250, y = 250, w = 500, h = 500,
-#        title = std:str:cat["Out Of Fuel"],
-#        title_color = c:SE1,
-#        child = ${
-#            t = :canvas,
-#            w = 1000,
-#            h = 1000,
-#            ref = "map",
-#            cmds = $[
-#                $[:circle,      10, 500, 500, 100, "F00"],
-#                $[:line,        11, 500, 500, 600, 900, 4, "FF0"],
-#                $[:rect,        20, 200,   0, 100, 200, "9F3"],
-#                $[:rect_filled, 20, 300,   0, 100, 200, "FF3"],
-#                $[:text,        12, 600, 900, 1000, 1, "Test", 0, "FFF"],
-#            ],
-#        },
-#    };
-};
-
 !@export on_arrived {!(too_fast, sys_id, ent_id) = @;
     std:displayln "ARRIVED!";
     (bool too_fast) {
@@ -246,6 +214,87 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
+!open_start_info = {
+    sscg:win.set_window WID:MAIN_MENU ${
+        x = 200, y = 100, w = 550, h = 800,
+        title = std:str:cat["Credits"],
+        title_color = c:CON,
+        child = ${
+            t = :vbox,
+            w = 1000,
+            h = 1000,
+            spacing = 10,
+            childs = $[
+                ${ t = :l_label, fg = c:SE1_L2, bg = "000", h = 100, w = 1000,
+                   text = "Welcome to SSCG - Space Ship Cargo Game!" },
+                ${ t = :c_text, fg = c:SE1_L, bg = "000", h = 700, w = 1000,
+                   margin = 10,
+                   text = std:str:join " " $[
+                        "This is an early alpha tech release. ",
+                        "Expect bugs and missing features. ",
+                        "Please consult the key binding help in the top ",
+                        "left of the screen for help about the controls.",
+                        "To interact with space stations and other objects ",
+                        "just fly head on into them at 'docking' speed. ",
+                        "There is currently not much more information ",
+                        "available. Please explore the game by yourself ",
+                        "or ask the developer(s).",
+                   ]
+                },
+                ${ t = :r_button, fg = "000", bg = c:SE2,
+                   w = 300, h = 10, text = "Close", ref = "close" },
+            ]
+        }
+    } {|| sscg:win.set_window WID:MAIN_MENU; };
+};
+
+!open_credits = {
+    !credits = $[
+        $["Game Developers", $[
+            "Weird Constructor",
+        ] ],
+        $["Music & Sound", $[
+        ] ],
+        $["Artwork", $[
+        ] ],
+        $["Feedback, Hints, Testing", $[
+            "Gargaj"
+        ] ],
+    ];
+
+    sscg:win.set_window WID:MAIN_MENU ${
+        x = 200, y = 100, w = 550, h = 800,
+        title = std:str:cat["Credits"],
+        title_color = c:CON,
+        child = ${
+            t = :vbox,
+            w = 1000,
+            h = 1000,
+            spacing = 10,
+            childs = $[
+                *credits | std:fold $[] { !(section, out) = @;
+                    std:push out ${
+                        t = :l_label,
+                        w = 1000,
+                        text = section.0,
+                        fg = c:SE2_L,
+                        bg = "000",
+                    };
+                    std:append out ~ section.1 { ${
+                        t = :l_label,
+                        w = 1000,
+                        text = std:str:cat "- " _,
+                        fg = c:SE1_L,
+                        bg = "000",
+                    } }
+                },
+                ${ t = :r_button, fg = "000", bg = c:SE2,
+                   w = 300, h = 10, text = "Close", ref = "close" },
+            ],
+        },
+    } {|| sscg:win.set_window WID:MAIN_MENU; };
+};
+
 !open_menu = {
     sscg:win.set_window WID:MAIN_MENU ${
         x = 200, y = 200, w = 550, h = 550,
@@ -257,17 +306,23 @@ STATE.code.recalc_ship_cargo = {
             h = 1000,
             spacing = 10,
             childs = $[
-                ${ t = :l_button, fg = "000", bg = "0F0",
-                   w = 1000, h = 250, text = "Load", ref = "load" },
-                ${ t = :l_button, fg = "000", bg = "0F0",
-                   w = 1000, h = 250, text = "Save", ref = "save" },
-                ${ t = :l_button, fg = "000", bg = "0F0",
-                   w = 1000, h = 500, text = "Close", ref = "close" },
+                ${ t = :l_button, fg = "000", bg = c:SE1,
+                   w = 300, h = 200, text = "Start", ref = "start" },
+                ${ t = :l_button, fg = "000", bg = c:SE1,
+                   w = 300, h = 100, text = "Load", ref = "load" },
+                ${ t = :l_button, fg = "000", bg = c:SE1,
+                   w = 300, h = 100, text = "Save", ref = "save" },
+                ${ t = :l_button, fg = "000", bg = c:CON,
+                   w = 300, h = 100, text = "Credits", ref = "credits" },
+                ${ t = :r_button, fg = "000", bg = c:SE2,
+                   w = 300, h = 200, text = "Close", ref = "close" },
             ],
         },
     } {||
         match _1
+            "start" {|| open_start_info[]; }
             "save" {|| sscg:game.cmd "save_state" $n; }
+            "credits" {|| open_credits[]; }
             "load" {||
                 !state =
                     on_error {|| std:displayln "Couldn't load savegame: " @ }
@@ -327,6 +382,21 @@ STATE.code.recalc_ship_cargo = {
     sscg:win.set_label WID:STATUS :credits STATE.player.credits;
     sscg:win.set_label WID:STATUS :cargo_load ~
         std:str:cat (STATE.ship.cargo.m3) " / " STATE.ship.cargo.kg;
+};
+
+!@export on_ready {
+    std:displayln "GAME READY!";
+    sscg:game.cmd :load_state ${
+        engine_on_fract = 0.0,
+        engine_on_secs  = 0.0,
+        thruster_speed  = 0.0,
+        speed           = 0.0,
+        x               = 5000,
+        y               = 4990,
+        rot_z           = 0,
+    };
+
+    open_menu[];
 };
 
 !@export init {
