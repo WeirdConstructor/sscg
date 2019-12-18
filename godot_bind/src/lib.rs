@@ -294,7 +294,6 @@ fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<HelloWorld>();
     handle.add_class::<GUIPaintNode>();
     handle.add_class::<system_map::SystemMap>();
-    handle.add_class::<voxel_vol::VoxVolume>();
     handle.add_class::<voxel_vol::InstVoxVolume>();
 }
 
