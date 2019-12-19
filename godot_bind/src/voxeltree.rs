@@ -125,6 +125,18 @@ impl<C> Vol<C> where C: VoxelColor {
         vox.faces = faces;
         vox
     }
+
+    pub fn fill(&mut self, x: pint, y: pint, z: pint,
+                w: pint, h: pint, d: pint, v: Voxel<C>)
+    {
+        for z in z..(z + d) {
+            for y in y..(y + h) {
+                for x in x..(x + w) {
+                    self.set(x, y, z, v);
+                }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Default)]
@@ -300,13 +312,7 @@ impl<C> Octree<C> where C: VoxelColor {
     pub fn fill(&mut self, x: pint, y: pint, z: pint,
                 w: pint, h: pint, d: pint, v: Voxel<C>)
     {
-        for z in z..(z + d) {
-            for y in y..(y + h) {
-                for x in x..(x + w) {
-                    self.set(x, y, z, v);
-                }
-            }
-        }
+        self.vol.fill(x, y, z, w, h, d, v);
     }
 
     pub fn recompute(&mut self) -> Node<C> {
