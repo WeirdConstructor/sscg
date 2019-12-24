@@ -1,8 +1,8 @@
 extends MeshInstance
 
 func _ready():
-	var line_width = 0.8
-	var length     = 2000
+	var line_width = 0.4
+	var length     = 1000
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.add_color(Color(1, 0, 0))
