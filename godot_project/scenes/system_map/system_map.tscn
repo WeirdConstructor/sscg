@@ -1,9 +1,9 @@
 [gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
-[ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
-[ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=3]
-[ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=4]
+[ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=3]
+[ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=4]
 [ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=5]
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=6]
 [ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=7]
@@ -15,18 +15,14 @@ resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
 
-[sub_resource type="SphereMesh" id=2]
-radius = 0.2
-height = 0.4
-
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="DynamicFont" id=2]
 size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 6 )
 
-[sub_resource type="DynamicFont" id=4]
+[sub_resource type="DynamicFont" id=3]
 size = 12
 outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
@@ -34,7 +30,7 @@ use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 6 )
 
-[sub_resource type="SpatialMaterial" id=5]
+[sub_resource type="SpatialMaterial" id=4]
 albedo_color = Color( 1, 0.72549, 0, 1 )
 emission_enabled = true
 emission = Color( 1, 0.72549, 0, 1 )
@@ -42,10 +38,10 @@ emission_energy = 8.14
 emission_operator = 0
 emission_on_uv2 = false
 
-[sub_resource type="SphereMesh" id=6]
-material = SubResource( 5 )
+[sub_resource type="SphereMesh" id=5]
+material = SubResource( 4 )
 
-[sub_resource type="Shader" id=7]
+[sub_resource type="Shader" id=6]
 code = "shader_type spatial;
 
 render_mode diffuse_burley;
@@ -65,50 +61,47 @@ void fragment() {
 	EMISSION = vec3(0.0, mixval, mixval) * 4.0;
 }"
 
-[sub_resource type="ShaderMaterial" id=8]
-shader = SubResource( 7 )
+[sub_resource type="ShaderMaterial" id=7]
+shader = SubResource( 6 )
 
-[sub_resource type="CubeMesh" id=9]
-size = Vector3( 4, 0.1, 4 )
+[sub_resource type="CubeMesh" id=8]
+size = Vector3( 1.2, 1.2, 1.2 )
 
-[sub_resource type="BoxShape" id=10]
+[sub_resource type="Shader" id=9]
+code = "shader_type spatial;
+
+render_mode diffuse_burley;
+
+void fragment() {
+	ALPHA = (sin(UV.x * 100.0 + fract(TIME) * 3.146  * 2.0) + 1.0) / 2.0;
+    ALBEDO = vec3(
+		(UV.x + sin(TIME * 5.0) + 1.0) / 3.0,
+		 1.0 - (UV.y + cos(TIME * 7.0) + 1.0) / 3.0,
+		 1.0 - (UV.x * 6.0 + UV.y * 3.0 + cos(TIME * 10.0) + 1.0) / 11.0);
+}"
+
+[sub_resource type="ShaderMaterial" id=10]
+shader = SubResource( 9 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
 
-[node name="crosshair" parent="." instance=ExtResource( 2 )]
-transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
-
-[node name="ship" parent="." instance=ExtResource( 3 )]
+[node name="ship" parent="." instance=ExtResource( 2 )]
 transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714, 0, 1.2, 0 )
 
 [node name="entities" type="Spatial" parent="."]
 
-[node name="Sun" type="DirectionalLight" parent="."]
-transform = Transform( 0.741775, 0.518385, 0.425497, 0, -0.634455, 0.77296, 0.670649, -0.573362, -0.470623, 0, 0, -5.034 )
-visible = false
-light_specular = 0.0
-shadow_bias = 0.02
-shadow_reverse_cull_face = true
-directional_shadow_split_1 = 0.007
-directional_shadow_split_2 = 0.014
-directional_shadow_split_3 = 0.295
-directional_shadow_blend_splits = true
-directional_shadow_normal_bias = 0.02
-directional_shadow_bias_split_scale = 0.0
-directional_shadow_max_distance = 32.1
-
 [node name="drone" type="Camera" parent="."]
 far = 4712.0
-script = ExtResource( 4 )
+script = ExtResource( 3 )
 
 [node name="RayCast" type="RayCast" parent="drone"]
 enabled = true
 cast_to = Vector3( 0, 0, -20 )
 
-[node name="MeshInstance" type="MeshInstance" parent="drone"]
-mesh = SubResource( 2 )
-material/0 = null
+[node name="crosshair" parent="drone" instance=ExtResource( 4 )]
+transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
+visible = false
 
 [node name="SpotLight" type="SpotLight" parent="drone"]
 visible = false
@@ -143,7 +136,7 @@ __meta__ = {
 margin_left = 167.0
 margin_right = 857.0
 margin_bottom = 63.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 2 )
 custom_colors/font_color = Color( 1, 0, 0, 1 )
 text = "You are too fast!
 Emergency collision transport activated!
@@ -161,7 +154,7 @@ margin_left = 7.35092
 margin_top = 8.08603
 margin_right = 173.351
 margin_bottom = 77.086
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 3 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "[A]         - Thrust to left
 [D]         - Thrust to right
@@ -177,7 +170,7 @@ margin_left = 900.0
 margin_top = 2.0
 margin_right = -3.0
 margin_bottom = 20.0
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 3 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "FPS: 00.00"
 align = 2
@@ -186,10 +179,10 @@ __meta__ = {
 }
 
 [node name="Sun Sphere" type="MeshInstance" parent="."]
-transform = Transform( 100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0 )
+transform = Transform( 30, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0, 0 )
 layers = 2
 cast_shadow = 0
-mesh = SubResource( 6 )
+mesh = SubResource( 5 )
 material/0 = null
 
 [node name="Detail Light" type="OmniLight" parent="."]
@@ -226,21 +219,12 @@ omni_shadow_detail = 0
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
 
 [node name="VoxStruct" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.58833, -2.13184, 9.6887 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.588, 0, 9.689 )
 layers = 2
-material_override = SubResource( 8 )
+material_override = SubResource( 7 )
 script = ExtResource( 9 )
 
-[node name="MeshInstance" type="MeshInstance" parent="VoxStruct"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.02977, -0.5, -5.5472 )
-layers = 2
-mesh = SubResource( 9 )
-material/0 = null
-
-[node name="StaticBody" type="StaticBody" parent="VoxStruct"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.99662, 0, 1.04231 )
-
-[node name="CollisionShape" type="CollisionShape" parent="VoxStruct/StaticBody"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.320214, 1.01542, 1.23239 )
-shape = SubResource( 10 )
+[node name="CursorBox" type="MeshInstance" parent="VoxStruct"]
+mesh = SubResource( 8 )
+material/0 = SubResource( 10 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]

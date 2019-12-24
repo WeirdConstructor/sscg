@@ -37,7 +37,7 @@ impl ColorMap {
     }
 }
 
-fn render_octree_to_am(am: &mut ArrayMesh, cm: &ColorMap, vt: &Octree<u8>) {
+fn render_octree_to_am(am: &mut ArrayMesh, cv: &mut ConcavePolygonShape, cm: &ColorMap, vt: &Octree<u8>) {
     let mut va      = Vector3Array::new();
     let mut verts   = Vector3Array::new();
     let mut uvs     = Vector2Array::new();
@@ -51,6 +51,7 @@ fn render_octree_to_am(am: &mut ArrayMesh, cm: &ColorMap, vt: &Octree<u8>) {
     normals.resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
     colors .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
     indices.resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
+    va     .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
 
     let mut idxlen = 0;
     let mut vtxlen = 0;
@@ -110,6 +111,7 @@ fn render_octree_to_am(am: &mut ArrayMesh, cm: &ColorMap, vt: &Octree<u8>) {
     normals.resize(vtxlen as i32);
     colors .resize(vtxlen as i32);
     indices.resize(idxlen as i32);
+    va     .resize(idxlen as i32);
 
     println!("VERTEXES={}", vtxlen);
 
@@ -125,6 +127,7 @@ fn render_octree_to_am(am: &mut ArrayMesh, cm: &ColorMap, vt: &Octree<u8>) {
     arr.push(&Variant::from_int32_array(&indices));
 
     am.add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arr, VariantArray::new(), 97280);
+    cv.set_faces(va);
 }
 
 
@@ -133,12 +136,13 @@ fn render_octree_to_am(am: &mut ArrayMesh, cm: &ColorMap, vt: &Octree<u8>) {
 #[inherit(gdnative::MeshInstance)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct InstVoxVolume {
+    box_in_focus: bool,
 }
 
 #[methods]
 impl InstVoxVolume {
     fn _init(owner: MeshInstance) -> Self {
-        Self { }
+        Self { box_in_focus: false }
     }
 
     #[export]
@@ -157,17 +161,55 @@ impl InstVoxVolume {
 
         let cm = ColorMap::new_8bit();
 
-        render_octree_to_am(&mut am, &cm, &ot);
+        let mut cvshape = ConcavePolygonShape::new();
+
+        render_octree_to_am(&mut am, &mut cvshape, &cm, &ot);
 
         println!("IVV COMMITTED!");
         unsafe {
             owner.set_mesh(am.cast::<Mesh>());
+
+            let mut sb = StaticBody::new();
+            let sb_obj = Object::from_sys(sb.cast::<Object>().unwrap().to_sys());
+            let id = sb.create_shape_owner(Some(sb_obj));
+            sb.shape_owner_add_shape(id, cvshape.cast::<Shape>());
+            sb.set_name(GodotString::from("box_selector"));
+
 //            owner.rotate_x((90.0_f64).to_radians());
 //            owner.rotate_z((90.0_f64).to_radians());
+            owner.add_child(sb.cast::<Node>(), false);
             owner.show();
-
         }
     }
+
+    #[export]
+    fn looking_at(&mut self, mut owner: MeshInstance, x: f64, y: f64, z: f64) {
+        unsafe {
+            let mut c = owner.get_child(0).and_then(|n| n.cast::<Spatial>()).unwrap();
+            if !self.box_in_focus {
+                c.show();
+                self.box_in_focus = true;
+            }
+            let mut t = c.get_transform();
+            t.origin.x = x.floor() as f32 + 0.5;
+            t.origin.y = y.floor() as f32 + 0.5;
+            t.origin.z = z.floor() as f32 + 0.5;
+            c.set_transform(t);
+        }
+    }
+
+    #[export]
+    fn looking_at_nothing(&mut self, mut owner: MeshInstance) {
+        println!("NONE");
+        unsafe {
+            let mut c = owner.get_child(0).and_then(|n| n.cast::<Spatial>()).unwrap();
+            if self.box_in_focus {
+                c.hide();
+                self.box_in_focus = false;
+            }
+        }
+    }
+
     #[export]
     fn _process(&mut self, mut owner: MeshInstance, delta: f64) {
         let rot_speed = (10.0_f64).to_radians();
@@ -271,7 +313,6 @@ impl Face {
                 (CUBE_VERTICES[idx][0] * size + offs.x) * scale,
                 (CUBE_VERTICES[idx][1] * size + offs.y) * scale,
                 (CUBE_VERTICES[idx][2] * size + offs.z) * scale);
-//            collision_tris.set(*vtxlen as i32, &v);
             verts.set(*vtxlen as i32, &v);
             colors.set(*vtxlen as i32, &color);
             normals.set(*vtxlen as i32, &vec3(normal[0], normal[1], normal[2]));
@@ -280,36 +321,10 @@ impl Face {
 
         for i in 4..10 {
             let idx = tris[i];
-            indices.set(*idxlen as i32, *vtxlen as i32 - (4 - idx as i32));
+            let tri_vertex_index = *vtxlen as i32 - (4 - idx as i32);
+            indices.set(*idxlen as i32, tri_vertex_index);
+            collision_tris.set(*idxlen as i32, &verts.get(tri_vertex_index));
             *idxlen += 1;
-        }
-    }
-
-    fn render_to(&self, texture_index: usize, offs: Vector3, scale: f32,
-                         sf: &mut SurfaceTool,
-                         collision_tris: &mut Vector3Array) {
-        let tris = match self {
-            Face::Front  => &FACE_TRIANGLE_VERTEX_IDX[0],
-            Face::Top    => &FACE_TRIANGLE_VERTEX_IDX[1],
-            Face::Back   => &FACE_TRIANGLE_VERTEX_IDX[2],
-            Face::Left   => &FACE_TRIANGLE_VERTEX_IDX[3],
-            Face::Right  => &FACE_TRIANGLE_VERTEX_IDX[4],
-            Face::Bottom => &FACE_TRIANGLE_VERTEX_IDX[5],
-        };
-
-        let u_offs = (texture_index % UV_TEXTURE_ATLAS_WIDTH) as f32;
-        let v_offs = (texture_index / UV_TEXTURE_ATLAS_WIDTH) as f32;
-
-        for idx in tris.iter().rev() {
-            sf.add_uv(vec2(
-                FACE_TRIANGLE_VERTEX_UV[*idx][0] * u_offs,
-                FACE_TRIANGLE_VERTEX_UV[*idx][1] * v_offs));
-            let v = vec3(
-                (CUBE_VERTICES[*idx][0] + offs.x) * scale,
-                (CUBE_VERTICES[*idx][1] + offs.y) * scale,
-                (CUBE_VERTICES[*idx][2] + offs.z) * scale);
-            collision_tris.push(&v);
-            sf.add_vertex(v);
         }
     }
 }

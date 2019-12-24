@@ -215,14 +215,14 @@ impl TreePos {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub struct Node<C: VoxelColor> {
+pub struct OctNode<C: VoxelColor> {
     pub voxel: Option<Voxel<C>>,
     pub pos:   Pos,
     pub empty: bool,
     pub tree_pos: TreePos,
 }
 
-impl<C> Node<C> where C: VoxelColor {
+impl<C> OctNode<C> where C: VoxelColor {
     pub fn new() -> Self {
         Self {
             voxel:  None,
@@ -235,7 +235,7 @@ impl<C> Node<C> where C: VoxelColor {
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Octree<C: VoxelColor> {
-    nodes: std::vec::Vec<Node<C>>,
+    nodes: std::vec::Vec<OctNode<C>>,
     nodes_size: usize,
     pub vol: Vol<C>,
 }
@@ -258,7 +258,7 @@ impl<C> Octree<C> where C: VoxelColor {
         }
         alloc += 1; // For the root node
         let mut nodes = std::vec::Vec::new();
-        nodes.resize(alloc, Node::default());
+        nodes.resize(alloc, OctNode::default());
         Self {
             nodes,
             nodes_size: vol.size >> 1,
@@ -315,15 +315,15 @@ impl<C> Octree<C> where C: VoxelColor {
         self.vol.fill(x, y, z, w, h, d, v);
     }
 
-    pub fn recompute(&mut self) -> Node<C> {
+    pub fn recompute(&mut self) -> OctNode<C> {
         let n = self.compute_node(TreePos::new(), self.vol.size, Pos { x: 0, y: 0, z: 0 });
         n
     }
 
-    fn compute_node(&mut self, tp: TreePos, size: usize, top_left: Pos) -> Node<C> {
+    fn compute_node(&mut self, tp: TreePos, size: usize, top_left: Pos) -> OctNode<C> {
         if size == 1 {
             let v = self.vol.get(top_left);
-            let mut n = Node::default();
+            let mut n = OctNode::default();
             if v.color == C::default() {
                 n.empty = true;
                 n.pos = top_left;
@@ -336,7 +336,7 @@ impl<C> Octree<C> where C: VoxelColor {
             return n;
         }
 
-        let mut n : Node<C> = Node::default();
+        let mut n : OctNode<C> = OctNode::default();
         let mut faces : u8 = 0x0;
         let mut color : C = C::default();
 
@@ -367,7 +367,7 @@ impl<C> Octree<C> where C: VoxelColor {
             }
         }
 
-        let mut n = Node::default();
+        let mut n = OctNode::default();
         n.pos      = top_left;
         n.tree_pos = tp;
 
@@ -396,16 +396,16 @@ impl<C> Octree<C> where C: VoxelColor {
         n
     }
 
-    fn node_at(&self, offs: usize,  x: usize, y: usize, z: usize) -> &Node<C> {
+    fn node_at(&self, offs: usize,  x: usize, y: usize, z: usize) -> &OctNode<C> {
         &self.nodes[offs + (x * 2 * 2) + (y * 2) + x]
     }
 
-    fn node(&mut self, offs: usize, x: usize, y: usize, z: usize) -> &mut Node<C> {
+    fn node(&mut self, offs: usize, x: usize, y: usize, z: usize) -> &mut OctNode<C> {
         &mut self.nodes[offs + (x * 2 * 2) + (y * 2) + x]
 //        println!("ANOD lvl={}, pos={:?} => {:?}", level, pos, self.nodes);
     }
 
-//    fn compute_voxel_node(&mut self, top_left: Pos) -> Node<C> {
+//    fn compute_voxel_node(&mut self, top_left: Pos) -> OctNode<C> {
 //        let mut faces : u8 = 0x0;
 //        let mut color : C  = C::default();
 //
@@ -431,7 +431,7 @@ impl<C> Octree<C> where C: VoxelColor {
 //            }
 //        }
 //
-//        let mut n = Node::default();
+//        let mut n = OctNode::default();
 //        if !all_empty && equal_color {
 //            let mut v = Voxel::default();
 //            v.color = color;

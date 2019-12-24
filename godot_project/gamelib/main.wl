@@ -17,7 +17,7 @@
     ship_types = ${
         scout_mk1 = ${
             fuel_capacity       = 1000,
-            fuel_per_sec        = 7,
+            fuel_per_sec        = 14,
             max_kg_fuel_factor  = 200,
             cargo_max_m3        = 2000,
             cargo_max_kg        = 10000,
@@ -250,7 +250,7 @@ STATE.code.recalc_ship_cargo = {
 
 !open_credits = {
     !credits = $[
-        $["Game Developers", $[
+        $["Game Design and Programming", $[
             "Weird Constructor",
         ] ],
         $["Music & Sound", $[
@@ -261,6 +261,12 @@ STATE.code.recalc_ship_cargo = {
             "Gargaj",
             "Itmuckel",
             "Ilmuri",
+            "Tom from 'Recall Singularity'",
+            "szczm",
+        ] ],
+        $["Engine", $[
+            "Godot game engine developers",
+            "Godot-rust binding Developers ('karroffel', 'toasteater' and all others)",
         ] ],
     ];
 
@@ -283,7 +289,7 @@ STATE.code.recalc_ship_cargo = {
                         bg = "000",
                     };
                     std:append out ~ section.1 { ${
-                        t = :l_label,
+                        t = :l_text,
                         w = 1000,
                         text = std:str:cat "- " _,
                         fg = c:SE1_L,

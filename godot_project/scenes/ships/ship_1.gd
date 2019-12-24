@@ -11,8 +11,8 @@ var back_engine_particles
 var back_engine_light
 
 var safe_dock_speed         = 0.1;
-var max_speed               = 2.0;
-var no_fuel_max_speed       = 0.2;
+var max_speed               = 1.0;
+var no_fuel_max_speed       = 0.1;
 var accel                   = 0.1;
 var decel                   = 0.25;
 var max_space_wind_friction = 0.001;
@@ -29,8 +29,8 @@ func sscg_save():
 		"engine_on_fract": engine_on_fract,
 		"engine_on_secs": engine_on_secs,
 		"thruster_speed": thruster_speed,
-		"x": int(((self.translation.x + 1000.0) * 10000.0) / 2000.0),
-		"y": int(((self.translation.z + 1000.0) * 10000.0) / 2000.0),
+		"x": int(((self.translation.x + 500.0) * 10000.0) / 1000.0),
+		"y": int(((self.translation.z + 500.0) * 10000.0) / 1000.0),
 		"rot_z": self.rotation.y,
 	}
 
@@ -39,9 +39,9 @@ func sscg_load(state):
 	engine_on_fract = state["engine_on_fract"]
 	engine_on_secs  = state["engine_on_secs"]
 	thruster_speed  = state["thruster_speed"]
-	self.translation.x = -1000.0 + (float(state["x"]) * 2000.0) / 10000.0
-	self.translation.y = 1.2
-	self.translation.z = -1000.0 + (float(state["y"]) * 2000.0) / 10000.0
+	self.translation.x = -500.0 + (float(state["x"]) * 1000.0) / 10000.0
+	self.translation.y = 0.6
+	self.translation.z = -500.0 + (float(state["y"]) * 1000.0) / 10000.0
 	self.rotation.y = state["rot_z"]
 
 func drone_process(delta):
@@ -139,14 +139,14 @@ func _physics_process(delta):
 	self.translation = self.translation + v.z.normalized() * speed
 	self.rotate_y(deg2rad(2 * thruster_speed))
 	
-	if self.translation.x > 1000.0:
-		self.translation.x -= 2000.0
-	if self.translation.x < -1000.0:
-		self.translation.x += 2000.0
-	if self.translation.z > 1000.0:
-		self.translation.z -= 2000.0
-	if self.translation.z < -1000.0:
-		self.translation.z += 2000.0
+	if self.translation.x > 500.0:
+		self.translation.x -= 1000.0
+	if self.translation.x < -500.0:
+		self.translation.x += 1000.0
+	if self.translation.z > 500.0:
+		self.translation.z -= 1000.0
+	if self.translation.z < -500.0:
+		self.translation.z += 1000.0
 
 
 func _ready():
