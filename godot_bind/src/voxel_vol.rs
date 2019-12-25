@@ -112,8 +112,6 @@ fn render_octree_to_am(am: &mut ArrayMesh, cv: &mut ConcavePolygonShape, cm: &Co
     indices.resize(idxlen as i32);
     va     .resize(idxlen as i32);
 
-    println!("VERTEXES={}", vtxlen);
-
     let mut arr = VariantArray::new();
     arr.push(&Variant::from_vector3_array(&verts));
     arr.push(&Variant::from_vector3_array(&normals));
@@ -139,6 +137,7 @@ pub struct InstVoxVolume {
     octree:         Option<Octree<u8>>,
     cursor:         [u16; 3],
     sb_shape_owner: i64,
+    last_mine_pos:  [u16; 3],
 }
 
 #[methods]
@@ -148,6 +147,7 @@ impl InstVoxVolume {
             box_in_focus:   false,
             octree:         None,
             cursor:         [0, 0, 0],
+            last_mine_pos:  [0, 0, 0],
             sb_shape_owner: 0
         }
     }
@@ -235,18 +235,22 @@ impl InstVoxVolume {
 
     #[export]
     fn mine(&mut self, mut owner: MeshInstance) {
-        let v =
-            self.octree.as_ref().unwrap().get_inv_y(
+        if self.last_mine_pos != self.cursor {
+            let v =
+                self.octree.as_ref().unwrap().get_inv_y(
+                    self.cursor[0],
+                    self.cursor[1],
+                    self.cursor[2]);
+            self.octree.as_mut().unwrap().set_inv_y(
                 self.cursor[0],
                 self.cursor[1],
-                self.cursor[2]);
-        self.octree.as_mut().unwrap().set_inv_y(
-            self.cursor[0],
-            self.cursor[1],
-            self.cursor[2],
-            0.into());
-        println!("MINED: {}", v.color);
-        self.rebuild(&mut owner);
+                self.cursor[2],
+                0.into());
+            println!("MINED: {}", v.color);
+            self.rebuild(&mut owner);
+
+            self.last_mine_pos = self.cursor;
+        }
     }
 
     #[export]
