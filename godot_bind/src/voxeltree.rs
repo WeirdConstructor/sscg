@@ -305,6 +305,18 @@ impl<C> Octree<C> where C: VoxelColor {
         }
     }
 
+    pub fn get_inv_y(&self, x: pint, y: pint, z: pint) -> Voxel<C> {
+        self.get(x, (self.vol.size - 1) as u16 - y, z)
+    }
+
+    pub fn get(&self, x: pint, y: pint, z: pint) -> Voxel<C> {
+        *self.vol.at(Pos::new(x, y, z))
+    }
+
+    pub fn set_inv_y(&mut self, x: pint, y: pint, z: pint, v: Voxel<C>) {
+        self.vol.set(x, (self.vol.size - 1) as u16 - y, z, v);
+    }
+
     pub fn set(&mut self, x: pint, y: pint, z: pint, v: Voxel<C>) {
         self.vol.set(x, y, z, v);
     }
