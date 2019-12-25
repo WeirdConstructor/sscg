@@ -57,7 +57,6 @@ fn render_octree_to_am(am: &mut ArrayMesh, cv: &mut ConcavePolygonShape, cm: &Co
     let mut vtxlen = 0;
 
     vt.draw(&mut |cube_size: usize, pos: &Pos, v: Voxel<u8>| {
-        println!("RENDER CUBE: {}, {:?}, {:x}", cube_size, pos, v.faces);
         if v.color == 0 { return; }
         let vol_max_idx : u16 = vt.vol.size as u16 - cube_size as u16;
 
@@ -136,13 +135,21 @@ fn render_octree_to_am(am: &mut ArrayMesh, cv: &mut ConcavePolygonShape, cm: &Co
 #[inherit(gdnative::MeshInstance)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct InstVoxVolume {
-    box_in_focus: bool,
+    box_in_focus:   bool,
+    octree:         Option<Octree<u8>>,
+    cursor:         [u16; 3],
+    sb_shape_owner: i64,
 }
 
 #[methods]
 impl InstVoxVolume {
     fn _init(owner: MeshInstance) -> Self {
-        Self { box_in_focus: false }
+        Self {
+            box_in_focus:   false,
+            octree:         None,
+            cursor:         [0, 0, 0],
+            sb_shape_owner: 0
+        }
     }
 
     #[export]
@@ -157,28 +164,51 @@ impl InstVoxVolume {
         ot.set(0, 7, 0, 72.into());
         ot.set(0, 7, 7, 23.into());
 //        ot.set(0, 0, 3, 0.into());
+
         ot.recompute();
 
-        let cm = ColorMap::new_8bit();
+        self.octree = Some(ot);
 
-        let mut cvshape = ConcavePolygonShape::new();
-
-        render_octree_to_am(&mut am, &mut cvshape, &cm, &ot);
-
-        println!("IVV COMMITTED!");
         unsafe {
-            owner.set_mesh(am.cast::<Mesh>());
-
             let mut sb = StaticBody::new();
             let sb_obj = Object::from_sys(sb.cast::<Object>().unwrap().to_sys());
             let id = sb.create_shape_owner(Some(sb_obj));
-            sb.shape_owner_add_shape(id, cvshape.cast::<Shape>());
+            self.sb_shape_owner = id;
             sb.set_name(GodotString::from("box_selector"));
 
-//            owner.rotate_x((90.0_f64).to_radians());
-//            owner.rotate_z((90.0_f64).to_radians());
             owner.add_child(sb.cast::<Node>(), false);
             owner.show();
+        }
+
+        self.rebuild(&mut owner);
+    }
+
+    fn rebuild(&mut self, owner: &mut MeshInstance) {
+        if let Some(ref mut ot) = self.octree {
+            let n = ot.recompute();
+
+            let mut am = ArrayMesh::new();
+            let mut cvshape = ConcavePolygonShape::new();
+
+            if !n.empty {
+                let cm = ColorMap::new_8bit();
+
+                render_octree_to_am(&mut am, &mut cvshape, &cm, ot);
+            }
+
+            unsafe {
+                owner.set_mesh(am.cast::<Mesh>());
+                let mut sb =
+                    owner.get_node(NodePath::from_str("box_selector")).unwrap();
+                let mut ssb = sb.cast::<StaticBody>().unwrap();
+                ssb.shape_owner_clear_shapes(self.sb_shape_owner);
+
+                if !n.empty {
+                    ssb.shape_owner_add_shape(
+                        self.sb_shape_owner,
+                        cvshape.cast::<Shape>());
+                }
+            }
         }
     }
 
@@ -195,12 +225,32 @@ impl InstVoxVolume {
             t.origin.y = y.floor() as f32 + 0.5;
             t.origin.z = z.floor() as f32 + 0.5;
             c.set_transform(t);
+            self.cursor = [
+                t.origin.x as u16,
+                t.origin.y as u16,
+                t.origin.z as u16,
+            ];
         }
     }
 
     #[export]
+    fn mine(&mut self, mut owner: MeshInstance) {
+        let v =
+            self.octree.as_ref().unwrap().get_inv_y(
+                self.cursor[0],
+                self.cursor[1],
+                self.cursor[2]);
+        self.octree.as_mut().unwrap().set_inv_y(
+            self.cursor[0],
+            self.cursor[1],
+            self.cursor[2],
+            0.into());
+        println!("MINED: {}", v.color);
+        self.rebuild(&mut owner);
+    }
+
+    #[export]
     fn looking_at_nothing(&mut self, mut owner: MeshInstance) {
-        println!("NONE");
         unsafe {
             let mut c = owner.get_child(0).and_then(|n| n.cast::<Spatial>()).unwrap();
             if self.box_in_focus {
