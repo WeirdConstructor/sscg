@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=2]
+[gd_scene load_steps=21 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -9,6 +9,7 @@
 [ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=7]
 [ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=8]
 [ext_resource path="res://scenes/system_map/MeshInstance.gdns" type="Script" id=9]
+[ext_resource path="res://scenes/system_map/VoxStruct2.gdns" type="Script" id=10]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -227,4 +228,8 @@ script = ExtResource( 9 )
 [node name="CursorBox" type="MeshInstance" parent="VoxStruct"]
 mesh = SubResource( 8 )
 material/0 = SubResource( 10 )
+
+[node name="VoxStruct2" type="Spatial" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.61571, 0, 40.3867 )
+script = ExtResource( 10 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]

@@ -215,39 +215,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "gdnative"
-version = "0.5.0"
+version = "0.7.0"
 dependencies = [
- "gdnative-bindings 0.1.0",
- "gdnative-core 0.5.0",
- "gdnative-derive 0.5.0",
+ "gdnative-bindings 0.7.0",
+ "gdnative-core 0.7.0",
+ "gdnative-derive 0.7.0",
 ]
 
 [[package]]
 name = "gdnative-bindings"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "gdnative-core 0.5.0",
- "gdnative-sys 0.5.0",
- "gdnative_bindings_generator 0.2.0",
+ "gdnative-core 0.7.0",
+ "gdnative-sys 0.7.0",
+ "gdnative_bindings_generator 0.7.0",
  "libc 0.2.65 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "gdnative-core"
-version = "0.5.0"
+version = "0.7.0"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "euclid 0.20.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gdnative-sys 0.5.0",
- "gdnative_bindings_generator 0.2.0",
+ "gdnative-sys 0.7.0",
+ "gdnative_bindings_generator 0.7.0",
  "libc 0.2.65 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "gdnative-derive"
-version = "0.5.0"
+version = "0.7.0"
 dependencies = [
  "proc-macro2 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -256,7 +256,7 @@ dependencies = [
 
 [[package]]
 name = "gdnative-sys"
-version = "0.5.0"
+version = "0.7.0"
 dependencies = [
  "bindgen 0.51.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.65 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "gdnative_bindings_generator"
-version = "0.2.0"
+version = "0.7.0"
 dependencies = [
  "heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.102 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -764,7 +764,7 @@ name = "sscg_gd"
 version = "0.1.0"
 dependencies = [
  "euclid 0.20.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gdnative 0.5.0",
+ "gdnative 0.7.0",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sscg 0.1.0",
  "wlambda 0.3.5",

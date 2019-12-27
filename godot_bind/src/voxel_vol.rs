@@ -30,10 +30,11 @@ impl InstVoxVolume {
     #[export]
     fn _ready(&mut self, mut owner: MeshInstance) {
         let mut am = ArrayMesh::new();
-        let mut ot : Octree<u8> = Octree::new_from_size(8);
+        let mut ot : Octree<u8> = Octree::new_from_size(16);
         ot.fill(0, 0, 0, 4, 4, 4, 128.into());
         ot.fill(1, 1, 1, 2, 2, 2, 0.into());
         ot.fill(4, 4, 4, 4, 4, 4, 240.into());
+        ot.fill(8, 8, 8, 8, 8, 8, 250.into());
         ot.set(0, 0, 0, 0.into());
         ot.set(1, 1, 0, 0.into());
         ot.set(0, 7, 0, 72.into());
