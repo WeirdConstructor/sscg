@@ -1,0 +1,17 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+render_mode diffuse_burley;
+
+void fragment() {
+	ALPHA = (sin(UV.x * 100.0 + fract(TIME) * 3.146  * 2.0) + 1.0) / 2.0;
+    ALBEDO = vec3(
+		(UV.x + sin(TIME * 5.0) + 1.0) / 3.0,
+		 1.0 - (UV.y + cos(TIME * 7.0) + 1.0) / 3.0,
+		 1.0 - (UV.x * 6.0 + UV.y * 3.0 + cos(TIME * 10.0) + 1.0) / 11.0);
+}"
+
+[resource]
+shader = SubResource( 1 )

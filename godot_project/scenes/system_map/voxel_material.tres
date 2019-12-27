@@ -1,0 +1,24 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+render_mode diffuse_burley;
+
+void fragment() {
+	float xv = 0.0;
+	float yv = 0.0;
+	float width = 0.02;
+	
+	if (UV.x <= width) { xv = 1.0 * (1.0 - UV.x / width); }
+	if (UV.y <= width) { yv = 1.0 * (1.0 - UV.y / width); }
+	if (UV.x >= (1.0 - width)) { xv = 1.0 * (1.0 - (1.0 - UV.x) / width); }
+	if (UV.y >= (1.0 - width)) { yv = 1.0 * (1.0 - (1.0 - UV.y) / width); }
+
+	float mixval = max(xv, yv);
+	ALBEDO = mix(vec3(COLOR.r, COLOR.g, COLOR.b), vec3(COLOR.r, mixval, mixval), mixval);
+	EMISSION = vec3(0.0, mixval, mixval) * 4.0;
+}"
+
+[resource]
+shader = SubResource( 1 )
