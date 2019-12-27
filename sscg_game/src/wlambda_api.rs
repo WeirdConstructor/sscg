@@ -63,8 +63,8 @@ impl GameStateWlWrapper {
 
 impl VValUserData for GameStateWlWrapper {
     fn s(&self) -> String { format!("$<GameState>") }
-    fn set_key(&self, key: &VVal, val: VVal) {
-        self.0.borrow_mut().state.set_key(key, val);
+    fn set_key(&self, key: &VVal, val: VVal) -> Result<(), StackAction> {
+        self.0.borrow().state.set_key(key, val)
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
         match key {
@@ -174,11 +174,12 @@ impl EntityWlWrapper {
 impl VValUserData for EntityWlWrapper {
     fn s(&self) -> String { format!("$<Entity:{}>", self.0.borrow().id) }
     fn i(&self) -> i64 { self.0.borrow().id as i64 }
-    fn set_key(&self, key: &VVal, val: VVal) {
+    fn set_key(&self, key: &VVal, val: VVal) -> Result<(), StackAction> {
         match &key.s_raw()[..] {
             "name" => { self.0.borrow_mut().name = val.s_raw(); },
             _      => { self.0.borrow_mut().state.set_key(key, val); }
         }
+        Ok(())
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
         match key {
@@ -220,8 +221,8 @@ impl ShipWlWrapper {
 impl VValUserData for ShipWlWrapper {
     fn s(&self) -> String { format!("$<Ship:{}>", self.0.borrow().id) }
     fn i(&self) -> i64 { self.0.borrow().id as i64 }
-    fn set_key(&self, key: &VVal, val: VVal) {
-        self.0.borrow_mut().state.set_key(key, val);
+    fn set_key(&self, key: &VVal, val: VVal) -> Result<(), StackAction> {
+        self.0.borrow().state.set_key(key, val)
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
         // println!("GET KEY: {} : STTE: {}", key, self.0.borrow().state.s());
@@ -281,8 +282,8 @@ impl SystemWlWrapper {
 impl VValUserData for SystemWlWrapper {
     fn s(&self) -> String { format!("$<System:{}>", self.0.borrow().id) }
     fn i(&self) -> i64 { self.0.borrow().id as i64 }
-    fn set_key(&self, key: &VVal, val: VVal) {
-        self.0.borrow_mut().state.set_key(key, val);
+    fn set_key(&self, key: &VVal, val: VVal) -> Result<(), StackAction> {
+        self.0.borrow().state.set_key(key, val)
     }
     fn get_key(&self, key: &str) -> Option<VVal> {
         match key {
