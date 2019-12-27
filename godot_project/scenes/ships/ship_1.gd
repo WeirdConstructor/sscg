@@ -59,7 +59,7 @@ func drone_process(delta):
 	if Input.is_action_pressed("turn_left"):
 		motion -= righ.normalized()
 	if Input.is_action_pressed("mine"):
-		self.get_node("../VoxStruct").mine()
+		self.get_node("../VoxStruct2").mine()
 	cam.set_translation(cam.get_translation() + motion.normalized() * 5 * delta)
 
 func _input(event):

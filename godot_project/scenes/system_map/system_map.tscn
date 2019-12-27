@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -9,7 +9,8 @@
 [ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=7]
 [ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=8]
 [ext_resource path="res://scenes/system_map/MeshInstance.gdns" type="Script" id=9]
-[ext_resource path="res://scenes/system_map/VoxStruct2.gdns" type="Script" id=10]
+[ext_resource path="res://scenes/system_map/voxel_cursor_material.tres" type="Material" id=10]
+[ext_resource path="res://scenes/system_map/VoxStruct2.gdns" type="Script" id=11]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -67,22 +68,6 @@ shader = SubResource( 6 )
 
 [sub_resource type="CubeMesh" id=8]
 size = Vector3( 1.2, 1.2, 1.2 )
-
-[sub_resource type="Shader" id=9]
-code = "shader_type spatial;
-
-render_mode diffuse_burley;
-
-void fragment() {
-	ALPHA = (sin(UV.x * 100.0 + fract(TIME) * 3.146  * 2.0) + 1.0) / 2.0;
-    ALBEDO = vec3(
-		(UV.x + sin(TIME * 5.0) + 1.0) / 3.0,
-		 1.0 - (UV.y + cos(TIME * 7.0) + 1.0) / 3.0,
-		 1.0 - (UV.x * 6.0 + UV.y * 3.0 + cos(TIME * 10.0) + 1.0) / 11.0);
-}"
-
-[sub_resource type="ShaderMaterial" id=10]
-shader = SubResource( 9 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -220,16 +205,21 @@ omni_shadow_detail = 0
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
 
 [node name="VoxStruct" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.588, 0, 9.689 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 10 )
 layers = 2
 material_override = SubResource( 7 )
 script = ExtResource( 9 )
 
 [node name="CursorBox" type="MeshInstance" parent="VoxStruct"]
 mesh = SubResource( 8 )
-material/0 = SubResource( 10 )
+material/0 = ExtResource( 10 )
 
 [node name="VoxStruct2" type="Spatial" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.61571, 0, 40.3867 )
-script = ExtResource( 10 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 40 )
+script = ExtResource( 11 )
+
+[node name="CursorBox" type="MeshInstance" parent="VoxStruct2"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -30 )
+mesh = SubResource( 8 )
+material/0 = ExtResource( 10 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]

@@ -10,8 +10,8 @@ use crate::gd_voxel_impl::*;
 pub struct InstVoxVolume {
     box_in_focus:   bool,
     octree:         Option<Octree<u8>>,
-    cursor:         [u16; 3],
     sb_shape_owner: i64,
+    cursor:         [u16; 3],
     last_mine_pos:  [u16; 3],
 }
 
@@ -30,11 +30,13 @@ impl InstVoxVolume {
     #[export]
     fn _ready(&mut self, mut owner: MeshInstance) {
         let mut am = ArrayMesh::new();
+//        let mut ot : Octree<u8> = Octree::new_from_size(32);
         let mut ot : Octree<u8> = Octree::new_from_size(16);
         ot.fill(0, 0, 0, 4, 4, 4, 128.into());
         ot.fill(1, 1, 1, 2, 2, 2, 0.into());
         ot.fill(4, 4, 4, 4, 4, 4, 240.into());
         ot.fill(8, 8, 8, 8, 8, 8, 250.into());
+//        ot.fill(16, 16, 16, 16, 16, 16, 250.into());
         ot.set(0, 0, 0, 0.into());
         ot.set(1, 1, 0, 0.into());
         ot.set(0, 7, 0, 72.into());
