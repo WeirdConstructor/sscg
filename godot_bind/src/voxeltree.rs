@@ -1,5 +1,5 @@
-pub trait VoxelColor: PartialEq + Sized + Copy + std::fmt::Debug + Default {}
-impl<T: PartialEq + Sized + Copy + std::fmt::Debug + Default> VoxelColor for T {}
+pub trait VoxelColor: PartialEq + Sized + Copy + From<u8> + Into<u8> + std::fmt::Debug + Default {}
+impl<T: PartialEq + Sized + Copy + From<u8> + Into<u8> + std::fmt::Debug + Default> VoxelColor for T {}
 
 type pint = u16;
 
@@ -45,6 +45,12 @@ fn xyz2facemask(x: pint, y: pint, z: pint) -> u8 {
     mask
 }
 
+impl Into<u8> for Voxel<u8> {
+    fn into(self) -> u8 {
+        self.color
+    }
+}
+
 impl Into<Voxel<u8>> for u8 {
     fn into(self) -> Voxel<u8> {
         Voxel {
@@ -68,6 +74,41 @@ impl<C> Vol<C> where C: VoxelColor {
             size,
             data,
         }
+    }
+
+    pub fn deserialize(&mut self, data: &[u8]) {
+        let size = data[4] as usize;
+        let mut dv : std::vec::Vec<Voxel<C>> = std::vec::Vec::new();
+        dv.resize(size.pow(3) as usize, Voxel::default());
+
+        for i in 5..(size.pow(3) + 5) {
+            dv[i - 5].color = data[i].into();
+            if data[i] != 0 {
+                println!("FOF {:?}", dv[i - 5].color);
+            }
+        }
+        println!("SISISISI: {} => {}", size, dv.len());
+
+        self.size = size;
+        self.data = dv;
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut out : Vec<u8> = vec![];
+        out.resize(5 + self.size.pow(3) as usize, 0);
+
+        let mut i = 0;
+        out[i] = 'v' as u32 as u8; i += 1;
+        out[i] = 'o' as u32 as u8; i += 1;
+        out[i] = 'x' as u32 as u8; i += 1;
+        out[i] = 1;                i += 1;
+        out[i] = self.size as u8;  i += 1;
+
+        for (i, c) in self.data.iter().enumerate() {
+            out[i + 5] = c.color.into();
+        }
+
+        out
     }
 
     pub fn set(&mut self, x: pint, y: pint, z: pint, v: Voxel<C>) {

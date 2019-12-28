@@ -51,12 +51,17 @@ impl VoxStruct {
                         self.vol.set(x as u16, y as u16, z as u16, 0.into());
                     } else {
                         let color = (u64_to_open01(sm.next_u64()) * 256.0) as u8;
+                        println!("COLOR: {}", color);
                         self.vol.set(x as u16, y as u16, z as u16, color.into());
                     }
                 }
             }
         }
         println!("filled...");
+
+        let vv = self.vol.serialize();
+        println!("BYTES: {}", vv.len());
+        self.vol.deserialize(&vv);
 
         let voxel_material =
             ResourceLoader::godot_singleton().load(
@@ -79,6 +84,8 @@ impl VoxStruct {
                         t.origin.y = (y * SUBVOL_SIZE) as f32;
                         t.origin.z = (z * SUBVOL_SIZE) as f32;
                         self.meshes[i].set_transform(t);
+                        self.meshes[i].set_layer_mask_bit(0, false);
+                        self.meshes[i].set_layer_mask_bit(1, true);
                         sb.set_transform(t);
 
                         owner.add_child(self.meshes[i].cast::<Node>(), false);
@@ -100,6 +107,34 @@ impl VoxStruct {
 
         self.load_vol(owner);
         println!("loaded godot objects");
+    }
+
+    fn serialize_vol(&mut self) -> Vec<u8> {
+        for z in 0..VOL_SIZE {
+            let iz  = z / SUBVOL_SIZE;
+            let izi = z % SUBVOL_SIZE;
+
+            for y in 0..VOL_SIZE {
+                let iy  = y / SUBVOL_SIZE;
+                let iyi = y % SUBVOL_SIZE;
+
+                for x in 0..VOL_SIZE {
+                    let ix  = x / SUBVOL_SIZE;
+                    let ixi = x % SUBVOL_SIZE;
+
+                    self.vol.set(x as u16, y as u16, z as u16,
+                        self.octrees[
+                              iz * (SUBVOLS * SUBVOLS)
+                            + iy * SUBVOLS
+                            + ix].get(
+                                ixi as u16,
+                                iyi as u16,
+                                izi as u16));
+                }
+            }
+        }
+
+        self.vol.serialize()
     }
 
     #[export]
@@ -232,6 +267,8 @@ impl VoxStruct {
                         self.cursor[0] as usize,
                         self.cursor[1] as usize,
                         self.cursor[2] as usize);
+                let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
+                println!("MINEED {}", m.color);
                 ot.set_inv_y(pos[0], pos[1], pos[2], 0.into());
             }
 
