@@ -295,6 +295,9 @@ impl VoxStruct {
         }
     }
 
+    #[export]
+    fn _process(&mut self, mut owner: MeshInstance, delta: f64) {
+    }
 
     fn reload_at(&mut self, x: usize, y: usize, z: usize) {
         let iz  = z / SUBVOL_SIZE;
