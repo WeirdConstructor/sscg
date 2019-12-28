@@ -79,6 +79,7 @@ impl VoxStruct {
                         t.origin.y = (y * SUBVOL_SIZE) as f32;
                         t.origin.z = (z * SUBVOL_SIZE) as f32;
                         self.meshes[i].set_transform(t);
+                        sb.set_transform(t);
 
                         owner.add_child(self.meshes[i].cast::<Node>(), false);
 
