@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -8,15 +8,17 @@
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=6]
 [ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=7]
 [ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=8]
-[ext_resource path="res://scenes/system_map/MeshInstance.gdns" type="Script" id=9]
+[ext_resource path="res://scenes/system_map/VoxStruct2.gdns" type="Script" id=9]
 [ext_resource path="res://scenes/system_map/voxel_cursor_material.tres" type="Material" id=10]
-[ext_resource path="res://scenes/system_map/VoxStruct2.gdns" type="Script" id=11]
-[ext_resource path="res://scenes/system_map/voxel_mine_material.tres" type="Material" id=12]
+[ext_resource path="res://scenes/system_map/voxel_mine_material.tres" type="Material" id=11]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
+
+[sub_resource type="SphereShape" id=9]
+radius = 0.48
 
 [sub_resource type="DynamicFont" id=2]
 size = 25
@@ -44,31 +46,11 @@ emission_on_uv2 = false
 [sub_resource type="SphereMesh" id=5]
 material = SubResource( 4 )
 
-[sub_resource type="Shader" id=6]
-code = "shader_type spatial;
-
-render_mode diffuse_burley;
-
-void fragment() {
-	float xv = 0.0;
-	float yv = 0.0;
-	float width = 0.02;
-	
-	if (UV.x <= width) { xv = 1.0 * (1.0 - UV.x / width); }
-	if (UV.y <= width) { yv = 1.0 * (1.0 - UV.y / width); }
-	if (UV.x >= (1.0 - width)) { xv = 1.0 * (1.0 - (1.0 - UV.x) / width); }
-	if (UV.y >= (1.0 - width)) { yv = 1.0 * (1.0 - (1.0 - UV.y) / width); }
-
-	float mixval = max(xv, yv);
-	ALBEDO = mix(vec3(COLOR.r, COLOR.g, COLOR.b), vec3(COLOR.r, mixval, mixval), mixval);
-	EMISSION = vec3(0.0, mixval, mixval) * 4.0;
-}"
-
-[sub_resource type="ShaderMaterial" id=7]
-shader = SubResource( 6 )
-
 [sub_resource type="CubeMesh" id=8]
 size = Vector3( 1.2, 1.2, 1.2 )
+
+[sub_resource type="BoxShape" id=10]
+extents = Vector3( 64, 1, 64 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -78,19 +60,24 @@ transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714,
 
 [node name="entities" type="Spatial" parent="."]
 
-[node name="drone" type="Camera" parent="."]
-far = 4712.0
+[node name="Drone" type="KinematicBody" parent="."]
 script = ExtResource( 3 )
 
-[node name="RayCast" type="RayCast" parent="drone"]
+[node name="RayCast" type="RayCast" parent="Drone"]
 enabled = true
 cast_to = Vector3( 0, 0, -20 )
 
-[node name="crosshair" parent="drone" instance=ExtResource( 4 )]
+[node name="CollisionShape" type="CollisionShape" parent="Drone"]
+shape = SubResource( 9 )
+
+[node name="Camera" type="Camera" parent="Drone"]
+far = 4712.0
+
+[node name="crosshair" parent="Drone/Camera" instance=ExtResource( 4 )]
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 visible = false
 
-[node name="SpotLight" type="SpotLight" parent="drone"]
+[node name="SpotLight" type="SpotLight" parent="Drone/Camera"]
 visible = false
 layers = 2
 spot_range = 22.5656
@@ -98,7 +85,7 @@ spot_attenuation = 2.0
 spot_angle = 23.0086
 spot_angle_attenuation = 0.554785
 
-[node name="OmniLight" type="OmniLight" parent="drone"]
+[node name="OmniLight" type="OmniLight" parent="Drone/Camera"]
 omni_range = 9.73455
 omni_attenuation = 4.28709
 
@@ -205,19 +192,9 @@ omni_shadow_detail = 0
 [node name="Grid" parent="." instance=ExtResource( 8 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
 
-[node name="VoxStruct" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 10 )
-layers = 2
-material_override = SubResource( 7 )
-script = ExtResource( 9 )
-
-[node name="CursorBox" type="MeshInstance" parent="VoxStruct"]
-mesh = SubResource( 8 )
-material/0 = ExtResource( 10 )
-
 [node name="VoxStruct2" type="Spatial" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 40 )
-script = ExtResource( 11 )
+script = ExtResource( 9 )
 
 [node name="CursorBox" type="MeshInstance" parent="VoxStruct2"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -30 )
@@ -227,5 +204,11 @@ material/0 = ExtResource( 10 )
 [node name="MineBox" type="MeshInstance" parent="VoxStruct2"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -30 )
 mesh = SubResource( 8 )
-material/0 = ExtResource( 12 )
+material/0 = ExtResource( 11 )
+
+[node name="floor" type="StaticBody" parent="VoxStruct2"]
+
+[node name="CollisionShape" type="CollisionShape" parent="VoxStruct2/floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 64, -1, 64 )
+shape = SubResource( 10 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
