@@ -33,7 +33,7 @@ func _input(event):
 		return
 		
 	if Input.is_action_just_pressed("fly_forward"):
-		print("JUMP", self.get_transform().origin, jump_motion)
+		#print("JUMP", self.get_transform().origin, jump_motion)
 		jump_motion += Vector3(0, grav, 0) * jump_strength;
 		
 	if event is InputEventMouseMotion:
@@ -66,7 +66,6 @@ func process_movement(delta):
 		jump_motion = Vector3(0, -10.0, 0)
 			
 	motion += jump_motion;
-	print("MOTON", motion)
 	self.move_and_slide(motion * speed, Vector3(0, 1, 0))
 	
 	if self.is_on_floor() or self.is_on_ceiling():
@@ -97,14 +96,32 @@ func process_mining_gun(delta):
 		var cn = cast.get_collision_normal()
 		#d# var n = self.get_child(1)
 		#d# n.global_transform.origin = p - (0.13 * cn)
+		var dir_vector = p - cast.global_transform.origin
+		
 		var vox_coord = vox.to_local(p - (0.1 * cn))
 		var vv = Vector3(floor(vox_coord.x), floor(vox_coord.y), floor(vox_coord.z))
 		vox.looking_at(vv.x, vv.y, vv.z)
 		last_vox = vox
-		self.get_node("RayMesh").show()
-		self.get_node("RayMesh").look_at(vv, Vector3(0, 1, 0))
+		var raym = self.find_node("RayMesh")
+		raym.show()
+		
+		# raycast origin
+		#  \        a 
+		#   O----------------(p)
+		# b |          -----
+		#   |alpha ----
+		#   o------
+		#    \
+		#     raymesh origin
+		var a     = dir_vector.length() # distance of hit point from raycast
+		var b     = 0.08                # distance of raymesh on Y axis
+		var alpha = atan(a / b)         # correction angle for direction cylinder
+		raym.set_rotation(Vector3(-alpha, deg2rad(90) - alpha, 0))
+		
+		var raymesh_vector = p - raym.global_transform.origin
+		raym.scale.y = raymesh_vector.length() * 2
 	else:
-		self.get_node("RayMesh").hide()
+		self.find_node("RayMesh").hide()
 		if last_vox:
 			last_vox.looking_at_nothing()
 			last_vox = null
