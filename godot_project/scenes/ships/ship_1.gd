@@ -39,6 +39,7 @@ func sscg_load(state):
 	self.translation.y = 0.6
 	self.translation.z = -500.0 + (float(state["y"]) * 1000.0) / 10000.0
 	self.rotation.y = state["rot_z"]
+	print("LOAD SHIP:", state)
 
 func _input(event):
 	if event.is_action_pressed("drone"):

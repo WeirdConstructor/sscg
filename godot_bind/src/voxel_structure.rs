@@ -59,9 +59,9 @@ impl VoxStruct {
         }
         println!("filled...");
 
-        let vv = self.vol.serialize();
-        println!("BYTES: {}", vv.len());
-        self.vol.deserialize(&vv);
+//        let vv = self.vol.serialize();
+//        println!("BYTES: {}", vv.len());
+//        self.vol.deserialize(&vv);
 
         let voxel_material =
             ResourceLoader::godot_singleton().load(

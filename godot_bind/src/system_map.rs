@@ -68,7 +68,7 @@ impl SystemMap {
     fn on_ship_arrived(&mut self, mut owner: Spatial, too_fast: bool, system: i64, entity: i64) {
         lock_sscg!(sscg);
         sscg.call_cb(
-            "on_arrived", 
+            "on_arrived",
             &vec![VVal::Bol(too_fast),
                   VVal::Int(system),
                   VVal::Int(entity)]);

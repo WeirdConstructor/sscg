@@ -32,7 +32,6 @@ pub struct SSCGState {
     pub temp_stations:   std::vec::Vec<(i32, i32)>,
     pub update_stations: bool,
     pub wlctx:           EvalContext,
-    pub cb_arrived:      VVal,
     pub state:           VVal,
     pub cmd_queue:       Rc<RefCell<std::vec::Vec<VVal>>>,
     pub wm:              Rc<RefCell<WindowManager>>,
@@ -130,14 +129,15 @@ impl SSCGState {
             temp_stations:   vec![(1, 1), (900, 500)],
             update_stations: true,
             wlctx:           EvalContext::new(genv),
-            cb_arrived:      VVal::Nul,
             state:           VVal::Nul,
         }
     }
 
     pub fn call_cb(&mut self, name: &str, args: &[VVal]) -> VVal {
         let cb =
-            match self.wlctx.get_global_var(name) {
+            match self.state.get_key("callbacks")
+                      .expect("Expected 'code' in STATE!")
+                      .get_key(name) {
                 None => {
                     godot_print!(
                         "No such callback {} (args: {:?})!",
@@ -159,11 +159,7 @@ impl SSCGState {
         println!("START WLAM");
         match self.wlctx.eval(r"
             !@import main main;
-            !:global on_arrived             = main:on_arrived;
-            !:global on_tick                = main:on_tick;
-            !:global on_ready               = main:on_ready;
-            !:global on_saved_godot_state   = main:on_saved_godot_state;
-            !:global STATE                  = main:STATE;
+            !:global STATE = main:STATE;
             main:init[]")
         {
             Ok(state) => {
@@ -172,9 +168,6 @@ impl SSCGState {
             },
             Err(e) => { godot_print!("main.wl error: {:?}", e); }
         }
-
-        self.cb_arrived =
-            self.wlctx.get_global_var("on_arrived").unwrap_or(VVal::Nul);
     }
 }
 

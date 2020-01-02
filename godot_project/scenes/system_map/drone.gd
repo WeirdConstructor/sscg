@@ -2,17 +2,17 @@ extends KinematicBody
 
 export var drone_active = false
 
-var vox_struct = null
 var camera = null
 
 var view_sensitivity = 0.3
 var yaw = 0.0
 var pitch = 0.0
-var speed = 4.0
-var grav = 3.0
+var speed = 0.5
+var grav = 1.0
 var accel = 0.0
 var jump_strength = 0.8
 var jump_motion = Vector3(0, 0, 0)
+var last_vox = null
 
 var old_on_floor = false
 
@@ -24,7 +24,9 @@ func set_active(is_active):
 		pitch = 0
 		yaw = 180
 		self.set_rotation(Vector3(deg2rad(pitch),deg2rad(yaw), 0))
-		self.set_translation(vox_struct.get_translation() - Vector3(0, -1, 2))
+		self.set_translation(
+		   self.get_parent().get_node("ship").get_translation()
+		   + Vector3(0, 1, 0))
 
 func _input(event):
 	if !drone_active:
@@ -53,8 +55,8 @@ func process_movement(delta):
 		motion += righ.normalized()
 	if Input.is_action_pressed("turn_left"):
 		motion -= righ.normalized()
-	if Input.is_action_pressed("mine"):
-		vox_struct.mine()
+	if Input.is_action_pressed("mine") and last_vox:
+		last_vox.mine()
 		
 	#if !self.is_on_floor():
 	#	if old_on_floor:
@@ -73,19 +75,39 @@ func process_movement(delta):
 	old_on_floor = self.is_on_floor()
 	#self.set_translation(self.get_translation() + motion.normalized() * 5 * delta)
 
+
+#if($RayCast.is_colliding()):
+#        $RayCast/Point.global_transform.origin = $RayCast.get_collision_point()
+#        length = -$RayCast/Point.translation.z
+#    $RayCast/Line.translation.z = -length/2
+#    $RayCast/Line.scale.y = length
+#
+#
+#$RayCast/Point is a mesh instance, that shows the collision position
+#$RayCast/Line is a mesh instance, that is the actual line it is 1 Unit high
+#$RayCast casts into -z direction
+
+
 func process_mining_gun(delta):
 	var cast = self.get_child(0)
 	var c = cast.get_collider()
 	if c:
+		var vox = c.get_parent()
 		var p = cast.get_collision_point()
 		var cn = cast.get_collision_normal()
 		#d# var n = self.get_child(1)
 		#d# n.global_transform.origin = p - (0.13 * cn)
-		var vox_coord = vox_struct.to_local(p - (0.1 * cn))
+		var vox_coord = vox.to_local(p - (0.1 * cn))
 		var vv = Vector3(floor(vox_coord.x), floor(vox_coord.y), floor(vox_coord.z))
-		vox_struct.looking_at(vv.x, vv.y, vv.z)
+		vox.looking_at(vv.x, vv.y, vv.z)
+		last_vox = vox
+		self.get_node("RayMesh").show()
+		self.get_node("RayMesh").look_at(vv, Vector3(0, 1, 0))
 	else:
-		vox_struct.looking_at_nothing()
+		self.get_node("RayMesh").hide()
+		if last_vox:
+			last_vox.looking_at_nothing()
+			last_vox = null
 	
 func _physics_process(delta):
 	if !drone_active:
@@ -97,7 +119,6 @@ func _physics_process(delta):
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	vox_struct = self.get_node("../VoxStruct2")
 	camera     = self.get_node("Camera")
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

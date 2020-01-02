@@ -29,7 +29,6 @@
     },
     ship = ${
         t               = :scout_mk1,
-        pos             = $[5000, 2000],
         system_id       = 0,
         docked          = $f,
         engine_on_secs  = 0,
@@ -56,7 +55,8 @@
             ],
         }
     ],
-    code = ${},
+    code      = ${},
+    callbacks = ${},
 };
 
 !@export STATE STATE;
@@ -153,7 +153,7 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
-!@export on_saved_godot_state {!(state) = @;
+STATE.callbacks.on_saved_godot_state = {!(state) = @;
     std:displayln "STATE:" state;
 
     on_error {||
@@ -166,7 +166,7 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
-!@export on_arrived {!(too_fast, sys_id, ent_id) = @;
+STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     std:displayln "ARRIVED!";
     (bool too_fast) {
         STATE.ship.fuel = std:num:floor 0.5 * STATE.ship.fuel
@@ -254,6 +254,7 @@ STATE.code.recalc_ship_cargo = {
             "Weird Constructor",
         ] ],
         $["Music & Sound", $[
+            "'Synthwave' by Ryan Andersen, CC-BY-NC 4.0 from Free Music Archive",
         ] ],
         $["Artwork", $[
         ] ],
@@ -345,7 +346,7 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
-!@export on_tick {!(ship_action_state) = @;
+STATE.callbacks.on_tick = {!(ship_action_state) = @;
     (bool STATE.player.is_mining) {
         !capacity_units =
             STATE.code.calc_unit_capacity_for_good :rock;
@@ -392,15 +393,15 @@ STATE.code.recalc_ship_cargo = {
         std:str:cat (STATE.ship.cargo.m3) " / " STATE.ship.cargo.kg;
 };
 
-!@export on_ready {
+STATE.callbacks.on_ready = {
     std:displayln "GAME READY!";
     sscg:game.cmd :load_state ${
         engine_on_fract = 0.0,
         engine_on_secs  = 0.0,
         thruster_speed  = 0.0,
         speed           = 0.0,
-        x               = 5000,
-        y               = 4990,
+        x               = 5072,
+        y               = 5405,
         rot_z           = 0,
     };
 
