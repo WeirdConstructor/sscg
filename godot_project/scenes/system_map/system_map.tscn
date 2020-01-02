@@ -1,15 +1,16 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=3]
-[ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=4]
-[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=5]
-[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=6]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=7]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=8]
-[ext_resource path="res://scenes/entities/VoxelStructure.tscn" type="PackedScene" id=9]
-[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=10]
+[ext_resource path="res://scenes/system_map/voxel_mine_material.tres" type="Material" id=4]
+[ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=5]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=6]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=7]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=8]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=9]
+[ext_resource path="res://scenes/entities/VoxelStructure.tscn" type="PackedScene" id=10]
+[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=11]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -17,9 +18,10 @@ class_name = "SystemMap"
 library = ExtResource( 1 )
 
 [sub_resource type="CylinderMesh" id=7]
-top_radius = 0.01
-bottom_radius = 0.01
-height = 3.0
+material = ExtResource( 4 )
+top_radius = 0.005
+bottom_radius = 0.005
+height = 1.0
 radial_segments = 8
 rings = 3
 
@@ -31,7 +33,7 @@ size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 6 )
+font_data = ExtResource( 7 )
 
 [sub_resource type="DynamicFont" id=4]
 size = 12
@@ -39,7 +41,7 @@ outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 6 )
+font_data = ExtResource( 7 )
 
 [sub_resource type="SpatialMaterial" id=5]
 albedo_color = Color( 1, 0.72549, 0, 1 )
@@ -68,7 +70,7 @@ enabled = true
 cast_to = Vector3( 0, 0, -3 )
 
 [node name="RayMesh" type="MeshInstance" parent="Drone"]
-transform = Transform( 1, 0, 0, 0, -0.190878, -0.981614, 0, 0.981614, -0.190878, 0, -0.317772, -1.5 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08, -0.08, 0 )
 mesh = SubResource( 7 )
 material/0 = null
 
@@ -79,7 +81,7 @@ shape = SubResource( 2 )
 fov = 80.0
 far = 4712.0
 
-[node name="crosshair" parent="Drone/Camera" instance=ExtResource( 4 )]
+[node name="crosshair" parent="Drone/Camera" instance=ExtResource( 5 )]
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
 visible = false
 
@@ -101,7 +103,7 @@ omni_attenuation = 4.59479
 editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 5 )
+script = ExtResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -129,7 +131,7 @@ __meta__ = {
 }
 
 [node name="GUIDrawing" type="Node2D" parent="GUI"]
-script = ExtResource( 7 )
+script = ExtResource( 8 )
 
 [node name="ControlsInfo" type="Label" parent="GUI"]
 margin_left = 7.35092
@@ -197,14 +199,13 @@ omni_range = 2500.0
 omni_attenuation = 0.0281641
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 8 )]
+[node name="Grid" parent="." instance=ExtResource( 9 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
-[node name="VoxStruct" parent="." instance=ExtResource( 9 )]
+[node name="VoxStruct" parent="." instance=ExtResource( 10 )]
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 4, -6, 40 )
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 10 )
-autoplay = true
+stream = ExtResource( 11 )
 bus = "Music"
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
