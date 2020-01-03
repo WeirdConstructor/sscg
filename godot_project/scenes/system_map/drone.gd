@@ -46,7 +46,7 @@ func process_movement(delta):
 	forw.y = 0;
 	var righ = -self.get_transform().basis.x;
 	var motion = Vector3()
-
+	
 	if Input.is_action_pressed("walk_forward"):
 		motion += forw.normalized()
 	if Input.is_action_pressed("fly_stop") or Input.is_action_pressed("walk_backward"):
@@ -58,6 +58,11 @@ func process_movement(delta):
 	if Input.is_action_pressed("mine") and last_vox:
 		last_vox.mine()
 		
+	var speed_factor = 1
+	if Input.is_action_pressed("faster"):
+		speed_factor = 5
+		
+	motion *= speed_factor
 	#if !self.is_on_floor():
 	#	if old_on_floor:
 #			print("NOT ON FLOOOR!", self.get_transform().origin, jump_motion)
@@ -114,7 +119,7 @@ func process_mining_gun(delta):
 		#    \
 		#     raymesh origin
 		var a     = dir_vector.length() # distance of hit point from raycast
-		var b     = 0.08                # distance of raymesh on Y axis
+		var b     = 0.05                # distance of raymesh on Y axis
 		var alpha = atan(a / b)         # correction angle for direction cylinder
 		raym.set_rotation(Vector3(-alpha, deg2rad(90) - alpha, 0))
 		
