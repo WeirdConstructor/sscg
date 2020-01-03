@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://scenes/entities/scripts/VoxStruct2.gdns" type="Script" id=1]
 [ext_resource path="res://scenes/system_map/voxel_cursor_material.tres" type="Material" id=2]
@@ -8,7 +8,10 @@
 size = Vector3( 1.2, 1.2, 1.2 )
 
 [sub_resource type="BoxShape" id=2]
-extents = Vector3( 64, 1, 64 )
+extents = Vector3( 68, 1, 68 )
+
+[sub_resource type="BoxShape" id=3]
+extents = Vector3( 68, 1, 80 )
 
 [node name="VoxStruct2" type="Spatial"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -6, 40 )
@@ -25,7 +28,29 @@ mesh = SubResource( 1 )
 material/0 = ExtResource( 3 )
 
 [node name="floor" type="StaticBody" parent="."]
+collision_layer = 2
+collision_mask = 2
 
-[node name="CollisionShape" type="CollisionShape" parent="floor"]
+[node name="CollBottom" type="CollisionShape" parent="floor"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 64, -1, 64 )
 shape = SubResource( 2 )
+
+[node name="CollTop" type="CollisionShape" parent="floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 157.465, 64 )
+shape = SubResource( 2 )
+
+[node name="CollFront" type="CollisionShape" parent="floor"]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 64, 78, -4.62242 )
+shape = SubResource( 3 )
+
+[node name="CollBack" type="CollisionShape" parent="floor"]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 64, 78, 132.787 )
+shape = SubResource( 3 )
+
+[node name="CollLeft" type="CollisionShape" parent="floor"]
+transform = Transform( -4.37114e-08, -1, 4.37114e-08, 0, -4.37114e-08, -1, 1, -4.37114e-08, 1.91069e-15, 132.673, 78, 64 )
+shape = SubResource( 3 )
+
+[node name="CollRight" type="CollisionShape" parent="floor"]
+transform = Transform( -4.37114e-08, -1, 4.37114e-08, 0, -4.37114e-08, -1, 1, -4.37114e-08, 1.91069e-15, -4.69518, 78, 64 )
+shape = SubResource( 3 )

@@ -64,6 +64,7 @@ transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714,
 [node name="entities" type="Spatial" parent="."]
 
 [node name="Drone" type="KinematicBody" parent="."]
+collision_mask = 3
 script = ExtResource( 3 )
 
 [node name="RayCast" type="RayCast" parent="Drone"]
@@ -71,7 +72,7 @@ enabled = true
 cast_to = Vector3( 0, 0, -3 )
 
 [node name="RayMesh" type="MeshInstance" parent="Drone"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08, -0.08, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, 0 )
 mesh = SubResource( 7 )
 material/0 = null
 
@@ -80,6 +81,7 @@ shape = SubResource( 2 )
 
 [node name="Camera" type="Camera" parent="Drone"]
 fov = 80.0
+near = 0.01
 far = 4712.0
 
 [node name="crosshair" parent="Drone/Camera" instance=ExtResource( 5 )]
