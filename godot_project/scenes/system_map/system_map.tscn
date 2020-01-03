@@ -1,16 +1,17 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=3]
 [ext_resource path="res://scenes/system_map/voxel_mine_material.tres" type="Material" id=4]
 [ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=5]
-[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=6]
-[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=7]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=8]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=9]
-[ext_resource path="res://scenes/entities/VoxelStructure.tscn" type="PackedScene" id=10]
-[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=11]
+[ext_resource path="res://crosshair.png" type="Texture" id=6]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=7]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=8]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=9]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=10]
+[ext_resource path="res://scenes/entities/VoxelStructure.tscn" type="PackedScene" id=11]
+[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=12]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -33,7 +34,7 @@ size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 7 )
+font_data = ExtResource( 8 )
 
 [sub_resource type="DynamicFont" id=4]
 size = 12
@@ -41,7 +42,7 @@ outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 7 )
+font_data = ExtResource( 8 )
 
 [sub_resource type="SpatialMaterial" id=5]
 albedo_color = Color( 1, 0.72549, 0, 1 )
@@ -99,11 +100,15 @@ light_indirect_energy = 0.75
 omni_range = 6.0
 omni_attenuation = 4.59479
 
+[node name="Sprite3D" type="Sprite3D" parent="Drone/Camera"]
+transform = Transform( 0.00772604, 0, 0, 0, 0.00772604, 0, 0, 0, 1, 0, 0, -0.0510799 )
+texture = ExtResource( 6 )
+
 [node name="GUI" type="Control" parent="."]
 editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 6 )
+script = ExtResource( 7 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -131,7 +136,7 @@ __meta__ = {
 }
 
 [node name="GUIDrawing" type="Node2D" parent="GUI"]
-script = ExtResource( 8 )
+script = ExtResource( 9 )
 
 [node name="ControlsInfo" type="Label" parent="GUI"]
 margin_left = 7.35092
@@ -199,13 +204,13 @@ omni_range = 2500.0
 omni_attenuation = 0.0281641
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 9 )]
+[node name="Grid" parent="." instance=ExtResource( 10 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
-[node name="VoxStruct" parent="." instance=ExtResource( 10 )]
+[node name="VoxStruct" parent="." instance=ExtResource( 11 )]
 transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 4, -6, 40 )
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 11 )
+stream = ExtResource( 12 )
 bus = "Music"
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
