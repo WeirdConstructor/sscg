@@ -267,7 +267,8 @@ fn terminate(options: *mut gdnative::sys::godot_gdnative_terminate_options) {
     dbg!("*** terminate sscg native");
 }
 
-static mut oldhook : Option<Box<dyn Fn(&std::panic::PanicInfo) + Sync + Send + 'static>> = None;
+static mut oldhook
+    : Option<Box<dyn Fn(&std::panic::PanicInfo) + Sync + Send + 'static>> = None;
 
 fn init_panic_hook() {
     unsafe {
@@ -281,12 +282,14 @@ fn init_panic_hook() {
                         location.file(),
                         location.line());
         }
+
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             godot_print!("{}: panic occurred: {:?}", loc_string, s);
         } else {
             godot_print!("{}: unknown panic occurred", loc_string);
-            unsafe { (*(oldhook.as_ref().unwrap()))(panic_info); }
         }
+
+        unsafe { (*(oldhook.as_ref().unwrap()))(panic_info); }
     }));
 }
 
