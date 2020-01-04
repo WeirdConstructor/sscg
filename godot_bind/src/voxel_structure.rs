@@ -51,7 +51,6 @@ impl VoxStruct {
                         self.vol.set(x as u16, y as u16, z as u16, 0.into());
                     } else {
                         let color = (u64_to_open01(sm.next_u64()) * 256.0) as u8;
-                        println!("COLOR: {}", color);
                         self.vol.set(x as u16, y as u16, z as u16, color.into());
                     }
                 }

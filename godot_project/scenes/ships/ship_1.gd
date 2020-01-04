@@ -25,8 +25,8 @@ func sscg_save():
 		"engine_on_fract": engine_on_fract,
 		"engine_on_secs": engine_on_secs,
 		"thruster_speed": thruster_speed,
-		"x": int(((self.translation.x + 500.0) * 10000.0) / 1000.0),
-		"y": int(((self.translation.z + 500.0) * 10000.0) / 1000.0),
+		"x": int(self.translation.x),
+		"y": int(self.translation.z),
 		"rot_z": self.rotation.y,
 	}
 
@@ -35,9 +35,9 @@ func sscg_load(state):
 	engine_on_fract = state["engine_on_fract"]
 	engine_on_secs  = state["engine_on_secs"]
 	thruster_speed  = state["thruster_speed"]
-	self.translation.x = -500.0 + (float(state["x"]) * 1000.0) / 10000.0
+	self.translation.x = float(state["x"])
 	self.translation.y = 0.6
-	self.translation.z = -500.0 + (float(state["y"]) * 1000.0) / 10000.0
+	self.translation.z = float(state["y"])
 	self.rotation.y = state["rot_z"]
 	print("LOAD SHIP:", state)
 
@@ -106,14 +106,14 @@ func _physics_process(delta):
 	self.translation = self.translation + v.z.normalized() * speed
 	self.rotate_y(deg2rad(2 * thruster_speed))
 	
-	if self.translation.x > 500.0:
-		self.translation.x -= 1000.0
-	if self.translation.x < -500.0:
-		self.translation.x += 1000.0
-	if self.translation.z > 500.0:
-		self.translation.z -= 1000.0
-	if self.translation.z < -500.0:
-		self.translation.z += 1000.0
+	if self.translation.x > 640.0:
+		self.translation.x -= 1280.0
+	if self.translation.x < -640.0:
+		self.translation.x += 1280.0
+	if self.translation.z > 640.0:
+		self.translation.z -= 1280.0
+	if self.translation.z < -640.0:
+		self.translation.z += 1280.0
 
 
 func _ready():

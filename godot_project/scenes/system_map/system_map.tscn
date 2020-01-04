@@ -18,7 +18,7 @@ resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
 
-[sub_resource type="CylinderMesh" id=7]
+[sub_resource type="CylinderMesh" id=2]
 material = ExtResource( 4 )
 top_radius = 0.005
 bottom_radius = 0.005
@@ -26,17 +26,17 @@ height = 1.0
 radial_segments = 8
 rings = 3
 
-[sub_resource type="SphereShape" id=2]
-radius = 0.1
+[sub_resource type="SphereShape" id=3]
+radius = 0.75
 
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="DynamicFont" id=4]
 size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 8 )
 
-[sub_resource type="DynamicFont" id=4]
+[sub_resource type="DynamicFont" id=5]
 size = 12
 outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
@@ -44,7 +44,7 @@ use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 8 )
 
-[sub_resource type="SpatialMaterial" id=5]
+[sub_resource type="SpatialMaterial" id=6]
 albedo_color = Color( 1, 0.72549, 0, 1 )
 emission_enabled = true
 emission = Color( 1, 0.72549, 0, 1 )
@@ -52,8 +52,8 @@ emission_energy = 8.14
 emission_operator = 0
 emission_on_uv2 = false
 
-[sub_resource type="SphereMesh" id=6]
-material = SubResource( 5 )
+[sub_resource type="SphereMesh" id=7]
+material = SubResource( 6 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -64,20 +64,21 @@ transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714,
 [node name="entities" type="Spatial" parent="."]
 
 [node name="Drone" type="KinematicBody" parent="."]
+visible = false
 collision_mask = 3
 script = ExtResource( 3 )
 
 [node name="RayCast" type="RayCast" parent="Drone"]
 enabled = true
-cast_to = Vector3( 0, 0, -3 )
+cast_to = Vector3( 0, 0, -10 )
 
 [node name="RayMesh" type="MeshInstance" parent="Drone"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, 0 )
-mesh = SubResource( 7 )
+mesh = SubResource( 2 )
 material/0 = null
 
 [node name="CollisionShape" type="CollisionShape" parent="Drone"]
-shape = SubResource( 2 )
+shape = SubResource( 3 )
 
 [node name="Camera" type="Camera" parent="Drone"]
 fov = 80.0
@@ -127,7 +128,7 @@ __meta__ = {
 margin_left = 167.0
 margin_right = 857.0
 margin_bottom = 63.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 4 )
 custom_colors/font_color = Color( 1, 0, 0, 1 )
 text = "You are too fast!
 Emergency collision transport activated!
@@ -145,7 +146,7 @@ margin_left = 7.35092
 margin_top = 8.08603
 margin_right = 173.351
 margin_bottom = 77.086
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 5 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "[A]         - Thrust to left
 [D]         - Thrust to right
@@ -161,7 +162,7 @@ margin_left = 900.0
 margin_top = 2.0
 margin_right = -3.0
 margin_bottom = 20.0
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 5 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "FPS: 00.00"
 align = 2
@@ -173,7 +174,7 @@ __meta__ = {
 transform = Transform( 30, 0, 0, 0, 30, 0, 0, 0, 30, 0.00144982, -0.00536215, -0.00533855 )
 layers = 2
 cast_shadow = 0
-mesh = SubResource( 6 )
+mesh = SubResource( 7 )
 material/0 = null
 
 [node name="Detail Light" type="OmniLight" parent="."]
@@ -210,7 +211,10 @@ omni_shadow_detail = 0
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
 [node name="VoxStruct" parent="." instance=ExtResource( 11 )]
-transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 4, -6, 40 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 450 )
+
+[node name="VoxStruct2" parent="." instance=ExtResource( 11 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -116.759, -6, 117.394 )
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 12 )
