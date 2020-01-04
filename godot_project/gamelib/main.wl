@@ -36,16 +36,18 @@
         cargo           = ${ m3 = 0, kg = 0, goods = ${} },
     },
     entity_types = ${
-        station    = ${ visual = "station",    gui = "station"  },
-        stargate   = ${ visual = "stargate",   gui = "stargate" },
-        asteroid_1 = ${ visual = "asteroid_1", gui = "asteroid" },
+        station         = ${ visual = "station",    gui = "station"   },
+        stargate        = ${ visual = "stargate",   gui = "stargate"  },
+        asteroid_1      = ${ visual = "asteroid_1", gui = "asteroid"  },
+        alien_struct    = ${ visual = "structure",  gui = "structure" },
     },
     systems = $[
         ${
             name = "Testaris 1",
             entities = $[
-                ${ t = "station",    name = "Station 1",  pos = $[720, 720] },
-                ${ t = "asteroid_1", name = "Asteroid 1", pos = $[400, 400] },
+                ${ t = "station",       name = "Station 1",    pos = $[720, 720] },
+                ${ t = "asteroid_1",    name = "Asteroid 1",   pos = $[400, 400] },
+                ${ t = "alien_struct",  name = "Voxel Struct", pos = $[572, 200] },
             ],
         }
     ],

@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -10,8 +10,7 @@
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=8]
 [ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=9]
 [ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=10]
-[ext_resource path="res://scenes/entities/VoxelStructure.tscn" type="PackedScene" id=11]
-[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=12]
+[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=11]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -64,6 +63,7 @@ transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714,
 [node name="entities" type="Spatial" parent="."]
 
 [node name="Drone" type="KinematicBody" parent="."]
+editor/display_folded = true
 visible = false
 collision_mask = 3
 script = ExtResource( 3 )
@@ -81,6 +81,7 @@ material/0 = null
 shape = SubResource( 3 )
 
 [node name="Camera" type="Camera" parent="Drone"]
+editor/display_folded = true
 fov = 80.0
 near = 0.01
 far = 4712.0
@@ -210,13 +211,7 @@ omni_shadow_detail = 0
 [node name="Grid" parent="." instance=ExtResource( 10 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
-[node name="VoxStruct" parent="." instance=ExtResource( 11 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 450 )
-
-[node name="VoxStruct2" parent="." instance=ExtResource( 11 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -116.759, -6, 117.394 )
-
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 12 )
+stream = ExtResource( 11 )
 bus = "Music"
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
