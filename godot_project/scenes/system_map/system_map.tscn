@@ -26,7 +26,7 @@ radial_segments = 8
 rings = 3
 
 [sub_resource type="SphereShape" id=3]
-radius = 0.75
+radius = 0.4
 
 [sub_resource type="DynamicFont" id=4]
 size = 25
