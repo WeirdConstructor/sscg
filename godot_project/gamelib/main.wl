@@ -44,14 +44,8 @@
         ${
             name = "Testaris 1",
             entities = $[
-                ${ t = "station",    name = "Station 1",  pos = $[2000, 2000] },
-                ${ t = "station",    name = "Station 2",  pos = $[ 500, 2000] },
-                ${ t = "station",    name = "Station 3",  pos = $[9000, 4000] },
-                ${ t = "station",    name = "Station 4",  pos = $[4000, 4000] },
-                ${ t = "stargate",   name = "Stargate Alpha",  pos = $[200, 200] },
-                ${ t = "asteroid_1", name = "Asteroid 1", pos = $[ 300,  300] },
-                ${ t = "asteroid_1", name = "Asteroid 2", pos = $[6500, 6500] },
-#                ${ t = "station", name = "Asteroid 2", pos = $[6500, 6500] },
+                ${ t = "station",    name = "Station 1",  pos = $[720, 720] },
+                ${ t = "asteroid_1", name = "Asteroid 1", pos = $[400, 400] },
             ],
         }
     ],
@@ -400,8 +394,8 @@ STATE.callbacks.on_ready = {
         engine_on_secs  = 0.0,
         thruster_speed  = 0.0,
         speed           = 0.0,
-        x               = 5072,
-        y               = 5405,
+        x               = 0.0,
+        y               = 0.0,
         rot_z           = 0,
     };
 

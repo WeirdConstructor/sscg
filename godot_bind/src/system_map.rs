@@ -227,10 +227,7 @@ impl SystemMap {
                                 .cast::<Spatial>()
                                 .expect("Station must be a Spatial"),
                     };
-                let v = vec3(
-                    -500.0 + (x as f32 * 1000.0) / 10000.0,
-                    1.0,
-                    -500.0 + (y as f32 * 1000.0) / 10000.0);
+                let v = vec3(x as f32, 1.0, y as f32);
                 ins.set(
                     GodotString::from_str("label_name"),
                     Variant::from_str(ent.v_s_rawk("name")));

@@ -7,8 +7,8 @@ var camera = null
 var view_sensitivity = 0.3
 var yaw = 0.0
 var pitch = 0.0
-var speed = 0.5
-var grav = 1.0
+var speed = 2.0
+var grav = 3.0
 var accel = 0.0
 var jump_strength = 0.8
 var jump_motion = Vector3(0, 0, 0)
@@ -19,6 +19,7 @@ var old_on_floor = false
 func set_active(is_active):
 	drone_active = is_active
 	if drone_active:
+		self.show()
 		camera.current = true;
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		pitch = 0
@@ -27,6 +28,8 @@ func set_active(is_active):
 		self.set_translation(
 		   self.get_parent().get_node("ship").get_translation()
 		   + Vector3(0, 1, 0))
+	else:
+		self.hide()
 
 func _input(event):
 	if !drone_active:
