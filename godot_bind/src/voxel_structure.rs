@@ -11,11 +11,9 @@ pub struct VoxStruct {
     vol:              Vol<u8>,
     octrees:          std::vec::Vec<Octree<u8>>,
 
-    box_in_focus:   bool,
     sb_shape_owner: i64,
 
     cursor:         [u16; 3],
-    last_mine_pos:  [u16; 3],
 }
 
 unsafe impl Send for VoxStruct { }
@@ -32,9 +30,7 @@ impl VoxStruct {
             collision_shapes: vec![],
             vol:              Vol::new(VOL_SIZE),
             octrees:          vec![],
-            box_in_focus:   false,
             cursor:         [0, 0, 0],
-            last_mine_pos:  [0, 0, 0],
             sb_shape_owner: 0
         }
     }
@@ -197,41 +193,40 @@ impl VoxStruct {
     }
 
     #[export]
-    fn mine_info_at(&mut self, mut owner: Spatial, x: f64, y: f64, z: f64) -> Variant {
+    fn mine_info_at_cursor(&mut self, mut owner: Spatial) -> Variant {
         let (ot, pos) =
             self.get_octree_at(
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
-        let v =
-            ot.get_inv_y(
-                pos[0],
-                pos[1],
-                pos[2]);
+        let v = ot.get_inv_y(pos[0], pos[1], pos[2]);
         let mut dict = gdnative::Dictionary::new();
         dict.set(&Variant::from_str("material"), &Variant::from_i64(v.color as i64));
         dict.set(&Variant::from_str("time"),     &Variant::from_f64(1.2));
+        dict.set(&Variant::from_str("x"),        &Variant::from_i64(self.cursor[0] as i64));
+        dict.set(&Variant::from_str("y"),        &Variant::from_i64(self.cursor[1] as i64));
+        dict.set(&Variant::from_str("z"),        &Variant::from_i64(self.cursor[2] as i64));
         Variant::from_dictionary(&dict)
     }
 
     #[export]
-    fn looking_at(&mut self, mut owner: Spatial, x: f64, y: f64, z: f64) {
+    fn looking_at(&mut self, mut owner: Spatial, x: f64, y: f64, z: f64) -> bool {
         unsafe {
             let mut c =
                 owner.get_child(0)
                      .and_then(|n| n.cast::<Spatial>())
                      .unwrap();
-
-            if !self.box_in_focus {
-                c.show();
-                self.box_in_focus = true;
-            }
+            let mut c2 =
+                owner.get_child(1)
+                     .and_then(|n| n.cast::<Spatial>())
+                     .unwrap();
 
             let mut t = c.get_transform();
             t.origin.x = x.floor() as f32 + 0.5;
             t.origin.y = y.floor() as f32 + 0.5;
             t.origin.z = z.floor() as f32 + 0.5;
             c.set_transform(t);
+            c2.set_transform(t);
 
             self.cursor = [
                 t.origin.x as u16,
@@ -239,58 +234,97 @@ impl VoxStruct {
                 t.origin.z as u16,
             ];
 
-            {
-                let (ot, pos) =
-                    self.get_octree_at(
-                        self.cursor[0] as usize,
-                        self.cursor[1] as usize,
-                        self.cursor[2] as usize);
-                let v = ot.get_inv_y(pos[0], pos[1], pos[2]);
-                if v.color == 0 {
-                    c.hide();
-                    self.box_in_focus = true;
+            let (ot, pos) =
+                self.get_octree_at(
+                    self.cursor[0] as usize,
+                    self.cursor[1] as usize,
+                    self.cursor[2] as usize);
+            let v = ot.get_inv_y(pos[0], pos[1], pos[2]);
+            v.color != 0
+
+//            {
+//                let (ot, pos) =
+//                    self.get_octree_at(
+//                        self.cursor[0] as usize,
+//                        self.cursor[1] as usize,
+//                        self.cursor[2] as usize);
+//                let v = ot.get_inv_y(pos[0], pos[1], pos[2]);
+//                if v.color == 0 {
+//                    c.hide();
+//                } else {
+//                    c.show();
+//                }
+//            }
+        }
+    }
+
+    #[export]
+    fn set_marker_status(&mut self, owner: Spatial, show: bool, mining: bool) {
+        unsafe {
+            let mut looking_cursor =
+                owner.get_child(0)
+                     .and_then(|n| n.cast::<Spatial>())
+                     .unwrap();
+            let mut mining_cursor =
+                owner.get_child(1)
+                     .and_then(|n| n.cast::<Spatial>())
+                     .unwrap();
+
+            if show {
+                if mining {
+                    looking_cursor.hide();
+                    mining_cursor.show();
                 } else {
-                    c.show();
-                    self.box_in_focus = true;
+                    looking_cursor.show();
+                    mining_cursor.hide();
                 }
+            } else {
+                looking_cursor.hide();
+                mining_cursor.hide();
             }
         }
     }
 
     #[export]
-    fn mine(&mut self, mut owner: Spatial) {
-        if self.last_mine_pos != self.cursor {
-            {
-                let (ot, pos) =
-                    self.get_octree_at(
-                        self.cursor[0] as usize,
-                        self.cursor[1] as usize,
-                        self.cursor[2] as usize);
-                let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
-                println!("MINEED {}", m.color);
-                ot.set_inv_y(pos[0], pos[1], pos[2], 0.into());
-            }
+    fn mine_status(&mut self, mut owner: Spatial, started: bool) -> bool {
+        let (ot, pos) =
+            self.get_octree_at(
+                self.cursor[0] as usize,
+                self.cursor[1] as usize,
+                self.cursor[2] as usize);
+        let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
 
+        let found_voxel = m.color != 0;
+
+        found_voxel
+    }
+
+    #[export]
+    fn mine_at_cursor(&mut self, mut owner: Spatial) -> bool {
+        let (ot, pos) =
+            self.get_octree_at(
+                self.cursor[0] as usize,
+                self.cursor[1] as usize,
+                self.cursor[2] as usize);
+        let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
+
+        if m.color != 0 {
+            ot.set_inv_y(pos[0], pos[1], pos[2], 0.into());
             self.reload_at(
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
 
-            self.last_mine_pos = self.cursor;
+            true
+        } else {
+            false
         }
     }
 
     #[export]
     fn looking_at_nothing(&mut self, mut owner: Spatial) {
         unsafe {
-            let mut c =
-                owner.get_child(0)
-                     .and_then(|n| n.cast::<Spatial>())
-                     .unwrap();
-            if self.box_in_focus {
-                c.hide();
-                self.box_in_focus = false;
-            }
+            self.set_marker_status(owner, false, false);
         }
     }
 

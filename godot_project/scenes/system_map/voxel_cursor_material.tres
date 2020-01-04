@@ -6,7 +6,7 @@ code = "shader_type spatial;
 render_mode diffuse_burley;
 
 void fragment() {
-	ALPHA = (sin(UV.x * 400.0 + fract(TIME) * 3.146 * 2.0 * 10.0) + 1.0) / 2.0;
+	ALPHA = (sin(UV.x * 400.0 + fract(TIME) * 3.146 * 2.0 * 1.0) + 1.0) / 2.0;
     ALBEDO = vec3(
 		(UV.x + sin(TIME * 5.0) + 1.0) / 3.0,
 		 1.0 - (UV.y + cos(TIME * 7.0) + 1.0) / 3.0,
