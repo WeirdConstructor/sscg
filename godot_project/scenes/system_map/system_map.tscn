@@ -63,7 +63,6 @@ transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714,
 [node name="entities" type="Spatial" parent="."]
 
 [node name="Drone" type="KinematicBody" parent="."]
-editor/display_folded = true
 visible = false
 collision_mask = 3
 script = ExtResource( 3 )
@@ -74,6 +73,7 @@ cast_to = Vector3( 0, 0, -10 )
 
 [node name="RayMesh" type="MeshInstance" parent="Drone"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, 0 )
+visible = false
 mesh = SubResource( 2 )
 material/0 = null
 
