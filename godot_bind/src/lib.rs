@@ -263,41 +263,41 @@ impl GUIPaintNode {
     }
 }
 
-/// The HelloWorld "class"
-#[derive(NativeClass)]
-#[inherit(gdnative::Node)]
-#[user_data(user_data::ArcData<HelloWorld>)]
-pub struct HelloWorld;
-
-#[methods]
-impl HelloWorld {
-
-    /// The "constructor" of the class.
-    fn _init(_owner: Node) -> Self {
-        HelloWorld
-    }
-
-    #[export]
-    fn _ready(&self, _owner: Node) {
-        godot_print!("hello, world. YE!");
-    }
-
-    #[export]
-    fn _process(&self, _owner: Node, _delta: f64) {
-    }
-}
-
 fn terminate(options: *mut gdnative::sys::godot_gdnative_terminate_options) {
     dbg!("*** terminate sscg native");
 }
 
+static mut oldhook : Option<Box<dyn Fn(&std::panic::PanicInfo) + Sync + Send + 'static>> = None;
+
+fn init_panic_hook() {
+    unsafe {
+        oldhook = Some(std::panic::take_hook());
+    }
+    std::panic::set_hook(Box::new(|panic_info| {
+        let mut loc_string = String::from("unknown location");
+        if let Some(location) = panic_info.location() {
+            loc_string =
+                format!("file '{}' at line {}",
+                        location.file(),
+                        location.line());
+        }
+        if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            godot_print!("{}: panic occurred: {:?}", loc_string, s);
+        } else {
+            godot_print!("{}: unknown panic occurred", loc_string);
+            unsafe { (*(oldhook.as_ref().unwrap()))(panic_info); }
+        }
+    }));
+}
+
 fn init(handle: gdnative::init::InitHandle) {
     dbg!("*** init sscg native");
-    handle.add_class::<HelloWorld>();
+    init_panic_hook();
     handle.add_class::<GUIPaintNode>();
     handle.add_class::<system_map::SystemMap>();
     handle.add_class::<voxel_vol::InstVoxVolume>();
     handle.add_class::<voxel_structure::VoxStruct>();
+
 }
 
 godot_gdnative_init!();
