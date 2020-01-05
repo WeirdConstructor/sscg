@@ -151,6 +151,7 @@ STATE.code.recalc_ship_cargo = {
 
 STATE.callbacks.on_mine = {
     std:displayln "MINE:" @;
+    $false
 };
 
 STATE.callbacks.on_saved_godot_state = {!(state) = @;
