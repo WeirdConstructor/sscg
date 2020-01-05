@@ -45,7 +45,7 @@
         ${
             name = "Testaris 1",
             entities = $[
-                ${ t = "station",       name = "Station 1",    pos = $[720, 720] },
+                ${ t = "station",       name = "Station 1",    pos = $[200,   0] },
                 ${ t = "alien_struct",  name = "Voxel Struct", pos = $[572, 200] },
                 ${ t = "asteroid_1",    name = "Asteroid 1",   pos = $[400, 400] },
             ],
@@ -151,7 +151,15 @@ STATE.code.recalc_ship_cargo = {
 
 STATE.callbacks.on_mine = {
     std:displayln "MINE:" @;
-    $false
+    $t
+};
+
+STATE.callbacks.on_mined_voxel = {
+    std:displayln "MINE:" @;
+    STATE.ship.cargo.goods.rock =
+        STATE.ship.cargo.goods.rock + 1;
+    STATE.code.recalc_ship_cargo[];
+    $t
 };
 
 STATE.callbacks.on_saved_godot_state = {!(state) = @;

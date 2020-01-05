@@ -343,6 +343,17 @@ impl VoxStruct {
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
 
+            lock_sscg!(sscg);
+            let (sysid, entid) = self.parent_info(&mut owner);
+            let ret = sscg.call_cb(
+                "on_mined_voxel",
+                &vec![sysid, entid,
+                      VVal::Int(m.color as i64),
+                      VVal::Int(self.cursor[0] as i64),
+                      VVal::Int(self.cursor[1] as i64),
+                      VVal::Int(self.cursor[2] as i64),
+                      ]);
+
             true
         } else {
             false

@@ -20,6 +20,7 @@ var mining_vox = null
 var mining_pos = null
 var mining_info = null
 var marker_vox = null
+var mining_time = 0
 
 var old_on_floor = false
 
@@ -147,10 +148,15 @@ func process_mining_gun(delta):
 					mining_pos = vv
 					raym.show()
 					mining_vox.set_marker_status(true, true)
+					mining_time = 0.0
 					marker_vox = vox
 				else:
 					vox.looking_at_nothing()
 					mining_pos = null
+			else:
+				mining_time = mining_time + delta
+				if mining_time > 1:
+					mining_vox.mine_at_cursor()
 		else:
 			vox.set_marker_status(true, false)
 			marker_vox = vox
