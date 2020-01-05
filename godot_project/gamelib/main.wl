@@ -17,9 +17,10 @@
     ship_types = ${
         scout_mk1 = ${
             fuel_capacity       = 1000,
-            fuel_per_sec        = 14,
+            fuel_per_sec        = 10,
             max_kg_fuel_factor  = 200,
-            cargo_max_m3        = 2000,
+#            cargo_max_m3        = 2000,
+            cargo_max_m3        = 222,
             cargo_max_kg        = 10000,
         },
     },
@@ -151,7 +152,11 @@ STATE.code.recalc_ship_cargo = {
 
 STATE.callbacks.on_mine = {
     std:displayln "MINE:" @;
-    $t
+
+    !capacity_units =
+        STATE.code.calc_unit_capacity_for_good :rock;
+
+    (capacity_units > 0) &and (_2 != 0)
 };
 
 STATE.callbacks.on_mined_voxel = {

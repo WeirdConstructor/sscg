@@ -6,7 +6,7 @@
 !@import WID gui_window_ids;
 
 !calc_refuel = {!(STATE) = @;
-    !cc_per_fuelunit = 150;
+    !cc_per_fuelunit = 125;
 
     !fuel_delta =
         STATE.ship_types.(STATE.ship.t).fuel_capacity
