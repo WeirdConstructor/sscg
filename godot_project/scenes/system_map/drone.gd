@@ -142,8 +142,8 @@ func process_mining_gun(delta):
 		
 		if Input.is_action_pressed("mine"):
 			if mining_vox != vox:
-				mining_vox = vox
-				if mining_vox.mine_status(true):
+				if vox.mine_status(true):
+					mining_vox = vox
 					mining_info = mining_vox.mine_info_at_cursor()
 					mining_pos = vv
 					raym.show()
@@ -155,8 +155,12 @@ func process_mining_gun(delta):
 					mining_pos = null
 			else:
 				mining_time = mining_time + delta
-				if mining_time > 1:
+				if mining_vox and mining_time > 1:
 					mining_vox.mine_at_cursor()
+					stop_mining()
+					#mining_vox.looking_at_nothing()
+					#mining_time = 0.0
+					#mining_pos = null
 		else:
 			vox.set_marker_status(true, false)
 			marker_vox = vox
