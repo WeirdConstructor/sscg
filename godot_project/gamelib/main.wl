@@ -46,8 +46,8 @@
             name = "Testaris 1",
             entities = $[
                 ${ t = "station",       name = "Station 1",    pos = $[720, 720] },
-                ${ t = "asteroid_1",    name = "Asteroid 1",   pos = $[400, 400] },
                 ${ t = "alien_struct",  name = "Voxel Struct", pos = $[572, 200] },
+                ${ t = "asteroid_1",    name = "Asteroid 1",   pos = $[400, 400] },
             ],
         }
     ],
@@ -147,6 +147,10 @@ STATE.code.recalc_ship_cargo = {
                 STATE.ship.docked = $f;
             };
     };
+};
+
+STATE.callbacks.on_mine = {
+    std:displayln "MINE:" @;
 };
 
 STATE.callbacks.on_saved_godot_state = {!(state) = @;
@@ -263,7 +267,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
         ] ],
         $["Engine", $[
             "Godot game engine developers",
-            "Godot-rust binding Developers ('karroffel', 'toasteater' and all others)",
+            "Godot-rust binding developers ('karroffel', 'toasteater' and all others)",
         ] ],
     ];
 
@@ -300,6 +304,17 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     } {|| sscg:win.set_window WID:MAIN_MENU; };
 };
 
+!load_save = {
+    !state =
+        on_error {|| std:displayln "Couldn't load savegame: " @ }
+            ~ sscg:game.read_savegame "sv1";
+    (bool state) {
+        STATE.player = state.player;
+        STATE.ship   = state.ship;
+        sscg:game.cmd "load_state" state.ship_dyn;
+    };
+};
+
 !open_menu = {
     sscg:win.set_window WID:MAIN_MENU ${
         x = 200, y = 200, w = 550, h = 550,
@@ -325,19 +340,10 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
         },
     } {||
         match _1
-            "start" {|| open_start_info[]; }
-            "save" {|| sscg:game.cmd "save_state" $n; }
-            "credits" {|| open_credits[]; }
-            "load" {||
-                !state =
-                    on_error {|| std:displayln "Couldn't load savegame: " @ }
-                        ~ sscg:game.read_savegame "sv1";
-                (bool state) {
-                    STATE.player = state.player;
-                    STATE.ship   = state.ship;
-                    sscg:game.cmd "load_state" state.ship_dyn;
-                };
-            }
+            "start"     {|| open_start_info[]; }
+            "save"      {|| sscg:game.cmd "save_state" $n; }
+            "credits"   {|| open_credits[]; }
+            "load"      {|| load_save[]; }
             {|| sscg:win.set_window WID:MAIN_MENU; };
     };
 };
@@ -401,7 +407,8 @@ STATE.callbacks.on_ready = {
         rot_z           = 0,
     };
 
-    open_menu[];
+#    open_menu[];
+    load_save[];
 };
 
 !@export init {

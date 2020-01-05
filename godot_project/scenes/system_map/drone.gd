@@ -1,5 +1,7 @@
 extends KinematicBody
 
+var test_mode = true
+
 export var drone_active = false
 
 var camera = null
@@ -12,6 +14,7 @@ var grav = 3.0
 var accel = 0.0
 var jump_strength = 0.8
 var jump_motion = Vector3(0, 0, 0)
+var anti_grav = test_mode
 
 var mining_vox = null
 var mining_pos = null
@@ -29,9 +32,14 @@ func set_active(is_active):
 		pitch = 0
 		yaw = 180
 		self.set_rotation(Vector3(deg2rad(pitch),deg2rad(yaw), 0))
-		self.set_translation(
-		   self.get_parent().get_node("ship").get_translation()
-		   + Vector3(0, 1, 0))
+		if test_mode:
+			self.set_translation(
+			   self.get_parent().get_node("ship").get_translation()
+			   + Vector3(0, 140, 0))
+		else:
+			self.set_translation(
+			   self.get_parent().get_node("ship").get_translation()
+			   + Vector3(0, 1, 0))
 	else:
 		self.hide()
 
@@ -62,6 +70,9 @@ func process_movement(delta):
 		motion += righ.normalized()
 	if Input.is_action_pressed("turn_left"):
 		motion -= righ.normalized()
+	if Input.is_action_just_pressed("antigrav"):
+		anti_grav = not anti_grav
+		jump_motion = Vector3(0, 0, 0)
 		
 	var speed_factor = 1
 	if Input.is_action_pressed("faster"):
@@ -69,7 +80,9 @@ func process_movement(delta):
 		
 	motion *= speed_factor
 	
-	jump_motion += Vector3(0, -grav, 0) * delta;
+	if not anti_grav:
+		jump_motion += Vector3(0, -grav, 0) * delta
+
 	if jump_motion.dot(Vector3(0, 1, 0)) < -10.0:
 		jump_motion = Vector3(0, -10.0, 0)
 			
@@ -127,16 +140,17 @@ func process_mining_gun(delta):
 		vox.looking_at(vv.x, vv.y, vv.z)
 		
 		if Input.is_action_pressed("mine"):
-			mining_vox = vox
-			if mining_vox.mine_status(true):
-				mining_info = mining_vox.mine_info_at_cursor()
-				mining_pos = vv
-				raym.show()
-				mining_vox.set_marker_status(true, true)
-				marker_vox = vox
-			else:
-				vox.looking_at_nothing()
-				mining_pos = null
+			if mining_vox != vox:
+				mining_vox = vox
+				if mining_vox.mine_status(true):
+					mining_info = mining_vox.mine_info_at_cursor()
+					mining_pos = vv
+					raym.show()
+					mining_vox.set_marker_status(true, true)
+					marker_vox = vox
+				else:
+					vox.looking_at_nothing()
+					mining_pos = null
 		else:
 			vox.set_marker_status(true, false)
 			marker_vox = vox

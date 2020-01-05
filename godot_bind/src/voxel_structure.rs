@@ -1,7 +1,11 @@
+use crate::state::SSCG;
+#[macro_use]
+use crate::state::*;
 use gdnative::*;
 use euclid::{vec2, vec3};
 use crate::voxeltree::*;
 use crate::gd_voxel_impl::*;
+use wlambda::VVal;
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Spatial)]
@@ -285,6 +289,18 @@ impl VoxStruct {
         }
     }
 
+    fn parent_info(&self, owner: &mut Spatial) -> (VVal, VVal) {
+        unsafe {
+            let sysid =
+                owner.get_parent().unwrap().get(
+                    GodotString::from_str("system_id")).to_i64();
+            let entid =
+                owner.get_parent().unwrap().get(
+                    GodotString::from_str("entity_id")).to_i64();
+            (VVal::Int(sysid), VVal::Int(entid))
+        }
+    }
+
     #[export]
     fn mine_status(&mut self, mut owner: Spatial, started: bool) -> bool {
         let (ot, pos) =
@@ -296,7 +312,19 @@ impl VoxStruct {
 
         let found_voxel = m.color != 0;
 
-        found_voxel
+        let (sysid, entid) = self.parent_info(&mut owner);
+        lock_sscg!(sscg);
+        let ret = sscg.call_cb(
+            "on_mine",
+            &vec![sysid, entid,
+                  VVal::Bol(started),
+                  VVal::Int(m.color as i64),
+                  VVal::Int(self.cursor[0] as i64),
+                  VVal::Int(self.cursor[1] as i64),
+                  VVal::Int(self.cursor[2] as i64),
+                  ]);
+
+        ret.b()
     }
 
     #[export]
