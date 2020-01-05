@@ -1,35 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=2]
 
-[sub_resource type="Shader" id=1]
-code = "shader_type spatial;
-
-render_mode diffuse_burley;
-//render_mode depth_draw_always;
-
-void fragment() {
-	float xv = 0.0;
-	float yv = 0.0;
-	float width = 0.02;
-	
-	float depth = (FRAGCOORD.z / FRAGCOORD.w) / 64.0;
-	float idepth = 1.0 - depth;
-	float sdepth = clamp(((depth + 0.2) / 1.2), 0.2 / 1.2, 1.0);
-	
-	width = width * 6.0 * sdepth;
-	if (UV.x <= width) { xv = 1.0 * (1.0 - UV.x / width); }
-	if (UV.y <= width) { yv = 1.0 * (1.0 - UV.y / width); }
-	if (UV.x >= (1.0 - width)) { xv = 1.0 * (1.0 - (1.0 - UV.x) / width); }
-	if (UV.y >= (1.0 - width)) { yv = 1.0 * (1.0 - (1.0 - UV.y) / width); }
-	
-	depth = depth * depth;
-	float mixval = max(xv, yv);
-	ALBEDO = mix(mix(COLOR.rgb, COLOR.rgb * 0.5, 1.0 - length(vec2(0.5, 0.5) - UV)),
-//	                 vec3(min(COLOR.r * 1.5, 1.0), min(COLOR.g * 1.5, 1.0), min(COLOR.b * 1.5, 1.0)), max(UV.x, UV.y)),
-					 vec3(0, mixval, mixval) * idepth, ((1.0 - sdepth) + 0.2) * mixval);
-	//ALBEDO = vec3(depth, 1.0 - depth, 1.0 - depth);
-	EMISSION = vec3(0.0, mixval, mixval) * ((1.0 - sdepth) + 0.2);
-	//EMISSION = ALBEDO;
-}"
+[ext_resource path="res://scenes/system_map/voxel_material.shader" type="Shader" id=1]
 
 [resource]
-shader = SubResource( 1 )
+shader = ExtResource( 1 )
