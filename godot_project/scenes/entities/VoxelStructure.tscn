@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://scenes/entities/VoxelStructure.gd" type="Script" id=1]
 [ext_resource path="res://scenes/entities/scripts/VoxStruct2.gdns" type="Script" id=2]
@@ -8,10 +8,20 @@
 [sub_resource type="CubeMesh" id=1]
 size = Vector3( 1.2, 1.2, 1.2 )
 
-[sub_resource type="BoxShape" id=2]
+[sub_resource type="ParticlesMaterial" id=2]
+emission_shape = 2
+emission_box_extents = Vector3( 1, 1, 1 )
+spread = 180.0
+gravity = Vector3( 0, 0, 0 )
+initial_velocity = 20.73
+
+[sub_resource type="CubeMesh" id=3]
+size = Vector3( 0.5, 0.5, 0.5 )
+
+[sub_resource type="BoxShape" id=4]
 extents = Vector3( 68, 1, 68 )
 
-[sub_resource type="BoxShape" id=3]
+[sub_resource type="BoxShape" id=5]
 extents = Vector3( 68, 1, 80 )
 
 [node name="VoxelStructure" type="Spatial"]
@@ -33,30 +43,41 @@ visible = false
 mesh = SubResource( 1 )
 material/0 = ExtResource( 4 )
 
+[node name="MineExplosion" type="Particles" parent="VoxStruct"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -6.46184, 0, -29.7627 )
+visible = false
+amount = 100
+lifetime = 1.05
+speed_scale = 2.61
+explosiveness = 1.0
+randomness = 1.0
+process_material = SubResource( 2 )
+draw_pass_1 = SubResource( 3 )
+
 [node name="floor" type="StaticBody" parent="VoxStruct"]
 collision_layer = 2
 collision_mask = 2
 
 [node name="CollBottom" type="CollisionShape" parent="VoxStruct/floor"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 64, -1, 64 )
-shape = SubResource( 2 )
+shape = SubResource( 4 )
 
 [node name="CollTop" type="CollisionShape" parent="VoxStruct/floor"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 157.465, 64 )
-shape = SubResource( 2 )
+shape = SubResource( 4 )
 
 [node name="CollFront" type="CollisionShape" parent="VoxStruct/floor"]
 transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 64, 78, -4.62242 )
-shape = SubResource( 3 )
+shape = SubResource( 5 )
 
 [node name="CollBack" type="CollisionShape" parent="VoxStruct/floor"]
 transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 64, 78, 132.787 )
-shape = SubResource( 3 )
+shape = SubResource( 5 )
 
 [node name="CollLeft" type="CollisionShape" parent="VoxStruct/floor"]
 transform = Transform( -4.37114e-08, -1, 4.37114e-08, 0, -4.37114e-08, -1, 1, -4.37114e-08, 1.91069e-15, 132.673, 78, 64 )
-shape = SubResource( 3 )
+shape = SubResource( 5 )
 
 [node name="CollRight" type="CollisionShape" parent="VoxStruct/floor"]
 transform = Transform( -4.37114e-08, -1, 4.37114e-08, 0, -4.37114e-08, -1, 1, -4.37114e-08, 1.91069e-15, -4.69518, 78, 64 )
-shape = SubResource( 3 )
+shape = SubResource( 5 )

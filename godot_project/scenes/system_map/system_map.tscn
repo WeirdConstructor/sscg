@@ -34,10 +34,9 @@ rings = 3
 [sub_resource type="ParticlesMaterial" id=13]
 emission_shape = 1
 emission_sphere_radius = 0.01
-spread = 116.82
+spread = 0.0
 gravity = Vector3( 0, 0, 0 )
-linear_accel = 0.7
-anim_speed = 57.69
+initial_velocity = 1.26
 
 [sub_resource type="SpatialMaterial" id=15]
 flags_transparent = true
@@ -121,7 +120,8 @@ mesh = SubResource( 2 )
 material/0 = null
 
 [node name="Particles" type="Particles" parent="Drone/RayMesh"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.5, 0 )
+cast_shadow = 0
 amount = 128
 lifetime = 10.0
 speed_scale = 0.84
