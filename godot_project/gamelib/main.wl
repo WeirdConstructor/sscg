@@ -331,7 +331,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 
 !open_menu = {
     sscg:win.set_window WID:MAIN_MENU ${
-        x = 200, y = 200, w = 550, h = 550,
+        x = 300, y = 200, w = 400, h = 550,
         title = std:str:cat["Main Menu"],
         title_color = c:CON,
         child = ${
@@ -341,15 +341,15 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
             spacing = 10,
             childs = $[
                 ${ t = :l_button, fg = "000", bg = c:SE1,
-                   w = 300, h = 200, text = "Start", ref = "start" },
+                   w = 1000, h = 200, text = "Start", ref = "start" },
                 ${ t = :l_button, fg = "000", bg = c:SE1,
-                   w = 300, h = 100, text = "Load", ref = "load" },
+                   w = 1000, h = 100, text = "Load", ref = "load" },
                 ${ t = :l_button, fg = "000", bg = c:SE1,
-                   w = 300, h = 100, text = "Save", ref = "save" },
+                   w = 1000, h = 100, text = "Save", ref = "save" },
                 ${ t = :l_button, fg = "000", bg = c:CON,
-                   w = 300, h = 100, text = "Credits", ref = "credits" },
+                   w = 1000, h = 100, text = "Credits", ref = "credits" },
                 ${ t = :r_button, fg = "000", bg = c:SE2,
-                   w = 300, h = 200, text = "Close", ref = "close" },
+                   w = 1000, h = 200, text = "Close", ref = "close" },
             ],
         },
     } {||
