@@ -159,6 +159,7 @@ func process_mining_gun(delta):
 				mining_time = mining_time + delta
 				if mining_vox and mining_time > 1:
 					mining_vox.mine_at_cursor()
+					$MiningBeamSound.play_pop()
 					stop_mining()
 					#mining_vox.looking_at_nothing()
 					#mining_time = 0.0

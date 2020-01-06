@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=2]
+[gd_scene load_steps=30 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -7,12 +7,16 @@
 [ext_resource path="res://crosshair.png" type="Texture" id=5]
 [ext_resource path="res://sounds/mining_beam.wav" type="AudioStream" id=6]
 [ext_resource path="res://scenes/system_map/MiningBeamSound.gd" type="Script" id=7]
-[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=8]
-[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=9]
-[ext_resource path="res://scenes/system_map/gui_blur.shader" type="Shader" id=10]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=11]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=12]
-[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=13]
+[ext_resource path="res://sounds/mining_pop1.wav" type="AudioStream" id=8]
+[ext_resource path="res://sounds/mining_pop2.wav" type="AudioStream" id=9]
+[ext_resource path="res://sounds/mining_pop3.wav" type="AudioStream" id=10]
+[ext_resource path="res://sounds/mining_pop4.wav" type="AudioStream" id=11]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=12]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=13]
+[ext_resource path="res://scenes/system_map/gui_blur.shader" type="Shader" id=14]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=15]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=16]
+[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=17]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -30,12 +34,24 @@ rings = 3
 [sub_resource type="SphereShape" id=3]
 radius = 0.4
 
+[sub_resource type="AudioStreamRandomPitch" id=9]
+audio_stream = ExtResource( 8 )
+
+[sub_resource type="AudioStreamRandomPitch" id=10]
+audio_stream = ExtResource( 9 )
+
+[sub_resource type="AudioStreamRandomPitch" id=11]
+audio_stream = ExtResource( 10 )
+
+[sub_resource type="AudioStreamRandomPitch" id=12]
+audio_stream = ExtResource( 11 )
+
 [sub_resource type="DynamicFont" id=4]
 size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 9 )
+font_data = ExtResource( 13 )
 
 [sub_resource type="DynamicFont" id=5]
 size = 12
@@ -43,10 +59,10 @@ outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 9 )
+font_data = ExtResource( 13 )
 
 [sub_resource type="ShaderMaterial" id=6]
-shader = ExtResource( 10 )
+shader = ExtResource( 14 )
 
 [sub_resource type="SpatialMaterial" id=7]
 albedo_color = Color( 1, 0.72549, 0, 1 )
@@ -103,13 +119,30 @@ texture = ExtResource( 5 )
 [node name="MiningBeamSound" type="AudioStreamPlayer" parent="Drone"]
 stream = ExtResource( 6 )
 volume_db = -9.248
+bus = "SoundFx"
 script = ExtResource( 7 )
+
+[node name="Pop1" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 9 )
+bus = "SoundFx"
+
+[node name="Pop2" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 10 )
+bus = "SoundFx"
+
+[node name="Pop3" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 11 )
+bus = "SoundFx"
+
+[node name="Pop4" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 12 )
+bus = "SoundFx"
 
 [node name="GUI" type="Control" parent="."]
 editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 8 )
+script = ExtResource( 12 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -181,7 +214,7 @@ handle_input_locally = false
 render_target_update_mode = 3
 
 [node name="GUIDrawing" type="Node2D" parent="GUI/ViewportContainer/Viewport"]
-script = ExtResource( 11 )
+script = ExtResource( 15 )
 
 [node name="Sun Sphere" type="MeshInstance" parent="."]
 transform = Transform( 30, 0, 0, 0, 30, 0, 0, 0, 30, 0.00144982, -0.00536215, -0.00533855 )
@@ -220,10 +253,11 @@ omni_range = 800.0
 omni_attenuation = 0.0281641
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 12 )]
+[node name="Grid" parent="." instance=ExtResource( 16 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 13 )
+stream = ExtResource( 17 )
+autoplay = true
 bus = "Music"
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
