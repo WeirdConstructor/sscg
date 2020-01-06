@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/mining_pop2.wav-48a63b7d827aa1245a81eefa3ad9de82.sample"
+
+[deps]
+
+source_file="res://sounds/mining_pop2.wav"
+dest_files=[ "res://.import/mining_pop2.wav-48a63b7d827aa1245a81eefa3ad9de82.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=true
+edit/normalize=true
+edit/loop=false
+compress/mode=0
