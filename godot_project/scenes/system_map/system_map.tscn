@@ -1,16 +1,18 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=22 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=3]
-[ext_resource path="res://scenes/system_map/voxel_mine_material.tres" type="Material" id=4]
-[ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=5]
-[ext_resource path="res://crosshair.png" type="Texture" id=6]
-[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=7]
-[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=8]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=9]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=10]
-[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=11]
+[ext_resource path="res://scenes/entities/materials/voxel_mine_material.tres" type="Material" id=4]
+[ext_resource path="res://crosshair.png" type="Texture" id=5]
+[ext_resource path="res://sounds/mining_beam.wav" type="AudioStream" id=6]
+[ext_resource path="res://scenes/system_map/MiningBeamSound.gd" type="Script" id=7]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=8]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=9]
+[ext_resource path="res://scenes/system_map/gui_blur.shader" type="Shader" id=10]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=11]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=12]
+[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=13]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -33,7 +35,7 @@ size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 8 )
+font_data = ExtResource( 9 )
 
 [sub_resource type="DynamicFont" id=5]
 size = 12
@@ -41,25 +43,10 @@ outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 8 )
+font_data = ExtResource( 9 )
 
-[sub_resource type="Shader" id=14]
-code = "shader_type canvas_item;
-
-
-void fragment() {
-	vec4 screen_blur = texture(SCREEN_TEXTURE, SCREEN_UV, 2.0);
-	vec4 ui          = texture(TEXTURE, UV);
-	if (ui.a > 0.1) {
-		COLOR = mix(ui, screen_blur, 0.3);
-	} else {
-		COLOR = texture(SCREEN_TEXTURE, SCREEN_UV);
-	}
-	
-}"
-
-[sub_resource type="ShaderMaterial" id=13]
-shader = SubResource( 14 )
+[sub_resource type="ShaderMaterial" id=6]
+shader = ExtResource( 10 )
 
 [sub_resource type="SpatialMaterial" id=7]
 albedo_color = Color( 1, 0.72549, 0, 1 )
@@ -103,18 +90,6 @@ fov = 80.0
 near = 0.01
 far = 4712.0
 
-[node name="crosshair" parent="Drone/Camera" instance=ExtResource( 5 )]
-transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
-visible = false
-
-[node name="SpotLight" type="SpotLight" parent="Drone/Camera"]
-visible = false
-layers = 2
-spot_range = 22.5656
-spot_attenuation = 2.0
-spot_angle = 23.0086
-spot_angle_attenuation = 0.554785
-
 [node name="OmniLight" type="OmniLight" parent="Drone/Camera"]
 light_energy = 0.75
 light_indirect_energy = 0.75
@@ -123,12 +98,18 @@ omni_attenuation = 4.59479
 
 [node name="Sprite3D" type="Sprite3D" parent="Drone/Camera"]
 transform = Transform( 0.00772604, 0, 0, 0, 0.00772604, 0, 0, 0, 1, 0, 0, -0.0510799 )
-texture = ExtResource( 6 )
+texture = ExtResource( 5 )
+
+[node name="MiningBeamSound" type="AudioStreamPlayer" parent="Drone"]
+stream = ExtResource( 6 )
+volume_db = -9.248
+script = ExtResource( 7 )
 
 [node name="GUI" type="Control" parent="."]
+editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 7 )
+script = ExtResource( 8 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -186,7 +167,8 @@ __meta__ = {
 }
 
 [node name="ViewportContainer" type="ViewportContainer" parent="GUI"]
-material = SubResource( 13 )
+editor/display_folded = true
+material = SubResource( 6 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = -1280.0
@@ -199,7 +181,7 @@ handle_input_locally = false
 render_target_update_mode = 3
 
 [node name="GUIDrawing" type="Node2D" parent="GUI/ViewportContainer/Viewport"]
-script = ExtResource( 9 )
+script = ExtResource( 11 )
 
 [node name="Sun Sphere" type="MeshInstance" parent="."]
 transform = Transform( 30, 0, 0, 0, 30, 0, 0, 0, 30, 0.00144982, -0.00536215, -0.00533855 )
@@ -234,14 +216,14 @@ light_cull_mask = 4294967293
 shadow_bias = 1.57
 shadow_contact = 11.3
 shadow_reverse_cull_face = true
-omni_range = 2500.0
+omni_range = 800.0
 omni_attenuation = 0.0281641
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 10 )]
+[node name="Grid" parent="." instance=ExtResource( 12 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 11 )
+stream = ExtResource( 13 )
 bus = "Music"
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]

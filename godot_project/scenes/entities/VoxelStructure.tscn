@@ -2,8 +2,8 @@
 
 [ext_resource path="res://scenes/entities/VoxelStructure.gd" type="Script" id=1]
 [ext_resource path="res://scenes/entities/scripts/VoxStruct2.gdns" type="Script" id=2]
-[ext_resource path="res://scenes/system_map/voxel_cursor_material.tres" type="Material" id=3]
-[ext_resource path="res://scenes/system_map/voxel_mine_material.tres" type="Material" id=4]
+[ext_resource path="res://scenes/entities/materials/voxel_cursor_material.tres" type="Material" id=3]
+[ext_resource path="res://scenes/entities/materials/voxel_mine_material.tres" type="Material" id=4]
 
 [sub_resource type="CubeMesh" id=1]
 size = Vector3( 1.2, 1.2, 1.2 )
@@ -23,11 +23,13 @@ script = ExtResource( 2 )
 
 [node name="CursorBox" type="MeshInstance" parent="VoxStruct"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -30 )
+visible = false
 mesh = SubResource( 1 )
 material/0 = ExtResource( 3 )
 
 [node name="MineBox" type="MeshInstance" parent="VoxStruct"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -30 )
+visible = false
 mesh = SubResource( 1 )
 material/0 = ExtResource( 4 )
 

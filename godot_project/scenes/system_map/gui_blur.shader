@@ -7,7 +7,6 @@ void fragment() {
 	if (ui.a > 0.1) {
 		COLOR = mix(ui, screen_blur, 0.3);
 	} else {
-		COLOR = texture(SCREEN_TEXTURE, SCREEN_UV);
+		COLOR = ui;
 	}
-	
 }
