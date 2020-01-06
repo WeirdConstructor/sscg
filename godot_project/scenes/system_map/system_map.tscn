@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=2]
+[gd_scene load_steps=33 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -30,6 +30,29 @@ bottom_radius = 0.005
 height = 1.0
 radial_segments = 8
 rings = 3
+
+[sub_resource type="ParticlesMaterial" id=13]
+emission_shape = 1
+emission_sphere_radius = 0.01
+spread = 116.82
+gravity = Vector3( 0, 0, 0 )
+linear_accel = 0.7
+anim_speed = 57.69
+
+[sub_resource type="SpatialMaterial" id=15]
+flags_transparent = true
+flags_do_not_receive_shadows = true
+flags_disable_ambient_light = true
+albedo_color = Color( 0, 1, 1, 1 )
+emission_enabled = true
+emission = Color( 0, 1, 1, 1 )
+emission_energy = 4.99
+emission_operator = 0
+emission_on_uv2 = false
+
+[sub_resource type="CubeMesh" id=14]
+material = SubResource( 15 )
+size = Vector3( 0.01, 0.01, 0.01 )
 
 [sub_resource type="SphereShape" id=3]
 radius = 0.4
@@ -84,7 +107,6 @@ transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714,
 [node name="entities" type="Spatial" parent="."]
 
 [node name="Drone" type="KinematicBody" parent="."]
-visible = false
 collision_mask = 3
 script = ExtResource( 3 )
 
@@ -97,6 +119,15 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, 0 )
 visible = false
 mesh = SubResource( 2 )
 material/0 = null
+
+[node name="Particles" type="Particles" parent="Drone/RayMesh"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0 )
+amount = 128
+lifetime = 10.0
+speed_scale = 0.84
+randomness = 0.3
+process_material = SubResource( 13 )
+draw_pass_1 = SubResource( 14 )
 
 [node name="CollisionShape" type="CollisionShape" parent="Drone"]
 shape = SubResource( 3 )
