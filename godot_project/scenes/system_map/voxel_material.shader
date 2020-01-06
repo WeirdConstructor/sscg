@@ -25,7 +25,7 @@ void fragment() {
 	float line_val = max(clamp(xv, 0.0, 1.0), clamp(yv, 0.0, 1.0));
 	
 	// Base color of the voxel with some darkness gradiant so it doesn't look so flat:
-	vec3 base_color = COLOR.rgb * (1.0 - length(vec2(0.5, 0.5) - UV));
+	vec3 base_color = COLOR.rgb * clamp(1.0 - length(vec2(0.5, 0.5) - UV), 0.0, 1.0);
 	
 	// Color of the line fragment
 	vec3 emit_base_color = vec3(0, line_val, line_val);

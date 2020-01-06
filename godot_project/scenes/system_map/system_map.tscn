@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=2]
+[gd_scene load_steps=21 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -43,9 +43,25 @@ use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 8 )
 
-[sub_resource type="CanvasItemMaterial" id=8]
+[sub_resource type="Shader" id=14]
+code = "shader_type canvas_item;
 
-[sub_resource type="SpatialMaterial" id=6]
+
+void fragment() {
+	vec4 screen_blur = texture(SCREEN_TEXTURE, SCREEN_UV, 2.0);
+	vec4 ui          = texture(TEXTURE, UV);
+	if (ui.a > 0.1) {
+		COLOR = mix(ui, screen_blur, 0.3);
+	} else {
+		COLOR = texture(SCREEN_TEXTURE, SCREEN_UV);
+	}
+	
+}"
+
+[sub_resource type="ShaderMaterial" id=13]
+shader = SubResource( 14 )
+
+[sub_resource type="SpatialMaterial" id=7]
 albedo_color = Color( 1, 0.72549, 0, 1 )
 emission_enabled = true
 emission = Color( 1, 0.72549, 0, 1 )
@@ -53,8 +69,8 @@ emission_energy = 8.14
 emission_operator = 0
 emission_on_uv2 = false
 
-[sub_resource type="SphereMesh" id=7]
-material = SubResource( 6 )
+[sub_resource type="SphereMesh" id=8]
+material = SubResource( 7 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
@@ -170,8 +186,7 @@ __meta__ = {
 }
 
 [node name="ViewportContainer" type="ViewportContainer" parent="GUI"]
-self_modulate = Color( 1, 1, 1, 0.901961 )
-material = SubResource( 8 )
+material = SubResource( 13 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = -1280.0
@@ -180,6 +195,8 @@ stretch = true
 
 [node name="Viewport" type="Viewport" parent="GUI/ViewportContainer"]
 transparent_bg = true
+handle_input_locally = false
+render_target_update_mode = 3
 
 [node name="GUIDrawing" type="Node2D" parent="GUI/ViewportContainer/Viewport"]
 script = ExtResource( 9 )
@@ -188,7 +205,7 @@ script = ExtResource( 9 )
 transform = Transform( 30, 0, 0, 0, 30, 0, 0, 0, 30, 0.00144982, -0.00536215, -0.00533855 )
 layers = 2
 cast_shadow = 0
-mesh = SubResource( 7 )
+mesh = SubResource( 8 )
 material/0 = null
 
 [node name="Detail Light" type="OmniLight" parent="."]
