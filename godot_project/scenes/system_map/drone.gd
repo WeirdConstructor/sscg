@@ -36,7 +36,7 @@ func set_active(is_active):
 		if test_mode:
 			self.set_translation(
 			   self.get_parent().get_node("ship").get_translation()
-			   + Vector3(0, 140, 0))
+			   + Vector3(0, 120, 0))
 		else:
 			self.set_translation(
 			   self.get_parent().get_node("ship").get_translation()
@@ -103,6 +103,7 @@ func stop_mining():
 		mining_vox = null
 		mining_pos = null
 		mining_info = null
+		$MiningBeamSound.disable_beam()
 		
 func process_mining_gun(delta):
 	var cast = self.get_child(0)
@@ -150,6 +151,7 @@ func process_mining_gun(delta):
 					mining_vox.set_marker_status(true, true)
 					mining_time = 0.0
 					marker_vox = vox
+					$MiningBeamSound.enable_beam()
 				else:
 					vox.looking_at_nothing()
 					mining_pos = null

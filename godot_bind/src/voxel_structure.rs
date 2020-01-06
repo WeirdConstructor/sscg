@@ -64,7 +64,7 @@ impl VoxStruct {
 
         let voxel_material =
             ResourceLoader::godot_singleton().load(
-                GodotString::from_str("res://scenes/system_map/voxel_material.tres"),
+                GodotString::from_str("res://scenes/entities/materials/voxel_material.tres"),
                 GodotString::from_str("ShaderMaterial"),
                 false).unwrap().cast::<Material>().unwrap();
 
