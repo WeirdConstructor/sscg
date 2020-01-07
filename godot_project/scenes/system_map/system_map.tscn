@@ -156,18 +156,22 @@ script = ExtResource( 7 )
 
 [node name="Pop1" type="AudioStreamPlayer" parent="Drone"]
 stream = SubResource( 7 )
+volume_db = -6.0
 bus = "SoundFx"
 
 [node name="Pop2" type="AudioStreamPlayer" parent="Drone"]
 stream = SubResource( 8 )
+volume_db = -6.0
 bus = "SoundFx"
 
 [node name="Pop3" type="AudioStreamPlayer" parent="Drone"]
 stream = SubResource( 9 )
+volume_db = -6.0
 bus = "SoundFx"
 
 [node name="Pop4" type="AudioStreamPlayer" parent="Drone"]
 stream = SubResource( 10 )
+volume_db = -6.0
 bus = "SoundFx"
 
 [node name="GUI" type="Control" parent="."]
