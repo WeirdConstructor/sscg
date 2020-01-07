@@ -302,31 +302,31 @@ impl VoxStruct {
     }
 
     #[export]
-    fn spawn_mine_pop_at_cursor(&mut self, mut owner: Spatial) {
-        let (ot, pos) =
-            self.get_octree_at(
-                self.cursor[0] as usize,
-                self.cursor[1] as usize,
-                self.cursor[2] as usize);
-        let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
-
-        let found_voxel = m.color != 0;
-
+    fn spawn_mine_pop_at_cursor(&mut self, mut owner: Spatial, color: u8) {
         unsafe {
             let mut part =
                 owner.get_child(2)
                      .and_then(|n| n.cast::<Particles>())
                      .unwrap();
-            part.show();
-            part.set_one_shot(true);
-            part.set_emitting(true);
-            part.restart();
+
+            let mut m = part.get_material_override().unwrap()
+                            .cast::<SpatialMaterial>().unwrap();
+            let cm = ColorMap::new_8bit();
+            let clr = cm.map(color);
+            m.set_albedo(clr);
+            m.set_emission(clr);
+            part.set_material_override(m.cast::<Material>());
 
             let mut t = part.get_transform();
             t.origin.x = self.cursor[0] as f32 + 0.5;
             t.origin.y = self.cursor[1] as f32 + 0.5;
             t.origin.z = self.cursor[2] as f32 + 0.5;
             part.set_transform(t);
+
+            part.show();
+            part.set_one_shot(true);
+            part.set_emitting(true);
+            part.restart();
         }
     }
 
@@ -383,7 +383,7 @@ impl VoxStruct {
                       VVal::Int(self.cursor[2] as i64),
                       ]);
 
-            self.spawn_mine_pop_at_cursor(owner);
+            self.spawn_mine_pop_at_cursor(owner, m.color);
 
             true
         } else {
