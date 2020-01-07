@@ -1,6 +1,5 @@
 use gdnative::*;
 use euclid::{vec2, vec3};
-use std::rc::Rc;
 use crate::voxeltree::*;
 
 pub enum Face {
@@ -11,8 +10,6 @@ pub enum Face {
     Right,  // x + 1,   y,      z
     Bottom, // x,       y - 1,  z
 }
-
-const UV_TEXTURE_ATLAS_WIDTH : usize = 8;
 
 const CUBE_VERTICES : [[f32; 3]; 8] = [
   [ 0., 0., 0. ], // 0
@@ -69,7 +66,7 @@ impl Face {
                      indices: &mut Int32Array,
                      collision_tris: &mut Vector3Array) {
 
-        let mut tris = match self {
+        let tris = match self {
             Face::Front  => &FACE_TRIANGLE_VERTEX_IDX[0],
             Face::Top    => &FACE_TRIANGLE_VERTEX_IDX[1],
             Face::Back   => &FACE_TRIANGLE_VERTEX_IDX[2],
@@ -176,7 +173,7 @@ pub fn render_octree_to_am(
 //            ) { return; }
 
         let clr = cm.map(v.color);
-        let mut p = vec3(
+        let p = vec3(
             pos.x as f32,
             (vol_max_idx - pos.y) as f32,
             pos.z as f32);

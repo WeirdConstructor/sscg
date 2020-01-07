@@ -1,12 +1,10 @@
 use crate::state::SSCG;
 use gdnative::*;
-use euclid::{vec2, vec3};
+use euclid::{vec3};
 use wlambda::VVal;
 use std::rc::Rc;
-use sscg::tree_painter::{DrawCmd, TreePainter};
-#[macro_use]
 use crate::state::*;
-use crate::util::{variant2vval, vval2variant, c2c};
+use crate::util::{variant2vval, vval2variant};
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Spatial)]
@@ -22,7 +20,7 @@ unsafe impl Send for SystemMap { }
 
 #[methods]
 impl SystemMap {
-    fn _init(owner: Spatial) -> Self {
+    fn _init(_owner: Spatial) -> Self {
         let main_font_resource =
             ResourceLoader::godot_singleton().load(
                 GodotString::from_str("res://fonts/main_font_normal.tres"),
@@ -41,7 +39,7 @@ impl SystemMap {
             small_font_resource
                 .and_then(|font_res| font_res.cast::<DynamicFont>())
                 .unwrap();
-        let mut sscg =
+        let sscg =
             SSCGState::new(Rc::new(FontHolder {
                 main_font,
                 small_font,
@@ -61,7 +59,7 @@ impl SystemMap {
     }
 
     #[export]
-    fn on_ship_arrived(&mut self, mut owner: Spatial, too_fast: bool, system: i64, entity: i64) {
+    fn on_ship_arrived(&mut self, mut _owner: Spatial, too_fast: bool, system: i64, entity: i64) {
         lock_sscg!(sscg);
         sscg.call_cb(
             "on_arrived",
@@ -83,7 +81,7 @@ impl SystemMap {
     }
 
     #[export]
-    fn _ready(&mut self, mut owner: Spatial) {
+    fn _ready(&mut self, mut _owner: Spatial) {
         dbg!("READY SystemMap");
 //        let mut f = File::new();
 //        f.open(GodotString::from_str("res://test.txt"), 1)
@@ -210,7 +208,7 @@ impl SystemMap {
 
         self.handle_commands(sscg, &mut owner, delta);
 
-        let mut entities = unsafe {
+        let entities = unsafe {
             owner.get_node(NodePath::from_str("entities"))
                  .expect("Find 'entities' node")
                  .cast::<Spatial>()

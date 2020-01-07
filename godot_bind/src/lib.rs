@@ -3,9 +3,9 @@ mod state;
 mod system_map;
 mod wl_gd_mod_resolver;
 mod util;
-mod voxel_vol;
 mod voxel_structure;
 mod voxeltree;
+mod voxeltree_wlambda;
 mod gd_voxel_impl;
 
 #[macro_use]
@@ -15,9 +15,8 @@ extern crate gdnative;
 use gdnative::*;
 use euclid::rect;
 use euclid::vec2;
-use sscg::tree_painter::{DrawCmd, TreePainter, FontSize};
+use sscg::tree_painter::{DrawCmd, FontSize};
 use sscg::gui::*;
-use std::rc::Rc;
 use state::*;
 use util::c2c;
 use wlambda::VVal;
@@ -39,13 +38,13 @@ fn draw_cmds(xxo: i32, yyo: i32,
 {
     for c in cmds {
         match c {
-            DrawCmd::CacheDraw { w, h, id, cmds: cd_cmds } => {
+            DrawCmd::CacheDraw { w: _w, h: _h, id, cmds: cd_cmds } => {
                 if *id >= cache.len() {
                     cache.resize(*id + 1, None)
                 }
                 cache[*id] = Some(cd_cmds.clone());
             },
-            DrawCmd::DrawCache { x, y, w, h, id } => {
+            DrawCmd::DrawCache { x, y, w: _w, h: _h, id } => {
                 let my_cmds = std::mem::replace(&mut cache[*id], None);
                 draw_cmds(xxo + x, yyo + y, cache, n, fh, my_cmds.as_ref().unwrap());
                 std::mem::replace(&mut cache[*id], my_cmds);
@@ -226,7 +225,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn _process(&mut self, mut s: Node2D, delta: f64) {
+    fn _process(&mut self, mut s: Node2D, _delta: f64) {
         lock_sscg!(sscg);
 
         let acts = sscg.wm.borrow_mut().get_activated_childs();
@@ -263,16 +262,16 @@ impl GUIPaintNode {
     }
 }
 
-fn terminate(options: *mut gdnative::sys::godot_gdnative_terminate_options) {
+fn terminate(_options: *mut gdnative::sys::godot_gdnative_terminate_options) {
     dbg!("*** terminate sscg native");
 }
 
-static mut oldhook
+static mut OLDHOOK
     : Option<Box<dyn Fn(&std::panic::PanicInfo) + Sync + Send + 'static>> = None;
 
 fn init_panic_hook() {
     unsafe {
-        oldhook = Some(std::panic::take_hook());
+        OLDHOOK = Some(std::panic::take_hook());
     }
     std::panic::set_hook(Box::new(|panic_info| {
         let mut loc_string = String::from("unknown location");
@@ -289,7 +288,7 @@ fn init_panic_hook() {
             godot_print!("{}: unknown panic occurred", loc_string);
         }
 
-        unsafe { (*(oldhook.as_ref().unwrap()))(panic_info); }
+        unsafe { (*(OLDHOOK.as_ref().unwrap()))(panic_info); }
     }));
 }
 
@@ -298,7 +297,6 @@ fn init(handle: gdnative::init::InitHandle) {
     init_panic_hook();
     handle.add_class::<GUIPaintNode>();
     handle.add_class::<system_map::SystemMap>();
-    handle.add_class::<voxel_vol::InstVoxVolume>();
     handle.add_class::<voxel_structure::VoxStruct>();
 
 }

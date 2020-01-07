@@ -1,8 +1,6 @@
 use crate::state::SSCG;
 #[macro_use]
-use crate::state::*;
 use gdnative::*;
-use euclid::{vec2, vec3};
 use crate::voxeltree::*;
 use crate::gd_voxel_impl::*;
 use wlambda::VVal;
@@ -15,8 +13,6 @@ pub struct VoxStruct {
     vol:              Vol<u8>,
     octrees:          std::vec::Vec<Octree<u8>>,
 
-    sb_shape_owner: i64,
-
     cursor:         [u16; 3],
 }
 
@@ -28,14 +24,13 @@ const SUBVOLS     : usize = VOL_SIZE / SUBVOL_SIZE;
 
 #[methods]
 impl VoxStruct {
-    fn _init(owner: Spatial) -> Self {
+    fn _init(_owner: Spatial) -> Self {
         Self {
             meshes:           vec![],
             collision_shapes: vec![],
             vol:              Vol::new(VOL_SIZE),
             octrees:          vec![],
             cursor:         [0, 0, 0],
-            sb_shape_owner: 0
         }
     }
 
@@ -56,6 +51,10 @@ impl VoxStruct {
                 }
             }
         }
+
+//        let (sysid, entid) = self.parent_info(&mut owner);
+//        lock_sscg!(sscg);
+//        let ret = sscg.call_cb("on_draw_voxel_structure", &vec![sysid, entid]);
         println!("filled...");
 
 //        let vv = self.vol.serialize();
@@ -137,7 +136,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn load_vol(&mut self, mut owner: Spatial) {
+    fn load_vol(&mut self, mut _owner: Spatial) {
         for z in 0..VOL_SIZE {
             let iz  = z / SUBVOL_SIZE;
             let izi = z % SUBVOL_SIZE;
@@ -197,7 +196,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn mine_info_at_cursor(&mut self, mut owner: Spatial) -> Variant {
+    fn mine_info_at_cursor(&mut self, mut _owner: Spatial) -> Variant {
         let (ot, pos) =
             self.get_octree_at(
                 self.cursor[0] as usize,
@@ -214,7 +213,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn looking_at(&mut self, mut owner: Spatial, x: f64, y: f64, z: f64) -> bool {
+    fn looking_at(&mut self, owner: Spatial, x: f64, y: f64, z: f64) -> bool {
         unsafe {
             let mut c =
                 owner.get_child(0)
@@ -302,7 +301,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn spawn_mine_pop_at_cursor(&mut self, mut owner: Spatial, color: u8) {
+    fn spawn_mine_pop_at_cursor(&mut self, owner: Spatial, color: u8) {
         unsafe {
             let mut part =
                 owner.get_child(2)
@@ -339,8 +338,6 @@ impl VoxStruct {
                 self.cursor[2] as usize);
         let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
 
-        let found_voxel = m.color != 0;
-
         let (sysid, entid) = self.parent_info(&mut owner);
         lock_sscg!(sscg);
         let ret = sscg.call_cb(
@@ -374,7 +371,7 @@ impl VoxStruct {
 
             lock_sscg!(sscg);
             let (sysid, entid) = self.parent_info(&mut owner);
-            let ret = sscg.call_cb(
+            sscg.call_cb(
                 "on_mined_voxel",
                 &vec![sysid, entid,
                       VVal::Int(m.color as i64),
@@ -392,25 +389,18 @@ impl VoxStruct {
     }
 
     #[export]
-    fn looking_at_nothing(&mut self, mut owner: Spatial) {
-        unsafe {
-            self.set_marker_status(owner, false, false);
-        }
+    fn looking_at_nothing(&mut self, owner: Spatial) {
+        self.set_marker_status(owner, false, false);
     }
 
     #[export]
-    fn _process(&mut self, mut owner: Spatial, delta: f64) {
+    fn _process(&mut self, mut _owner: Spatial, _delta: f64) {
     }
 
     fn reload_at(&mut self, x: usize, y: usize, z: usize) {
         let iz  = z / SUBVOL_SIZE;
-        let izi = z % SUBVOL_SIZE;
-
         let iy  = y / SUBVOL_SIZE;
-        let iyi = y % SUBVOL_SIZE;
-
         let ix  = x / SUBVOL_SIZE;
-        let ixi = x % SUBVOL_SIZE;
 
         let sub_idx =
               iz * (SUBVOLS * SUBVOLS)
