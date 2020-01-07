@@ -59,31 +59,47 @@ enum Mask {
 }
 
 #[derive(Clone, Debug)]
-struct VoxelPainter {
+pub struct VoxelPainter {
     volumes: std::vec::Vec<Vol<FColor>>,
     masks:   std::vec::Vec<Mask>,
 }
 
 impl VoxelPainter {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             volumes: vec![],
             masks: vec![],
         }
     }
 
-    fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.volumes.clear();
         self.masks.clear();
     }
 
-    fn new_vol(&mut self, size: usize, def: f64) -> i64 {
+    pub fn write_into_u8_vol(&self, vol_id: usize, vol: &mut Vol<u8>) {
+        if self.volumes.len() == 0 { return; }
+
+        for z in 0..vol.size {
+            for y in 0..vol.size {
+                for x in 0..vol.size {
+                    vol.set(
+                        x as u16, y as u16, z as u16,
+                        self.volumes[vol_id]
+                        .at(Pos { x: x as u16, y: y as u16, z: z as u16 })
+                        .color.into());
+                }
+            }
+        }
+    }
+
+    pub fn new_vol(&mut self, size: usize, def: f64) -> i64 {
         self.volumes.push(Vol::new_default(size, def.into()));
         (self.volumes.len() - 1) as i64
     }
 }
 
-pub fn new_voxel_painter() -> VVal {
+pub fn new_voxel_painter(id: usize) -> (Rc<RefCell<VoxelPainter>>, VVal) {
     let o = VVal::map();
 
     let painter = Rc::new(RefCell::new(VoxelPainter::new()));
@@ -94,5 +110,9 @@ pub fn new_voxel_painter() -> VVal {
             env.arg(1).f())))
     });
 
-    o
+    set_vval_method!(o, painter, id, Some(2), Some(2), env, _argc, {
+        Ok(VVal::Int(id as i64))
+    });
+
+    (painter, o)
 }
