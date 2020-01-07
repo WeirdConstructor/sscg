@@ -8,7 +8,7 @@
 [sub_resource type="CubeMesh" id=1]
 size = Vector3( 1.2, 1.2, 1.2 )
 
-[sub_resource type="SpatialMaterial" id=9]
+[sub_resource type="SpatialMaterial" id=2]
 flags_do_not_receive_shadows = true
 flags_disable_ambient_light = true
 params_blend_mode = 1
@@ -27,7 +27,7 @@ curve = SubResource( 3 )
 
 [sub_resource type="ParticlesMaterial" id=5]
 emission_shape = 2
-emission_box_extents = Vector3( 1, 1, 1 )
+emission_box_extents = Vector3( 0.6, 0.6, 0.6 )
 spread = 180.0
 gravity = Vector3( 0, 0, 0 )
 initial_velocity = 1.0
@@ -62,8 +62,8 @@ mesh = SubResource( 1 )
 material/0 = ExtResource( 4 )
 
 [node name="MineExplosion" type="Particles" parent="VoxStruct"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.98195, 0, -29.7627 )
-material_override = SubResource( 9 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.97075, 0, -29.966 )
+material_override = SubResource( 2 )
 amount = 128
 lifetime = 2.0
 speed_scale = 3.7
