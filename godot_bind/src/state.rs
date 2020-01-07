@@ -1,12 +1,13 @@
 use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
-use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric, FontSize};
+use sscg::tree_painter::{TreePainter, FontMetric, FontSize};
 use sscg::wlambda_api::WindowManager;
 use sscg::wlambda_api::window_manager_wlambda_obj;
 use gdnative::*;
-use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
+use wlambda::{VVal, Env, GlobalEnv, EvalContext, SymbolTable};
 use wlambda::set_vval_method;
+use crate::voxeltree_wlambda::*;
 use crate::wl_gd_mod_resolver::*;
 
 #[derive(Debug, Clone)]
@@ -57,14 +58,15 @@ impl SSCGState {
         let cmd_queue = Rc::new(RefCell::new(std::vec::Vec::new()));
 
         let o = VVal::map();
-        set_vval_method!(o, cmd_queue, cmd, Some(2), Some(2), env, argc, {
+        set_vval_method!(o, cmd_queue, cmd, Some(2), Some(2), env, _argc, {
             let v = VVal::vec();
             v.push(env.arg(0));
             v.push(env.arg(1));
             cmd_queue.borrow_mut().push(v);
             Ok(VVal::Nul)
         });
-        set_vval_method!(o, cmd_queue, read_savegame, Some(1), Some(1), env, argc, {
+        let _cmd_queue = cmd_queue.clone();
+        set_vval_method!(o, _cmd_queue, read_savegame, Some(1), Some(1), env, _argc, {
             let filename = env.arg(0).s_raw();
 
             let savegame_url = format!("user://{}.json", filename);
@@ -89,7 +91,7 @@ impl SSCGState {
                 }
             }
         });
-        set_vval_method!(o, cmd_queue, write_savegame, Some(2), Some(2), env, argc, {
+        set_vval_method!(o, _cmd_queue, write_savegame, Some(2), Some(2), env, _argc, {
             let filename = env.arg(0).s_raw();
             let state    = env.arg(1);
 
@@ -118,6 +120,9 @@ impl SSCGState {
             Ok(VVal::Bol(true))
         });
         sscg_wl_mod.set("game", o);
+        sscg_wl_mod.fun("new_voxel_painter", move |_e: &mut Env, _argc: usize| {
+            Ok(new_voxel_painter())
+        }, Some(0), Some(0), false);
         genv.borrow_mut().set_module("sscg", sscg_wl_mod);
 
         let tp = TreePainter::new(fh.clone());

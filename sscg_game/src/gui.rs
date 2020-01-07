@@ -11,10 +11,10 @@ pub enum Widget {
 
 fn calc_m_wo_spacing(child_count: usize, spacing: u32, border: i32, mw: u32) -> u32 {
     let mw = if mw < (4 * border) as u32 { 0 } else { mw - (4 * border) as u32 };
-    let mut child_spacings =
+    let child_spacings =
         if child_count <= 1 { 0 }
         else { child_count - 1 };
-    let mut mw_wo_spacing =
+    let mw_wo_spacing =
         mw as i32 - (child_spacings as u32 * spacing) as i32;
 
     if mw_wo_spacing < 0 { 0 }
@@ -306,13 +306,13 @@ impl Widget {
                     self.draw_label(lbl, bg_color, tw, th, &mut mw, &mut mh, lbl.font_size, p);
                 }
             },
-            Widget::Canvas(id, _size, cv) => {
+            Widget::Canvas(_id, _size, cv) => {
                 let min = if mw < mh { mw } else { mh };
 
-                let mut hovered = false;
-                if let Some(hchld_id) = win.hover_child {
-                    if *id == hchld_id { hovered = true; }
-                }
+//                let mut hovered = false;
+//                if let Some(hchld_id) = win.hover_child {
+//                    if *id == hchld_id { hovered = true; }
+//                }
 
                 for cmd in cv.cmds.iter() {
                     match cmd {
@@ -338,14 +338,14 @@ impl Widget {
 
                             p.draw_circle(x as i32, y as i32, r, clr);
                         },
-                        CanvasCmd::Text( sid, x, y, w, align, s, fs, clr) => {
+                        CanvasCmd::Text( _sid, x, y, w, align, s, fs, clr) => {
                             let x = p2r(min, *x);
                             let y = p2r(min, *y);
                             let w = p2r(min, *w as i32);
                             p.draw_text(
                                 x as i32, y as i32, w, *clr, None, *align, &s, *fs);
                         },
-                        CanvasCmd::CircleFilled( sid, x, y, r, clr ) => {
+                        CanvasCmd::CircleFilled( _sid, x, y, r, clr ) => {
                             let x = p2r(min, *x);
                             let y = p2r(min, *y);
                             let r = p2r(min, *r as i32);
@@ -360,7 +360,7 @@ impl Widget {
                                 *t,
                                 *clr);
                         },
-                        CanvasCmd::Rect( sid, x1, y1, rw, rh, clr ) => {
+                        CanvasCmd::Rect( _sid, x1, y1, rw, rh, clr ) => {
                             p.draw_rect(
                                 p2r(min, *x1) as i32,
                                 p2r(min, *y1) as i32,
@@ -368,7 +368,7 @@ impl Widget {
                                 p2r(min, *rh as i32),
                                 *clr);
                         },
-                        CanvasCmd::RectFilled( sid, x1, y1, rw, rh, clr ) => {
+                        CanvasCmd::RectFilled( _sid, x1, y1, rw, rh, clr ) => {
                             p.draw_rect_filled(
                                 p2r(min, *x1) as i32,
                                 p2r(min, *y1) as i32,
@@ -743,7 +743,7 @@ impl Window {
 
         for (idx, fb) in self.feedback.iter().enumerate() {
             match &self.widgets[idx] {
-                Widget::Canvas(_, _, lbl) => {
+                Widget::Canvas(_, _, _lbl) => {
                     if fb.is_inside(x as u32, y as u32) {
                         if let Some(ref sfb) = fb.sub {
                             for c in sfb.iter() {

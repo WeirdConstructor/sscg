@@ -1,4 +1,4 @@
-use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
+use wlambda::{GlobalEnv, EvalContext, SymbolTable};
 use gdnative::godot_print;
 use gdnative::{File, GodotString};
 use wlambda::compiler::{GlobalEnvRef, ModuleResolver, ModuleLoadError};
