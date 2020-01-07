@@ -302,6 +302,35 @@ impl VoxStruct {
     }
 
     #[export]
+    fn spawn_mine_pop_at_cursor(&mut self, mut owner: Spatial) {
+        let (ot, pos) =
+            self.get_octree_at(
+                self.cursor[0] as usize,
+                self.cursor[1] as usize,
+                self.cursor[2] as usize);
+        let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
+
+        let found_voxel = m.color != 0;
+
+        unsafe {
+            let mut part =
+                owner.get_child(2)
+                     .and_then(|n| n.cast::<Particles>())
+                     .unwrap();
+            part.show();
+            part.set_one_shot(true);
+            part.set_emitting(true);
+            part.restart();
+
+            let mut t = part.get_transform();
+            t.origin.x = self.cursor[0] as f32 + 0.5;
+            t.origin.y = self.cursor[1] as f32 + 0.5;
+            t.origin.z = self.cursor[2] as f32 + 0.5;
+            part.set_transform(t);
+        }
+    }
+
+    #[export]
     fn mine_status(&mut self, mut owner: Spatial, started: bool) -> bool {
         let (ot, pos) =
             self.get_octree_at(
@@ -353,6 +382,8 @@ impl VoxStruct {
                       VVal::Int(self.cursor[1] as i64),
                       VVal::Int(self.cursor[2] as i64),
                       ]);
+
+            self.spawn_mine_pop_at_cursor(owner);
 
             true
         } else {
