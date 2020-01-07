@@ -1,7 +1,7 @@
 extends MeshInstance
 
 func _ready():
-	var line_width = 0.4
+	var line_width = 0.3
 	var length     = 1280
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -10,7 +10,7 @@ func _ready():
 	
 	self.translate(Vector3(-(length / 2), 0, -(length / 2)))
 	
-	var line_count = 256.0
+	var line_count = 256.0 / 2.0;
 	var grid_offs = (length - line_width) / (line_count - 1.0)
 	for i in range(line_count):
 		st.add_vertex(Vector3(length, 0,              i * grid_offs))
