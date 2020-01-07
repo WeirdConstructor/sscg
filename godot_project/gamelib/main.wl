@@ -167,6 +167,11 @@ STATE.callbacks.on_mined_voxel = {
     $t
 };
 
+STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
+    std:displayln "LOADDED on_draw_voxel_structure " sys_id ent_id;
+    $n
+};
+
 STATE.callbacks.on_saved_godot_state = {!(state) = @;
     std:displayln "STATE:" state;
 

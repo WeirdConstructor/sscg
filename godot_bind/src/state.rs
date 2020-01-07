@@ -36,6 +36,7 @@ pub struct SSCGState {
     pub state:           VVal,
     pub cmd_queue:       Rc<RefCell<std::vec::Vec<VVal>>>,
     pub wm:              Rc<RefCell<WindowManager>>,
+    pub vox_painters:    Rc<RefCell<std::vec::Vec<Rc<RefCell<VoxelPainter>>>>>,
 }
 
 // XXX: This is safe as long as it is only accessed from the
@@ -120,9 +121,15 @@ impl SSCGState {
             Ok(VVal::Bol(true))
         });
         sscg_wl_mod.set("game", o);
+
+        let vox_painters = Rc::new(RefCell::new(vec![]));
+        let vox_painters_r = vox_painters.clone();
         sscg_wl_mod.fun("new_voxel_painter", move |_e: &mut Env, _argc: usize| {
-            Ok(new_voxel_painter())
+            let (painter_ref, obj) = new_voxel_painter(vox_painters_r.borrow().len());
+            vox_painters_r.borrow_mut().push(painter_ref);
+            Ok(obj)
         }, Some(0), Some(0), false);
+
         genv.borrow_mut().set_module("sscg", sscg_wl_mod);
 
         let tp = TreePainter::new(fh.clone());
@@ -130,6 +137,7 @@ impl SSCGState {
             tp,
             wm,
             cmd_queue,
+            vox_painters,
             fonts:           fh,
             temp_stations:   vec![(1, 1), (900, 500)],
             update_stations: true,

@@ -204,10 +204,6 @@ impl SystemMap {
 
     #[export]
     fn _process(&mut self, mut owner: Spatial, delta: f64) {
-        lock_sscg!(sscg);
-
-        self.handle_commands(sscg, &mut owner, delta);
-
         let entities = unsafe {
             owner.get_node(NodePath::from_str("entities"))
                  .expect("Find 'entities' node")
@@ -215,16 +211,36 @@ impl SystemMap {
                  .unwrap()
         };
 
-        unsafe {
-            for i in 0..entities.get_child_count() {
-                let mut ent = entities.get_child(i).unwrap();
-                if ent.get(GodotString::from_str("selected")).to_bool() {
-                    ent.set(GodotString::from_str("selected"), Variant::from_i64(0));
-                    println!("GOT SELECTION: {}", i);
+        let load_entity_state = {
+            lock_sscg!(sscg);
+
+            self.handle_commands(sscg, &mut owner, delta);
+
+            unsafe {
+                for i in 0..entities.get_child_count() {
+                    let mut ent = entities.get_child(i).unwrap();
+                    if ent.get(GodotString::from_str("selected")).to_bool() {
+                        ent.set(GodotString::from_str("selected"), Variant::from_i64(0));
+                        println!("GOT SELECTION: {}", i);
+                    }
+                }
+            }
+
+            let load_entity_state = sscg.update_stations;
+
+            self.update_stations(sscg, entities);
+
+            load_entity_state
+        };
+
+        if load_entity_state {
+            unsafe {
+                for i in 0..entities.get_child_count() {
+                    let mut ent = entities.get_child(i).unwrap();
+                    println!("LES {}", i);
+                    ent.call(GodotString::from_str("on_wlambda_init"), &vec![]);
                 }
             }
         }
-
-        self.update_stations(sscg, entities);
     }
 }

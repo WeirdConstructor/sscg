@@ -35,6 +35,20 @@ impl VoxStruct {
     }
 
     #[export]
+    fn on_wlambda_init(&mut self, mut owner: Spatial) {
+        println!("FOFO");
+        let (sysid, entid) = self.parent_info(&mut owner);
+        lock_sscg!(sscg);
+        let ret = sscg.call_cb("on_draw_voxel_structure", &vec![sysid, entid]);
+        if !ret.is_none() {
+            sscg.vox_painters
+                .borrow()[ret.v_i(0) as usize]
+                .borrow()
+                .write_into_u8_vol(ret.v_i(1) as usize, &mut self.vol);
+        }
+    }
+
+    #[export]
     fn _ready(&mut self, mut owner: Spatial) {
         use wlambda::util::*;
         self.vol.fill(0, 0, 0, VOL_SIZE as u16, VOL_SIZE as u16, VOL_SIZE as u16, 100.into());
@@ -52,9 +66,6 @@ impl VoxStruct {
             }
         }
 
-//        let (sysid, entid) = self.parent_info(&mut owner);
-//        lock_sscg!(sscg);
-//        let ret = sscg.call_cb("on_draw_voxel_structure", &vec![sysid, entid]);
         println!("filled...");
 
 //        let vv = self.vol.serialize();
