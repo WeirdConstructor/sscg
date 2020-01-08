@@ -1,9 +1,9 @@
-pub trait VoxelColor: PartialEq + Sized + Copy + std::fmt::Debug + Default {}
-impl<T: PartialEq + Sized + Copy + std::fmt::Debug + Default> VoxelColor for T {}
+pub trait VoxelColor: PartialEq + Sized + Copy + Into<u8> + From<u8> + std::fmt::Debug + Default {}
+impl<T: PartialEq + Sized + Copy + Into<u8> + From<u8> + std::fmt::Debug + Default> VoxelColor for T {}
 
-type pint = u16;
+type PInt = u16;
 
-pub const F_NONE   : u8 = 0x00;
+//pub const F_NONE   : u8 = 0x00;
 pub const F_FRONT  : u8 = 0x01;
 pub const F_TOP    : u8 = 0x02;
 pub const F_BACK   : u8 = 0x04;
@@ -33,16 +33,21 @@ pub struct Voxel<C> where C: VoxelColor {
 impl<C> Voxel<C> where C: VoxelColor {
 }
 
-fn xyz2facemask(x: pint, y: pint, z: pint) -> u8 {
-    let mut mask : u8 = F_NONE;
-    if x == 0 { mask |= F_LEFT;   }
-    else      { mask |= F_RIGHT;  }
-    if y == 0 { mask |= F_TOP;    }
-    else      { mask |= F_BOTTOM; }
-    if z == 0 { mask |= F_FRONT;  }
-    else      { mask |= F_BACK;   }
-    mask = 0xFF;
-    mask
+//fn xyz2facemask(x: PInt, y: PInt, z: PInt) -> u8 {
+//    let mut mask : u8 = F_NONE;
+//    if x == 0 { mask |= F_LEFT;   }
+//    else      { mask |= F_RIGHT;  }
+//    if y == 0 { mask |= F_TOP;    }
+//    else      { mask |= F_BOTTOM; }
+//    if z == 0 { mask |= F_FRONT;  }
+//    else      { mask |= F_BACK;   }
+//    mask
+//}
+
+impl Into<u8> for Voxel<u8> {
+    fn into(self) -> u8 {
+        self.color
+    }
 }
 
 impl Into<Voxel<u8>> for u8 {
@@ -70,7 +75,47 @@ impl<C> Vol<C> where C: VoxelColor {
         }
     }
 
-    pub fn set(&mut self, x: pint, y: pint, z: pint, v: Voxel<C>) {
+    pub fn new_default(size: usize, default: Voxel<C>) -> Self {
+        let mut data = std::vec::Vec::new();
+        data.resize(size * size * size, default);
+        Self {
+            size,
+            data,
+        }
+    }
+
+    pub fn deserialize(&mut self, data: &[u8]) {
+        let size = data[4] as usize;
+        let mut dv : std::vec::Vec<Voxel<C>> = std::vec::Vec::new();
+        dv.resize(size.pow(3) as usize, Voxel::default());
+
+        for i in 5..(size.pow(3) + 5) {
+            dv[i - 5].color = data[i].into();
+        }
+
+        self.size = size;
+        self.data = dv;
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut out : Vec<u8> = vec![];
+        out.resize(5 + self.size.pow(3) as usize, 0);
+
+        let mut i = 0;
+        out[i] = 'v' as u32 as u8; i += 1;
+        out[i] = 'o' as u32 as u8; i += 1;
+        out[i] = 'x' as u32 as u8; i += 1;
+        out[i] = 1;                i += 1;
+        out[i] = self.size as u8;
+
+        for (i, c) in self.data.iter().enumerate() {
+            out[i + 5] = c.color.into();
+        }
+
+        out
+    }
+
+    pub fn set(&mut self, x: PInt, y: PInt, z: PInt, v: Voxel<C>) {
         self.data[z as usize * self.size * self.size + y as usize * self.size + x as usize] = v;
     }
 
@@ -83,7 +128,7 @@ impl<C> Vol<C> where C: VoxelColor {
 
         let clr_def = C::default();
         let size        = self.size;
-        let last : pint = (self.size - 1) as pint;
+        let last : PInt = (self.size - 1) as PInt;
 
         if pos.x == 0    { faces |= F_LEFT; }
         if pos.x == last { faces |= F_RIGHT; }
@@ -126,8 +171,8 @@ impl<C> Vol<C> where C: VoxelColor {
         vox
     }
 
-    pub fn fill(&mut self, x: pint, y: pint, z: pint,
-                w: pint, h: pint, d: pint, v: Voxel<C>)
+    pub fn fill(&mut self, x: PInt, y: PInt, z: PInt,
+                w: PInt, h: PInt, d: PInt, v: Voxel<C>)
     {
         for z in z..(z + d) {
             for y in y..(y + h) {
@@ -141,29 +186,29 @@ impl<C> Vol<C> where C: VoxelColor {
 
 #[derive(Clone, Copy, PartialEq, Default)]
 pub struct Pos {
-    pub x: pint,
-    pub y: pint,
-    pub z: pint,
+    pub x: PInt,
+    pub y: PInt,
+    pub z: PInt,
 }
 
 impl std::fmt::Debug for Pos {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        use std::fmt;
+//        use std::fmt;
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
 
 impl Pos {
-    pub fn new(x: pint, y: pint, z: pint) -> Self {
+    pub fn new(x: PInt, y: PInt, z: PInt) -> Self {
         Self { x, y, z }
     }
 
-    pub fn offs(&self, xo: pint, yo: pint, zo: pint) -> Self {
+    pub fn offs(&self, xo: PInt, yo: PInt, zo: PInt) -> Self {
         Self { x: self.x + xo, y: self.y + yo, z: self.z + zo }
     }
 
-    pub fn mul(&self, m: pint) -> Self {
+    pub fn mul(&self, m: PInt) -> Self {
         Self { x: self.x * m, y: self.y * m, z: self.z * m }
     }
 }
@@ -179,7 +224,7 @@ pub struct TreePos {
 
 impl std::fmt::Debug for TreePos {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        use std::fmt;
+//        use std::fmt;
         write!(f, "[lvl={},offs={}]+({}, {}, {})=>{}",
                   self.level, self.offs,
                   self.x, self.y, self.z, self.idx())
@@ -215,14 +260,14 @@ impl TreePos {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub struct Node<C: VoxelColor> {
+pub struct OctNode<C: VoxelColor> {
     pub voxel: Option<Voxel<C>>,
     pub pos:   Pos,
     pub empty: bool,
     pub tree_pos: TreePos,
 }
 
-impl<C> Node<C> where C: VoxelColor {
+impl<C> OctNode<C> where C: VoxelColor {
     pub fn new() -> Self {
         Self {
             voxel:  None,
@@ -235,7 +280,7 @@ impl<C> Node<C> where C: VoxelColor {
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Octree<C: VoxelColor> {
-    nodes: std::vec::Vec<Node<C>>,
+    nodes: std::vec::Vec<OctNode<C>>,
     nodes_size: usize,
     pub vol: Vol<C>,
 }
@@ -246,7 +291,7 @@ impl<C> Octree<C> where C: VoxelColor {
         Octree::new(size * size * size, v)
     }
 
-    pub fn new(node_count: usize, vol: Vol<C>) -> Self {
+    pub fn new(_node_count: usize, vol: Vol<C>) -> Self {
         let mut size = vol.size >> 1;
         let mut alloc = 1;
         let mut subtree_size : usize = 2;
@@ -258,7 +303,7 @@ impl<C> Octree<C> where C: VoxelColor {
         }
         alloc += 1; // For the root node
         let mut nodes = std::vec::Vec::new();
-        nodes.resize(alloc, Node::default());
+        nodes.resize(alloc, OctNode::default());
         Self {
             nodes,
             nodes_size: vol.size >> 1,
@@ -296,34 +341,46 @@ impl<C> Octree<C> where C: VoxelColor {
                         tp.lvl_offs(x, y, z),
                         size >> 1,
                         top_left.offs(
-                            (x as usize * (size >> 1)) as pint,
-                            (y as usize * (size >> 1)) as pint,
-                            (z as usize * (size >> 1)) as pint),
+                            (x as usize * (size >> 1)) as PInt,
+                            (y as usize * (size >> 1)) as PInt,
+                            (z as usize * (size >> 1)) as PInt),
                         f);
                 }
             }
         }
     }
 
-    pub fn set(&mut self, x: pint, y: pint, z: pint, v: Voxel<C>) {
+    pub fn get_inv_y(&self, x: PInt, y: PInt, z: PInt) -> Voxel<C> {
+        self.get(x, (self.vol.size - 1) as u16 - y, z)
+    }
+
+    pub fn get(&self, x: PInt, y: PInt, z: PInt) -> Voxel<C> {
+        *self.vol.at(Pos::new(x, y, z))
+    }
+
+    pub fn set_inv_y(&mut self, x: PInt, y: PInt, z: PInt, v: Voxel<C>) {
+        self.vol.set(x, (self.vol.size - 1) as u16 - y, z, v);
+    }
+
+    pub fn set(&mut self, x: PInt, y: PInt, z: PInt, v: Voxel<C>) {
         self.vol.set(x, y, z, v);
     }
 
-    pub fn fill(&mut self, x: pint, y: pint, z: pint,
-                w: pint, h: pint, d: pint, v: Voxel<C>)
+    pub fn fill(&mut self, x: PInt, y: PInt, z: PInt,
+                w: PInt, h: PInt, d: PInt, v: Voxel<C>)
     {
         self.vol.fill(x, y, z, w, h, d, v);
     }
 
-    pub fn recompute(&mut self) -> Node<C> {
+    pub fn recompute(&mut self) -> OctNode<C> {
         let n = self.compute_node(TreePos::new(), self.vol.size, Pos { x: 0, y: 0, z: 0 });
         n
     }
 
-    fn compute_node(&mut self, tp: TreePos, size: usize, top_left: Pos) -> Node<C> {
+    fn compute_node(&mut self, tp: TreePos, size: usize, top_left: Pos) -> OctNode<C> {
         if size == 1 {
             let v = self.vol.get(top_left);
-            let mut n = Node::default();
+            let mut n = OctNode::default();
             if v.color == C::default() {
                 n.empty = true;
                 n.pos = top_left;
@@ -336,7 +393,6 @@ impl<C> Octree<C> where C: VoxelColor {
             return n;
         }
 
-        let mut n : Node<C> = Node::default();
         let mut faces : u8 = 0x0;
         let mut color : C = C::default();
 
@@ -350,9 +406,9 @@ impl<C> Octree<C> where C: VoxelColor {
                         tp.lvl_offs(x, y, z),
                         size >> 1,
                         top_left.offs(
-                            (x as usize * (size >> 1)) as pint,
-                            (y as usize * (size >> 1)) as pint,
-                            (z as usize * (size >> 1)) as pint));
+                            (x as usize * (size >> 1)) as PInt,
+                            (y as usize * (size >> 1)) as PInt,
+                            (z as usize * (size >> 1)) as PInt));
 
                     if !n.empty { all_empty = false; }
                     if let Some(v) = n.voxel {
@@ -367,7 +423,7 @@ impl<C> Octree<C> where C: VoxelColor {
             }
         }
 
-        let mut n = Node::default();
+        let mut n = OctNode::default();
         n.pos      = top_left;
         n.tree_pos = tp;
 
@@ -396,16 +452,16 @@ impl<C> Octree<C> where C: VoxelColor {
         n
     }
 
-    fn node_at(&self, offs: usize,  x: usize, y: usize, z: usize) -> &Node<C> {
-        &self.nodes[offs + (x * 2 * 2) + (y * 2) + x]
+    fn node_at(&self, offs: usize,  x: usize, y: usize, z: usize) -> &OctNode<C> {
+        &self.nodes[offs + (z * 2 * 2) + (y * 2) + x]
     }
 
-    fn node(&mut self, offs: usize, x: usize, y: usize, z: usize) -> &mut Node<C> {
-        &mut self.nodes[offs + (x * 2 * 2) + (y * 2) + x]
+    fn node(&mut self, offs: usize, x: usize, y: usize, z: usize) -> &mut OctNode<C> {
+        &mut self.nodes[offs + (z * 2 * 2) + (y * 2) + x]
 //        println!("ANOD lvl={}, pos={:?} => {:?}", level, pos, self.nodes);
     }
 
-//    fn compute_voxel_node(&mut self, top_left: Pos) -> Node<C> {
+//    fn compute_voxel_node(&mut self, top_left: Pos) -> OctNode<C> {
 //        let mut faces : u8 = 0x0;
 //        let mut color : C  = C::default();
 //
@@ -431,7 +487,7 @@ impl<C> Octree<C> where C: VoxelColor {
 //            }
 //        }
 //
-//        let mut n = Node::default();
+//        let mut n = OctNode::default();
 //        if !all_empty && equal_color {
 //            let mut v = Voxel::default();
 //            v.color = color;
@@ -461,7 +517,7 @@ mod tests {
     fn check_octree_n1_filled() {
         let mut t : Octree<u8> = Octree::new_from_size(2);
         t.fill(0, 0, 0, 2, 2, 2, 10.into());
-        let n = t.recompute();
+        t.recompute();
 
         let mut log = vec![];
         t.draw(&mut |size, pos, v| {
@@ -476,7 +532,7 @@ mod tests {
         let mut t : Octree<u8> = Octree::new_from_size(4);
         t.fill(0, 0, 0, 4, 4, 4, 10.into());
         t.set(0, 0, 0, 12.into());
-        let n = t.recompute();
+        t.recompute();
 
         let mut log = vec![];
         t.draw(&mut |size, pos, v| {
@@ -664,7 +720,7 @@ mod tests {
     fn check_smal() {
         let mut ot : Octree<u8> = Octree::new_from_size(4);
         ot.set(2, 2, 2, 1.into());
-        let n = ot.recompute();
+        ot.recompute();
         let mut log = vec![];
         ot.draw(&mut |size, pos, v| {
             log.push((size, (pos.x, pos.y, pos.z), v.color, v.faces));

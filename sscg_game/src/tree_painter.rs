@@ -1,5 +1,4 @@
 use std::rc::Rc;
-use std::cell::RefCell;
 use crate::logic::GamePainter;
 
 pub use crate::logic::FontSize;
@@ -90,7 +89,7 @@ impl GamePainter for TreePainter {
     }
 
     fn done_cache_draw(&mut self) {
-        let mut prev_cmds =
+        let prev_cmds =
             std::mem::replace(&mut self.cache_tmp_cmds, None);
         if let Some(prev_cmds) = prev_cmds {
             let x  = prev_cmds.0;
@@ -177,7 +176,7 @@ impl GamePainter for TreePainter {
             h,
         });
     }
-    fn texture_size(&mut self, idx: usize) -> (u32, u32) {
+    fn texture_size(&mut self, _idx: usize) -> (u32, u32) {
         (0, 0)
     }
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool) {

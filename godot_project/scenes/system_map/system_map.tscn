@@ -1,40 +1,93 @@
-[gd_scene load_steps=20 format=2]
+[gd_scene load_steps=33 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
-[ext_resource path="res://scenes/system_map/crosshair.tscn" type="PackedScene" id=2]
-[ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=3]
-[ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=4]
-[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=5]
-[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=6]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=7]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=8]
-[ext_resource path="res://scenes/system_map/MeshInstance.gdns" type="Script" id=9]
+[ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/system_map/drone.gd" type="Script" id=3]
+[ext_resource path="res://scenes/entities/materials/voxel_mine_material.tres" type="Material" id=4]
+[ext_resource path="res://crosshair.png" type="Texture" id=5]
+[ext_resource path="res://sounds/mining_beam.wav" type="AudioStream" id=6]
+[ext_resource path="res://scenes/system_map/MiningBeamSound.gd" type="Script" id=7]
+[ext_resource path="res://sounds/mining_pop1.wav" type="AudioStream" id=8]
+[ext_resource path="res://sounds/mining_pop2.wav" type="AudioStream" id=9]
+[ext_resource path="res://sounds/mining_pop3.wav" type="AudioStream" id=10]
+[ext_resource path="res://sounds/mining_pop4.wav" type="AudioStream" id=11]
+[ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=12]
+[ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=13]
+[ext_resource path="res://scenes/system_map/gui_blur.shader" type="Shader" id=14]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=15]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=16]
+[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=17]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
 class_name = "SystemMap"
 library = ExtResource( 1 )
 
-[sub_resource type="SphereMesh" id=2]
-radius = 0.2
-height = 0.4
+[sub_resource type="CylinderMesh" id=2]
+material = ExtResource( 4 )
+top_radius = 0.005
+bottom_radius = 0.005
+height = 1.0
+radial_segments = 8
+rings = 3
 
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="ParticlesMaterial" id=3]
+emission_shape = 1
+emission_sphere_radius = 0.01
+spread = 0.0
+gravity = Vector3( 0, 0, 0 )
+initial_velocity = 1.26
+angular_velocity = -0.980785
+
+[sub_resource type="SpatialMaterial" id=4]
+flags_transparent = true
+flags_do_not_receive_shadows = true
+flags_disable_ambient_light = true
+albedo_color = Color( 0, 1, 1, 1 )
+emission_enabled = true
+emission = Color( 0, 1, 1, 1 )
+emission_energy = 4.99
+emission_operator = 0
+emission_on_uv2 = false
+
+[sub_resource type="CubeMesh" id=5]
+material = SubResource( 4 )
+size = Vector3( 0.01, 0.01, 0.01 )
+
+[sub_resource type="SphereShape" id=6]
+radius = 0.4
+
+[sub_resource type="AudioStreamRandomPitch" id=7]
+audio_stream = ExtResource( 8 )
+
+[sub_resource type="AudioStreamRandomPitch" id=8]
+audio_stream = ExtResource( 9 )
+
+[sub_resource type="AudioStreamRandomPitch" id=9]
+audio_stream = ExtResource( 10 )
+
+[sub_resource type="AudioStreamRandomPitch" id=10]
+audio_stream = ExtResource( 11 )
+
+[sub_resource type="DynamicFont" id=11]
 size = 25
 outline_size = 2
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 6 )
+font_data = ExtResource( 13 )
 
-[sub_resource type="DynamicFont" id=4]
+[sub_resource type="DynamicFont" id=12]
 size = 12
 outline_size = 1
 outline_color = Color( 0.160784, 0.160784, 0.160784, 1 )
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 6 )
+font_data = ExtResource( 13 )
 
-[sub_resource type="SpatialMaterial" id=5]
+[sub_resource type="ShaderMaterial" id=13]
+shader = ExtResource( 14 )
+
+[sub_resource type="SpatialMaterial" id=14]
 albedo_color = Color( 1, 0.72549, 0, 1 )
 emission_enabled = true
 emission = Color( 1, 0.72549, 0, 1 )
@@ -42,96 +95,95 @@ emission_energy = 8.14
 emission_operator = 0
 emission_on_uv2 = false
 
-[sub_resource type="SphereMesh" id=6]
-material = SubResource( 5 )
-
-[sub_resource type="Shader" id=7]
-code = "shader_type spatial;
-
-render_mode diffuse_burley;
-
-void fragment() {
-	float xv = 0.0;
-	float yv = 0.0;
-	float width = 0.02;
-	
-	if (UV.x <= width) { xv = 1.0 * (1.0 - UV.x / width); }
-	if (UV.y <= width) { yv = 1.0 * (1.0 - UV.y / width); }
-	if (UV.x >= (1.0 - width)) { xv = 1.0 * (1.0 - (1.0 - UV.x) / width); }
-	if (UV.y >= (1.0 - width)) { yv = 1.0 * (1.0 - (1.0 - UV.y) / width); }
-
-	float mixval = max(xv, yv);
-	ALBEDO = mix(vec3(COLOR.r, COLOR.g, COLOR.b), vec3(COLOR.r, mixval, mixval), mixval);
-	EMISSION = vec3(0.0, mixval, mixval) * 4.0;
-}"
-
-[sub_resource type="ShaderMaterial" id=8]
-shader = SubResource( 7 )
-
-[sub_resource type="CubeMesh" id=9]
-size = Vector3( 4, 0.1, 4 )
-
-[sub_resource type="BoxShape" id=10]
+[sub_resource type="SphereMesh" id=15]
+material = SubResource( 14 )
 
 [node name="SystemMap" type="Spatial"]
 script = SubResource( 1 )
 
-[node name="crosshair" parent="." instance=ExtResource( 2 )]
-transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0 )
-
-[node name="ship" parent="." instance=ExtResource( 3 )]
-transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714, 0, 1.2, 0 )
+[node name="ship" parent="." instance=ExtResource( 2 )]
+transform = Transform( -0.988714, 0, 0.149814, 0, 1, 0, -0.149814, 0, -0.988714, -14.1793, 1.2, -33.9352 )
 
 [node name="entities" type="Spatial" parent="."]
 
-[node name="Sun" type="DirectionalLight" parent="."]
-transform = Transform( 0.741775, 0.518385, 0.425497, 0, -0.634455, 0.77296, 0.670649, -0.573362, -0.470623, 0, 0, -5.034 )
-visible = false
-light_specular = 0.0
-shadow_bias = 0.02
-shadow_reverse_cull_face = true
-directional_shadow_split_1 = 0.007
-directional_shadow_split_2 = 0.014
-directional_shadow_split_3 = 0.295
-directional_shadow_blend_splits = true
-directional_shadow_normal_bias = 0.02
-directional_shadow_bias_split_scale = 0.0
-directional_shadow_max_distance = 32.1
+[node name="Drone" type="KinematicBody" parent="."]
+collision_mask = 3
+script = ExtResource( 3 )
 
-[node name="drone" type="Camera" parent="."]
-far = 4712.0
-script = ExtResource( 4 )
-
-[node name="RayCast" type="RayCast" parent="drone"]
+[node name="RayCast" type="RayCast" parent="Drone"]
 enabled = true
-cast_to = Vector3( 0, 0, -20 )
+cast_to = Vector3( 0, 0, -10 )
 
-[node name="MeshInstance" type="MeshInstance" parent="drone"]
+[node name="RayMesh" type="MeshInstance" parent="Drone"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, 0 )
+visible = false
 mesh = SubResource( 2 )
 material/0 = null
 
-[node name="SpotLight" type="SpotLight" parent="drone"]
-visible = false
-layers = 2
-spot_range = 22.5656
-spot_attenuation = 2.0
-spot_angle = 23.0086
-spot_angle_attenuation = 0.554785
+[node name="Particles" type="Particles" parent="Drone/RayMesh"]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.5, 0 )
+cast_shadow = 0
+amount = 128
+lifetime = 10.0
+speed_scale = 0.84
+randomness = 0.3
+process_material = SubResource( 3 )
+draw_pass_1 = SubResource( 5 )
 
-[node name="OmniLight" type="OmniLight" parent="drone"]
-omni_range = 9.73455
-omni_attenuation = 4.28709
+[node name="CollisionShape" type="CollisionShape" parent="Drone"]
+shape = SubResource( 6 )
+
+[node name="Camera" type="Camera" parent="Drone"]
+fov = 80.0
+near = 0.01
+far = 4712.0
+
+[node name="OmniLight" type="OmniLight" parent="Drone/Camera"]
+light_energy = 0.75
+light_indirect_energy = 0.75
+omni_range = 32.0
+omni_attenuation = 4.59479
+
+[node name="Sprite3D" type="Sprite3D" parent="Drone/Camera"]
+transform = Transform( 0.00772604, 0, 0, 0, 0.00772604, 0, 0, 0, 1, 0, 0, -0.0510799 )
+texture = ExtResource( 5 )
+
+[node name="MiningBeamSound" type="AudioStreamPlayer" parent="Drone"]
+stream = ExtResource( 6 )
+volume_db = -9.248
+bus = "SoundFx"
+script = ExtResource( 7 )
+
+[node name="Pop1" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 7 )
+volume_db = -6.0
+bus = "SoundFx"
+
+[node name="Pop2" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 8 )
+volume_db = -6.0
+bus = "SoundFx"
+
+[node name="Pop3" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 9 )
+volume_db = -6.0
+bus = "SoundFx"
+
+[node name="Pop4" type="AudioStreamPlayer" parent="Drone"]
+stream = SubResource( 10 )
+volume_db = -6.0
+bus = "SoundFx"
 
 [node name="GUI" type="Control" parent="."]
-editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource( 5 )
+script = ExtResource( 12 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="DockingWarning" type="HBoxContainer" parent="GUI"]
+editor/display_folded = true
 visible = false
 anchor_right = 1.0
 alignment = 1
@@ -143,7 +195,7 @@ __meta__ = {
 margin_left = 167.0
 margin_right = 857.0
 margin_bottom = 63.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 11 )
 custom_colors/font_color = Color( 1, 0, 0, 1 )
 text = "You are too fast!
 Emergency collision transport activated!
@@ -153,15 +205,12 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="GUIDrawing" type="Node2D" parent="GUI"]
-script = ExtResource( 7 )
-
 [node name="ControlsInfo" type="Label" parent="GUI"]
 margin_left = 7.35092
 margin_top = 8.08603
 margin_right = 173.351
 margin_bottom = 77.086
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 12 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "[A]         - Thrust to left
 [D]         - Thrust to right
@@ -177,7 +226,7 @@ margin_left = 900.0
 margin_top = 2.0
 margin_right = -3.0
 margin_bottom = 20.0
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 12 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "FPS: 00.00"
 align = 2
@@ -185,11 +234,27 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="ViewportContainer" type="ViewportContainer" parent="GUI"]
+material = SubResource( 13 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -1280.0
+margin_bottom = -720.0
+stretch = true
+
+[node name="Viewport" type="Viewport" parent="GUI/ViewportContainer"]
+transparent_bg = true
+handle_input_locally = false
+render_target_update_mode = 3
+
+[node name="GUIDrawing" type="Node2D" parent="GUI/ViewportContainer/Viewport"]
+script = ExtResource( 15 )
+
 [node name="Sun Sphere" type="MeshInstance" parent="."]
-transform = Transform( 100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0 )
+transform = Transform( 30, 0, 0, 0, 30, 0, 0, 0, 30, 0.00144982, -0.00536215, -0.00533855 )
 layers = 2
 cast_shadow = 0
-mesh = SubResource( 6 )
+mesh = SubResource( 15 )
 material/0 = null
 
 [node name="Detail Light" type="OmniLight" parent="."]
@@ -218,29 +283,14 @@ light_cull_mask = 4294967293
 shadow_bias = 1.57
 shadow_contact = 11.3
 shadow_reverse_cull_face = true
-omni_range = 2500.0
+omni_range = 800.0
 omni_attenuation = 0.0281641
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 8 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.24683, 0 )
+[node name="Grid" parent="." instance=ExtResource( 16 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
-[node name="VoxStruct" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.58833, -2.13184, 9.6887 )
-layers = 2
-material_override = SubResource( 8 )
-script = ExtResource( 9 )
-
-[node name="MeshInstance" type="MeshInstance" parent="VoxStruct"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.02977, -0.5, -5.5472 )
-layers = 2
-mesh = SubResource( 9 )
-material/0 = null
-
-[node name="StaticBody" type="StaticBody" parent="VoxStruct"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.99662, 0, 1.04231 )
-
-[node name="CollisionShape" type="CollisionShape" parent="VoxStruct/StaticBody"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.320214, 1.01542, 1.23239 )
-shape = SubResource( 10 )
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 17 )
+bus = "Music"
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]

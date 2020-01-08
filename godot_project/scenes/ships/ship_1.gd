@@ -11,17 +11,13 @@ var back_engine_particles
 var back_engine_light
 
 var safe_dock_speed         = 0.1;
-var max_speed               = 2.0;
-var no_fuel_max_speed       = 0.2;
+var max_speed               = 1.0;
+var no_fuel_max_speed       = 0.1;
 var accel                   = 0.1;
 var decel                   = 0.25;
 var max_space_wind_friction = 0.001;
 
 var drone_active = false;
-var view_sensitivity = 0.3;
-var yaw = 0.0;
-var pitch = 0.0;
-
 
 func sscg_save():
 	return {
@@ -29,8 +25,8 @@ func sscg_save():
 		"engine_on_fract": engine_on_fract,
 		"engine_on_secs": engine_on_secs,
 		"thruster_speed": thruster_speed,
-		"x": int(((self.translation.x + 1000.0) * 10000.0) / 2000.0),
-		"y": int(((self.translation.z + 1000.0) * 10000.0) / 2000.0),
+		"x": int(self.translation.x),
+		"y": int(self.translation.z),
 		"rot_z": self.rotation.y,
 	}
 
@@ -39,54 +35,25 @@ func sscg_load(state):
 	engine_on_fract = state["engine_on_fract"]
 	engine_on_secs  = state["engine_on_secs"]
 	thruster_speed  = state["thruster_speed"]
-	self.translation.x = -1000.0 + (float(state["x"]) * 2000.0) / 10000.0
-	self.translation.y = 1.2
-	self.translation.z = -1000.0 + (float(state["y"]) * 2000.0) / 10000.0
+	self.translation.x = float(state["x"])
+	self.translation.y = 0.6
+	self.translation.z = float(state["y"])
 	self.rotation.y = state["rot_z"]
-
-func drone_process(delta):
-	
-	var cam = self.get_node("../drone")
-	var forw = -cam.get_transform().basis.z;
-	var righ = -cam.get_transform().basis.x;
-	var motion = Vector3()
-	if Input.is_action_pressed("fly_forward"):
-		motion += forw.normalized()
-	if Input.is_action_pressed("fly_stop"):
-		motion -= forw.normalized()
-	if Input.is_action_pressed("turn_right"):
-		motion += righ.normalized()
-	if Input.is_action_pressed("turn_left"):
-		motion -= righ.normalized()
-	cam.set_translation(cam.get_translation() + motion.normalized() * 5 * delta)
+	print("LOAD SHIP:", state)
 
 func _input(event):
 	if event.is_action_pressed("drone"):
 		drone_active = !drone_active;
-		if drone_active:
-			self.get_node("../drone").current = true;
-			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-			pitch = 0
-			yaw = 180
-			var cam = self.get_node("../drone")
-			cam.set_rotation(Vector3(deg2rad(pitch),deg2rad(yaw), 0))
-			self.get_node("../drone").set_translation(self.get_node("../VoxStruct").get_translation() - Vector3(0, -1, 2))
-		else:
+		self.get_parent().get_node("Drone").set_active(drone_active)
+		if !drone_active:
 			self.get_node("Camera").current = true;
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	if event is InputEventMouseMotion:
-		if drone_active:
-			yaw = fmod(yaw - event.relative.x * view_sensitivity, 360) 
-			pitch = max(min(pitch - event.relative.y * view_sensitivity, 90),-90)
-			var cam = self.get_node("../drone")
-			cam.set_rotation(Vector3(deg2rad(pitch),deg2rad(yaw), 0))
 				
 func _physics_process(delta):
 	if docked:
 		return
 		
 	if drone_active:
-		self.drone_process(delta);
 		return
 
 	if Input.is_action_pressed("fly_forward"):
@@ -139,14 +106,14 @@ func _physics_process(delta):
 	self.translation = self.translation + v.z.normalized() * speed
 	self.rotate_y(deg2rad(2 * thruster_speed))
 	
-	if self.translation.x > 1000.0:
-		self.translation.x -= 2000.0
-	if self.translation.x < -1000.0:
-		self.translation.x += 2000.0
-	if self.translation.z > 1000.0:
-		self.translation.z -= 2000.0
-	if self.translation.z < -1000.0:
-		self.translation.z += 2000.0
+	if self.translation.x > 640.0:
+		self.translation.x -= 1280.0
+	if self.translation.x < -640.0:
+		self.translation.x += 1280.0
+	if self.translation.z > 640.0:
+		self.translation.z -= 1280.0
+	if self.translation.z < -640.0:
+		self.translation.z += 1280.0
 
 
 func _ready():
