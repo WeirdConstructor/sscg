@@ -827,7 +827,7 @@ impl System {
         return None;
     }
 
-    pub fn draw<P>(&mut self, ship: &mut Ship, scroll: &(i32, i32), p: &mut P) -> MouseScreenSystemPos where P: GamePainter {
+    pub fn draw<P>(&mut self, ship: &mut Ship, _scroll: &(i32, i32), p: &mut P) -> MouseScreenSystemPos where P: GamePainter {
         let mut mssp = MouseScreenSystemPos {
             screen_x0:  0,
             screen_x1:  1280,

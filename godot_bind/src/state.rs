@@ -1,12 +1,13 @@
 use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
-use sscg::tree_painter::{DrawCmd, TreePainter, FontMetric, FontSize};
+use sscg::tree_painter::{TreePainter, FontMetric, FontSize};
 use sscg::wlambda_api::WindowManager;
 use sscg::wlambda_api::window_manager_wlambda_obj;
 use gdnative::*;
-use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
+use wlambda::{VVal, Env, GlobalEnv, EvalContext, SymbolTable};
 use wlambda::set_vval_method;
+use crate::voxeltree_wlambda::*;
 use crate::wl_gd_mod_resolver::*;
 
 #[derive(Debug, Clone)]
@@ -32,10 +33,10 @@ pub struct SSCGState {
     pub temp_stations:   std::vec::Vec<(i32, i32)>,
     pub update_stations: bool,
     pub wlctx:           EvalContext,
-    pub cb_arrived:      VVal,
     pub state:           VVal,
     pub cmd_queue:       Rc<RefCell<std::vec::Vec<VVal>>>,
     pub wm:              Rc<RefCell<WindowManager>>,
+    pub vox_painters:    Rc<RefCell<std::vec::Vec<Rc<RefCell<VoxelPainter>>>>>,
 }
 
 // XXX: This is safe as long as it is only accessed from the
@@ -58,14 +59,15 @@ impl SSCGState {
         let cmd_queue = Rc::new(RefCell::new(std::vec::Vec::new()));
 
         let o = VVal::map();
-        set_vval_method!(o, cmd_queue, cmd, Some(2), Some(2), env, argc, {
+        set_vval_method!(o, cmd_queue, cmd, Some(2), Some(2), env, _argc, {
             let v = VVal::vec();
             v.push(env.arg(0));
             v.push(env.arg(1));
             cmd_queue.borrow_mut().push(v);
             Ok(VVal::Nul)
         });
-        set_vval_method!(o, cmd_queue, read_savegame, Some(1), Some(1), env, argc, {
+        let _cmd_queue = cmd_queue.clone();
+        set_vval_method!(o, _cmd_queue, read_savegame, Some(1), Some(1), env, _argc, {
             let filename = env.arg(0).s_raw();
 
             let savegame_url = format!("user://{}.json", filename);
@@ -90,7 +92,7 @@ impl SSCGState {
                 }
             }
         });
-        set_vval_method!(o, cmd_queue, write_savegame, Some(2), Some(2), env, argc, {
+        set_vval_method!(o, _cmd_queue, write_savegame, Some(2), Some(2), env, _argc, {
             let filename = env.arg(0).s_raw();
             let state    = env.arg(1);
 
@@ -119,6 +121,15 @@ impl SSCGState {
             Ok(VVal::Bol(true))
         });
         sscg_wl_mod.set("game", o);
+
+        let vox_painters = Rc::new(RefCell::new(vec![]));
+        let vox_painters_r = vox_painters.clone();
+        sscg_wl_mod.fun("new_voxel_painter", move |_e: &mut Env, _argc: usize| {
+            let (painter_ref, obj) = new_voxel_painter(vox_painters_r.borrow().len());
+            vox_painters_r.borrow_mut().push(painter_ref);
+            Ok(obj)
+        }, Some(0), Some(0), false);
+
         genv.borrow_mut().set_module("sscg", sscg_wl_mod);
 
         let tp = TreePainter::new(fh.clone());
@@ -126,18 +137,20 @@ impl SSCGState {
             tp,
             wm,
             cmd_queue,
+            vox_painters,
             fonts:           fh,
             temp_stations:   vec![(1, 1), (900, 500)],
             update_stations: true,
             wlctx:           EvalContext::new(genv),
-            cb_arrived:      VVal::Nul,
             state:           VVal::Nul,
         }
     }
 
     pub fn call_cb(&mut self, name: &str, args: &[VVal]) -> VVal {
         let cb =
-            match self.wlctx.get_global_var(name) {
+            match self.state.get_key("callbacks")
+                      .expect("Expected 'code' in STATE!")
+                      .get_key(name) {
                 None => {
                     godot_print!(
                         "No such callback {} (args: {:?})!",
@@ -159,11 +172,7 @@ impl SSCGState {
         println!("START WLAM");
         match self.wlctx.eval(r"
             !@import main main;
-            !:global on_arrived             = main:on_arrived;
-            !:global on_tick                = main:on_tick;
-            !:global on_ready               = main:on_ready;
-            !:global on_saved_godot_state   = main:on_saved_godot_state;
-            !:global STATE                  = main:STATE;
+            !:global STATE = main:STATE;
             main:init[]")
         {
             Ok(state) => {
@@ -172,9 +181,6 @@ impl SSCGState {
             },
             Err(e) => { godot_print!("main.wl error: {:?}", e); }
         }
-
-        self.cb_arrived =
-            self.wlctx.get_global_var("on_arrived").unwrap_or(VVal::Nul);
     }
 }
 

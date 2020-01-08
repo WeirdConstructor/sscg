@@ -17,9 +17,10 @@
     ship_types = ${
         scout_mk1 = ${
             fuel_capacity       = 1000,
-            fuel_per_sec        = 7,
+            fuel_per_sec        = 10,
             max_kg_fuel_factor  = 200,
             cargo_max_m3        = 2000,
+#            cargo_max_m3        = 222,
             cargo_max_kg        = 10000,
         },
     },
@@ -29,7 +30,6 @@
     },
     ship = ${
         t               = :scout_mk1,
-        pos             = $[5000, 2000],
         system_id       = 0,
         docked          = $f,
         engine_on_secs  = 0,
@@ -37,26 +37,23 @@
         cargo           = ${ m3 = 0, kg = 0, goods = ${} },
     },
     entity_types = ${
-        station    = ${ visual = "station",    gui = "station"  },
-        stargate   = ${ visual = "stargate",   gui = "stargate" },
-        asteroid_1 = ${ visual = "asteroid_1", gui = "asteroid" },
+        station         = ${ visual = "station",    gui = "station"   },
+        stargate        = ${ visual = "stargate",   gui = "stargate"  },
+        asteroid_1      = ${ visual = "asteroid_1", gui = "asteroid"  },
+        alien_struct    = ${ visual = "structure",  gui = "structure" },
     },
     systems = $[
         ${
             name = "Testaris 1",
             entities = $[
-                ${ t = "station",    name = "Station 1",  pos = $[2000, 2000] },
-                ${ t = "station",    name = "Station 2",  pos = $[ 500, 2000] },
-                ${ t = "station",    name = "Station 3",  pos = $[9000, 4000] },
-                ${ t = "station",    name = "Station 4",  pos = $[4000, 4000] },
-                ${ t = "stargate",   name = "Stargate Alpha",  pos = $[200, 200] },
-                ${ t = "asteroid_1", name = "Asteroid 1", pos = $[ 300,  300] },
-                ${ t = "asteroid_1", name = "Asteroid 2", pos = $[6500, 6500] },
-#                ${ t = "station", name = "Asteroid 2", pos = $[6500, 6500] },
+                ${ t = "station",       name = "Station 1",    pos = $[200,   0] },
+                ${ t = "alien_struct",  name = "Voxel Struct", pos = $[572, 200] },
+                ${ t = "asteroid_1",    name = "Asteroid 1",   pos = $[400, 400] },
             ],
         }
     ],
-    code = ${},
+    code      = ${},
+    callbacks = ${},
 };
 
 !@export STATE STATE;
@@ -153,7 +150,29 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
-!@export on_saved_godot_state {!(state) = @;
+STATE.callbacks.on_mine = {
+    std:displayln "MINE:" @;
+
+    !capacity_units =
+        STATE.code.calc_unit_capacity_for_good :rock;
+
+    (capacity_units > 0) &and (_2 != 0)
+};
+
+STATE.callbacks.on_mined_voxel = {
+    std:displayln "MINE:" @;
+    STATE.ship.cargo.goods.rock =
+        STATE.ship.cargo.goods.rock + 1;
+    STATE.code.recalc_ship_cargo[];
+    $t
+};
+
+STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
+    std:displayln "LOADDED on_draw_voxel_structure " sys_id ent_id;
+    $n
+};
+
+STATE.callbacks.on_saved_godot_state = {!(state) = @;
     std:displayln "STATE:" state;
 
     on_error {||
@@ -166,7 +185,7 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
-!@export on_arrived {!(too_fast, sys_id, ent_id) = @;
+STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     std:displayln "ARRIVED!";
     (bool too_fast) {
         STATE.ship.fuel = std:num:floor 0.5 * STATE.ship.fuel
@@ -250,10 +269,11 @@ STATE.code.recalc_ship_cargo = {
 
 !open_credits = {
     !credits = $[
-        $["Game Developers", $[
+        $["Game Design and Programming", $[
             "Weird Constructor",
         ] ],
         $["Music & Sound", $[
+            "'Synthwave' by Ryan Andersen, CC-BY-NC 4.0 from Free Music Archive",
         ] ],
         $["Artwork", $[
         ] ],
@@ -261,6 +281,12 @@ STATE.code.recalc_ship_cargo = {
             "Gargaj",
             "Itmuckel",
             "Ilmuri",
+            "Tom from 'Recall Singularity'",
+            "szczm",
+        ] ],
+        $["Engine", $[
+            "Godot game engine developers",
+            "Godot-rust binding developers ('karroffel', 'toasteater' and all others)",
         ] ],
     ];
 
@@ -283,7 +309,7 @@ STATE.code.recalc_ship_cargo = {
                         bg = "000",
                     };
                     std:append out ~ section.1 { ${
-                        t = :l_label,
+                        t = :l_text,
                         w = 1000,
                         text = std:str:cat "- " _,
                         fg = c:SE1_L,
@@ -297,9 +323,20 @@ STATE.code.recalc_ship_cargo = {
     } {|| sscg:win.set_window WID:MAIN_MENU; };
 };
 
+!load_save = {
+    !state =
+        on_error {|| std:displayln "Couldn't load savegame: " @ }
+            ~ sscg:game.read_savegame "sv1";
+    (bool state) {
+        STATE.player = state.player;
+        STATE.ship   = state.ship;
+        sscg:game.cmd "load_state" state.ship_dyn;
+    };
+};
+
 !open_menu = {
     sscg:win.set_window WID:MAIN_MENU ${
-        x = 200, y = 200, w = 550, h = 550,
+        x = 300, y = 200, w = 400, h = 550,
         title = std:str:cat["Main Menu"],
         title_color = c:CON,
         child = ${
@@ -309,37 +346,28 @@ STATE.code.recalc_ship_cargo = {
             spacing = 10,
             childs = $[
                 ${ t = :l_button, fg = "000", bg = c:SE1,
-                   w = 300, h = 200, text = "Start", ref = "start" },
+                   w = 1000, h = 200, text = "Start", ref = "start" },
                 ${ t = :l_button, fg = "000", bg = c:SE1,
-                   w = 300, h = 100, text = "Load", ref = "load" },
+                   w = 1000, h = 100, text = "Load", ref = "load" },
                 ${ t = :l_button, fg = "000", bg = c:SE1,
-                   w = 300, h = 100, text = "Save", ref = "save" },
+                   w = 1000, h = 100, text = "Save", ref = "save" },
                 ${ t = :l_button, fg = "000", bg = c:CON,
-                   w = 300, h = 100, text = "Credits", ref = "credits" },
+                   w = 1000, h = 100, text = "Credits", ref = "credits" },
                 ${ t = :r_button, fg = "000", bg = c:SE2,
-                   w = 300, h = 200, text = "Close", ref = "close" },
+                   w = 1000, h = 200, text = "Close", ref = "close" },
             ],
         },
     } {||
         match _1
-            "start" {|| open_start_info[]; }
-            "save" {|| sscg:game.cmd "save_state" $n; }
-            "credits" {|| open_credits[]; }
-            "load" {||
-                !state =
-                    on_error {|| std:displayln "Couldn't load savegame: " @ }
-                        ~ sscg:game.read_savegame "sv1";
-                (bool state) {
-                    STATE.player = state.player;
-                    STATE.ship   = state.ship;
-                    sscg:game.cmd "load_state" state.ship_dyn;
-                };
-            }
+            "start"     {|| open_start_info[]; }
+            "save"      {|| sscg:game.cmd "save_state" $n; }
+            "credits"   {|| open_credits[]; }
+            "load"      {|| load_save[]; }
             {|| sscg:win.set_window WID:MAIN_MENU; };
     };
 };
 
-!@export on_tick {!(ship_action_state) = @;
+STATE.callbacks.on_tick = {!(ship_action_state) = @;
     (bool STATE.player.is_mining) {
         !capacity_units =
             STATE.code.calc_unit_capacity_for_good :rock;
@@ -386,19 +414,20 @@ STATE.code.recalc_ship_cargo = {
         std:str:cat (STATE.ship.cargo.m3) " / " STATE.ship.cargo.kg;
 };
 
-!@export on_ready {
+STATE.callbacks.on_ready = {
     std:displayln "GAME READY!";
     sscg:game.cmd :load_state ${
         engine_on_fract = 0.0,
         engine_on_secs  = 0.0,
         thruster_speed  = 0.0,
         speed           = 0.0,
-        x               = 5000,
-        y               = 4990,
+        x               = 0.0,
+        y               = 0.0,
         rot_z           = 0,
     };
 
-    open_menu[];
+#    open_menu[];
+    load_save[];
 };
 
 !@export init {

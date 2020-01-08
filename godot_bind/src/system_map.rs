@@ -1,20 +1,16 @@
 use crate::state::SSCG;
 use gdnative::*;
-use euclid::{vec2, vec3};
+use euclid::{vec3};
 use wlambda::VVal;
 use std::rc::Rc;
-use sscg::tree_painter::{DrawCmd, TreePainter};
-#[macro_use]
 use crate::state::*;
-use crate::util::{variant2vval, vval2variant, c2c};
+use crate::util::{variant2vval, vval2variant};
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Spatial)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct SystemMap {
-    tmpl_station:  Option<PackedScene>,
-    tmpl_asteroid: Option<PackedScene>,
-    tmpl_gate:     Option<PackedScene>,
+    templates:     std::collections::HashMap<String, PackedScene>,
     time_tick_sum: f64,
 }
 
@@ -24,7 +20,7 @@ unsafe impl Send for SystemMap { }
 
 #[methods]
 impl SystemMap {
-    fn _init(owner: Spatial) -> Self {
+    fn _init(_owner: Spatial) -> Self {
         let main_font_resource =
             ResourceLoader::godot_singleton().load(
                 GodotString::from_str("res://fonts/main_font_normal.tres"),
@@ -43,7 +39,7 @@ impl SystemMap {
             small_font_resource
                 .and_then(|font_res| font_res.cast::<DynamicFont>())
                 .unwrap();
-        let mut sscg =
+        let sscg =
             SSCGState::new(Rc::new(FontHolder {
                 main_font,
                 small_font,
@@ -57,25 +53,35 @@ impl SystemMap {
         global_lock.as_mut().unwrap().setup_wlambda();
 
         Self {
-            tmpl_station:  None,
-            tmpl_asteroid: None,
-            tmpl_gate:     None,
+            templates:     std::collections::HashMap::new(),
             time_tick_sum: 0.0,
         }
     }
 
     #[export]
-    fn on_ship_arrived(&mut self, mut owner: Spatial, too_fast: bool, system: i64, entity: i64) {
+    fn on_ship_arrived(&mut self, mut _owner: Spatial, too_fast: bool, system: i64, entity: i64) {
         lock_sscg!(sscg);
         sscg.call_cb(
-            "on_arrived", 
+            "on_arrived",
             &vec![VVal::Bol(too_fast),
                   VVal::Int(system),
                   VVal::Int(entity)]);
     }
 
+    fn load_scene(&mut self, key: &str, path: &str) {
+        let scene = ResourceLoader::godot_singleton().load(
+            GodotString::from_str(path),
+            GodotString::from_str("PackedScene"),
+            false,
+        ).and_then(|s| s.cast::<PackedScene>())
+         .expect(
+            &format!("Expected PackedScene at '{}' (for type={})", path, key));
+        println!("Loaded scene {}={}", key, path);
+        self.templates.insert(key.to_string(), scene);
+    }
+
     #[export]
-    fn _ready(&mut self, mut owner: Spatial) {
+    fn _ready(&mut self, mut _owner: Spatial) {
         dbg!("READY SystemMap");
 //        let mut f = File::new();
 //        f.open(GodotString::from_str("res://test.txt"), 1)
@@ -84,40 +90,58 @@ impl SystemMap {
 //        println!("LAODED: {}", txt);
 
         godot_print!("Scene Map Instanciated!");
-        let scene = ResourceLoader::godot_singleton().load(
-            GodotString::from_str("res://scenes/entities/Station Selector.tscn"),
-            GodotString::from_str("PackedScene"),
-            false,
-        ).and_then(|s| s.cast::<PackedScene>())
-         .expect("Expected station scene and it being a PackedScene!");
-        self.tmpl_station = Some(scene);
-
-        let scene = ResourceLoader::godot_singleton().load(
-            GodotString::from_str("res://scenes/entities/Asteroid_1.tscn"),
-            GodotString::from_str("PackedScene"),
-            false,
-        ).and_then(|s| s.cast::<PackedScene>())
-         .expect("Expected asteroid scene and it being a PackedScene!");
-        self.tmpl_asteroid = Some(scene);
-
-        let scene = ResourceLoader::godot_singleton().load(
-            GodotString::from_str("res://scenes/entities/Stargate.tscn"),
-            GodotString::from_str("PackedScene"),
-            false,
-        ).and_then(|s| s.cast::<PackedScene>())
-         .expect("Expected stargate scene and it being a PackedScene!");
-        self.tmpl_gate = Some(scene);
-
-        dbg!("READY");
+        self.load_scene("station",    "res://scenes/entities/Station Selector.tscn");
+        self.load_scene("asteroid_1", "res://scenes/entities/Asteroid_1.tscn");
+        self.load_scene("stargate",   "res://scenes/entities/Stargate.tscn");
+        self.load_scene("structure",  "res://scenes/entities/VoxelStructure.tscn");
 
         lock_sscg!(sscg);
         sscg.call_cb("on_ready", &vec![]);
     }
 
-    #[export]
-    fn _process(&mut self, mut owner: Spatial, delta: f64) {
-        lock_sscg!(sscg);
+    fn update_stations(&mut self, sscg: &mut SSCGState, mut entities: Spatial) {
+        if !sscg.update_stations { return; }
 
+        let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
+        let sys_id = vvship.v_ik("system_id");
+        let sys    = sscg.state.v_k("systems").v_(sys_id as usize);
+        let types  = sscg.state.v_k("entity_types");
+
+        println!("DRAWING SYSTEM: {}", sys.v_sk("name"));
+
+        let mut i = 0;
+        sys.v_k("entities").for_each(|ent: &VVal| {
+            let vis = types.v_k(&ent.v_s_rawk("t")).v_s_rawk("visual");
+            let pos = ent.v_k("pos");
+            let x   = pos.v_i(0);
+            let y   = pos.v_i(1);
+            println!("ENT! {} {},{}", ent.s(), x, y);
+            unsafe {
+                let mut ins = self.templates.get(&vis).as_ref()
+                                  .expect("Entry for this entity")
+                                  .instance(0).expect("Instance in Spatial")
+                                  .cast::<Spatial>()
+                                  .expect("Scene must be a Spatial");
+                let v = vec3(x as f32, 1.0, y as f32);
+                ins.set(
+                    GodotString::from_str("label_name"),
+                    Variant::from_str(ent.v_s_rawk("name")));
+                ins.set(
+                    GodotString::from_str("system_id"),
+                    Variant::from_i64(sys_id));
+                ins.set(
+                    GodotString::from_str("entity_id"),
+                    Variant::from_i64(i));
+                ins.translate(v);
+                entities.add_child(Some(ins.to_node()), false);
+            }
+            i += 1;
+        });
+
+        sscg.update_stations = false;
+    }
+
+    fn handle_commands(&mut self, sscg: &mut SSCGState, owner: &mut Spatial, delta: f64) {
         let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
 
         let mut ship = unsafe {
@@ -176,77 +200,47 @@ impl SystemMap {
             sscg.call_cb("on_tick", &vec![vgodot_state]);
         }
 
-        let mut entities = unsafe {
+    }
+
+    #[export]
+    fn _process(&mut self, mut owner: Spatial, delta: f64) {
+        let entities = unsafe {
             owner.get_node(NodePath::from_str("entities"))
                  .expect("Find 'entities' node")
                  .cast::<Spatial>()
                  .unwrap()
         };
 
-        unsafe {
-            for i in 0..entities.get_child_count() {
-                let mut ent = entities.get_child(i).unwrap();
-                if ent.get(GodotString::from_str("selected")).to_bool() {
-                    ent.set(GodotString::from_str("selected"), Variant::from_i64(0));
-                    println!("GOT SELECTION: {}", i);
+        let load_entity_state = {
+            lock_sscg!(sscg);
+
+            self.handle_commands(sscg, &mut owner, delta);
+
+            unsafe {
+                for i in 0..entities.get_child_count() {
+                    let mut ent = entities.get_child(i).unwrap();
+                    if ent.get(GodotString::from_str("selected")).to_bool() {
+                        ent.set(GodotString::from_str("selected"), Variant::from_i64(0));
+                        println!("GOT SELECTION: {}", i);
+                    }
+                }
+            }
+
+            let load_entity_state = sscg.update_stations;
+
+            self.update_stations(sscg, entities);
+
+            load_entity_state
+        };
+
+        if load_entity_state {
+            unsafe {
+                for i in 0..entities.get_child_count() {
+                    let mut ent = entities.get_child(i).unwrap();
+                    println!("LES {}", i);
+                    ent.call(GodotString::from_str("on_wlambda_init"), &vec![]);
                 }
             }
         }
-
-        if !sscg.update_stations { return; }
-
-        let sys_id = vvship.v_ik("system_id");
-        let sys    = sscg.state.v_k("systems").v_(sys_id as usize);
-        let types  = sscg.state.v_k("entity_types");
-
-        println!("DRAWING SYSTEM: {}", sys.v_sk("name"));
-
-        let mut i = 0;
-        sys.v_k("entities").for_each(|ent: &VVal| {
-            let vis = types.v_k(&ent.v_s_rawk("t")).v_s_rawk("visual");
-            let pos = ent.v_k("pos");
-            let x   = pos.v_i(0);
-            let y   = pos.v_i(1);
-            println!("ENT! {} {},{}", ent.s(), x, y);
-            unsafe {
-                let mut ins =
-                    match &vis[..] {
-                        "station" =>
-                            self.tmpl_station.as_ref().unwrap()
-                                .instance(0).unwrap()
-                                .cast::<Spatial>()
-                                .expect("Station must be a Spatial"),
-                        "stargate" =>
-                            self.tmpl_gate.as_ref().unwrap()
-                                .instance(0).unwrap()
-                                .cast::<Spatial>()
-                                .expect("Stargate must be a Spatial"),
-                        _ | "asteroid_1" =>
-                            self.tmpl_asteroid.as_ref().unwrap()
-                                .instance(0).unwrap()
-                                .cast::<Spatial>()
-                                .expect("Station must be a Spatial"),
-                    };
-                let v = vec3(
-                    -1000.0 + (x as f32 * 2000.0) / 10000.0,
-                    1.0,
-                    -1000.0 + (y as f32 * 2000.0) / 10000.0);
-                ins.set(
-                    GodotString::from_str("label_name"),
-                    Variant::from_str(ent.v_s_rawk("name")));
-                ins.set(
-                    GodotString::from_str("system_id"),
-                    Variant::from_i64(sys_id));
-                ins.set(
-                    GodotString::from_str("entity_id"),
-                    Variant::from_i64(i));
-                ins.translate(v);
-                entities.add_child(Some(ins.to_node()), false);
-            }
-            i += 1;
-        });
-
-        sscg.update_stations = false;
-        dbg!("UPD STATE");
     }
 }
