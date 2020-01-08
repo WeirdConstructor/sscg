@@ -32,8 +32,8 @@ m.2.3.t = "v";
 m.3.3.t = ">";
 #m.3.4.t = "o";
 m.3.3.t = "o";
-m.3.4.t = "@";
-m.4.3.t = "@";
+#m.3.4.t = "@";
+#m.4.3.t = "@";
 print_map m;
 
 !rand_gen = std:rand:split_mix64_new_from "9939";
@@ -155,7 +155,7 @@ print_map m;
 
     .*this_gen = $*this_gen + 1;
 
-    std:displayln :source_sim;
+    std:displayln :sim_step;
 
     while { len[stack] > 0 } {
         !cell_step = std:pop stack;
@@ -164,8 +164,6 @@ print_map m;
         sim_step map cell_step stack;
         cell_step.2.gen = this_gen;
     };
-
-    std:displayln :dummy_sim;
 
     !dummy_stack = $[];
     for_each_cell map {!(x, y, cell) = @;
