@@ -41,10 +41,12 @@ impl VoxStruct {
         lock_sscg!(sscg);
         let ret = sscg.call_cb("on_draw_voxel_structure", &vec![sysid, entid]);
         if !ret.is_none() {
+            println!("WRITE VOL {}", ret.s());
             sscg.vox_painters
                 .borrow()[ret.v_i(0) as usize]
                 .borrow()
                 .write_into_u8_vol(ret.v_i(1) as usize, &mut self.vol);
+            self.load_vol(owner);
         }
     }
 

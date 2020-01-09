@@ -167,9 +167,21 @@ STATE.callbacks.on_mined_voxel = {
     $t
 };
 
+!vp = $&&$n;
+
 STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
-    std:displayln "LOADDED on_draw_voxel_structure " sys_id ent_id;
-    $n
+    !vp = $*vp;
+    std:displayln "LOADDED on_draw_voxel_structure " vp "|" sys_id ent_id;
+    vp.clear[];
+    !main_vol = vp.new 128 0.0;
+    vp.fill main_vol 0
+        0 0 0
+        128 128 128
+        0.7;
+    std:displayln "NEWVOL:" main_vol;
+
+    std:displayln "DONE!";
+    $[vp.id[], main_vol]
 };
 
 STATE.callbacks.on_saved_godot_state = {!(state) = @;
@@ -468,6 +480,9 @@ STATE.callbacks.on_ready = {
     };
 
     std:displayln "DISPLAY INIT";
+
+    .*vp = sscg:new_voxel_painter[];
+    std:displayln "VOXPAINT INIT " vp;
 
 #    STATE.ship.cargo.goods.rock = 100;
 #    STATE.code.recalc_ship_cargo[];
