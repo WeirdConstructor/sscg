@@ -9,19 +9,22 @@ void fragment() {
 	// Depth fades out until z > 64
 	float depth = clamp((FRAGCOORD.z / FRAGCOORD.w) / 64.0, 0.0, 1.0);
 	float idepth = 1.0 - depth;
-	float bias = 0.2;
+	float bias = 0.1;
 	// Some biased and clamped depth value, so we don't get 0.0 value when
 	// we are just in front of a voxel.
 	float depth_biased =
 		clamp(((depth + bias) / (1.0 + bias)), bias / (1.0 + bias), 1.0);
 
-	float width = 0.2 * depth_biased;
+	vec2 width =
+	   max(fwidth(UV),
+	       vec2((0.2 * depth_biased) / UV2.x,
+		        (0.2 * depth_biased) / UV2.y));
 
 	// Calculating the fragment of the wire line from the UV:
-	if (UV.x <= width)         { xv = 1.0 * (1.0 - UV.x / width); }
-	if (UV.y <= width)         { yv = 1.0 * (1.0 - UV.y / width); }
-	if (UV.x >= (1.0 - width)) { xv = 1.0 * (1.0 - (1.0 - UV.x) / width); }
-	if (UV.y >= (1.0 - width)) { yv = 1.0 * (1.0 - (1.0 - UV.y) / width); }
+	if (UV.x <= width.x)         { xv = 1.0 * (1.0 - UV.x / width.x); }
+	if (UV.y <= width.y)         { yv = 1.0 * (1.0 - UV.y / width.y); }
+	if (UV.x >= (1.0 - width.x)) { xv = 1.0 * (1.0 - (1.0 - UV.x) / width.x); }
+	if (UV.y >= (1.0 - width.y)) { yv = 1.0 * (1.0 - (1.0 - UV.y) / width.y); }
 	float line_val = max(clamp(xv, 0.0, 1.0), clamp(yv, 0.0, 1.0));
 	
 	// Base color of the voxel with some darkness gradiant so it doesn't look so flat:

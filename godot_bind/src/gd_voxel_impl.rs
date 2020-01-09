@@ -61,6 +61,7 @@ impl Face {
                      scale: f32,
                      verts: &mut Vector3Array,
                      uvs: &mut Vector2Array,
+                     uvs2: &mut Vector2Array,
                      colors: &mut ColorArray,
                      normals: &mut Vector3Array,
                      indices: &mut Int32Array,
@@ -89,6 +90,7 @@ impl Face {
             uvs.set(*vtxlen as i32, &vec2(
                 FACE_TRIANGLE_VERTEX_UV[i][0],
                 FACE_TRIANGLE_VERTEX_UV[i][1]));
+            uvs2.set(*vtxlen as i32, &vec2(size as f32, size as f32));
             let v = vec3(
                 (CUBE_VERTICES[idx][0] * size + offs.x) * scale,
                 (CUBE_VERTICES[idx][1] * size + offs.y) * scale,
@@ -145,6 +147,7 @@ pub fn render_octree_to_am(
     let mut va      = Vector3Array::new();
     let mut verts   = Vector3Array::new();
     let mut uvs     = Vector2Array::new();
+    let mut uvs2    = Vector2Array::new();
     let mut colors  = ColorArray::new();
     let mut normals = Vector3Array::new();
     let mut indices = Int32Array::new();
@@ -152,6 +155,7 @@ pub fn render_octree_to_am(
     let vol_size = vt.vol.size;
     verts  .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
     uvs    .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
+    uvs2   .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
     normals.resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
     colors .resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
     indices.resize(6 * 6 * (vol_size * vol_size * vol_size) as i32);
@@ -180,37 +184,38 @@ pub fn render_octree_to_am(
         if v.faces & F_FRONT > 0 {
             Face::Front. render_to_arr(
                 &mut idxlen, &mut vtxlen, clr, p, cube_size as f32, 1.0,
-                &mut verts, &mut uvs, &mut colors, &mut normals, &mut indices, &mut va);
+                &mut verts, &mut uvs, &mut uvs2, &mut colors, &mut normals, &mut indices, &mut va);
         }
         if v.faces & F_TOP > 0 {
             Face::Top. render_to_arr(
                 &mut idxlen, &mut vtxlen, clr, p, cube_size as f32, 1.0,
-                &mut verts, &mut uvs, &mut colors, &mut normals, &mut indices, &mut va);
+                &mut verts, &mut uvs, &mut uvs2, &mut colors, &mut normals, &mut indices, &mut va);
         }
         if v.faces & F_BACK > 0 {
             Face::Back. render_to_arr(
                 &mut idxlen, &mut vtxlen, clr, p, cube_size as f32, 1.0,
-                &mut verts, &mut uvs, &mut colors, &mut normals, &mut indices, &mut va);
+                &mut verts, &mut uvs, &mut uvs2, &mut colors, &mut normals, &mut indices, &mut va);
         }
         if v.faces & F_LEFT > 0 {
             Face::Left. render_to_arr(
                 &mut idxlen, &mut vtxlen, clr, p, cube_size as f32, 1.0,
-                &mut verts, &mut uvs, &mut colors, &mut normals, &mut indices, &mut va);
+                &mut verts, &mut uvs, &mut uvs2, &mut colors, &mut normals, &mut indices, &mut va);
         }
         if v.faces & F_RIGHT > 0 {
             Face::Right. render_to_arr(
                 &mut idxlen, &mut vtxlen, clr, p, cube_size as f32, 1.0,
-                &mut verts, &mut uvs, &mut colors, &mut normals, &mut indices, &mut va);
+                &mut verts, &mut uvs, &mut uvs2, &mut colors, &mut normals, &mut indices, &mut va);
         }
         if v.faces & F_BOTTOM > 0 {
             Face::Bottom. render_to_arr(
                 &mut idxlen, &mut vtxlen, clr, p, cube_size as f32, 1.0,
-                &mut verts, &mut uvs, &mut colors, &mut normals, &mut indices, &mut va);
+                &mut verts, &mut uvs, &mut uvs2, &mut colors, &mut normals, &mut indices, &mut va);
         }
     });
 
     verts  .resize(vtxlen as i32);
     uvs    .resize(vtxlen as i32);
+    uvs2   .resize(vtxlen as i32);
     normals.resize(vtxlen as i32);
     colors .resize(vtxlen as i32);
     indices.resize(idxlen as i32);
@@ -222,7 +227,7 @@ pub fn render_octree_to_am(
     arr.push(&Variant::new()); // tangent
     arr.push(&Variant::from_color_array(&colors));
     arr.push(&Variant::from_vector2_array(&uvs));
-    arr.push(&Variant::new()); // uv2
+    arr.push(&Variant::from_vector2_array(&uvs2));
     arr.push(&Variant::new()); // bones
     arr.push(&Variant::new()); // weights
     arr.push(&Variant::from_int32_array(&indices));

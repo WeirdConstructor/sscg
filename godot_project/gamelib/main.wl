@@ -182,6 +182,7 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
 
     std:displayln "DONE!";
     $[vp.id[], main_vol]
+#    ; $n
 };
 
 STATE.callbacks.on_saved_godot_state = {!(state) = @;
@@ -290,10 +291,10 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
         $["Artwork", $[
         ] ],
         $["Feedback, Hints, Ideas and Testing", $[
-            "Gargaj",
+            "Gargaj (shader suggestions)",
+            "Ilmuri (help with shaders and feedback)",
+            "Tom from 'Recall Singularity' (feedback and suggestions)",
             "Itmuckel",
-            "Ilmuri",
-            "Tom from 'Recall Singularity'",
             "szczm",
         ] ],
         $["Engine", $[
