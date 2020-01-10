@@ -54,19 +54,19 @@ impl VoxStruct {
     fn _ready(&mut self, mut owner: Spatial) {
         use wlambda::util::*;
         self.vol.fill(0, 0, 0, VOL_SIZE as u16, VOL_SIZE as u16, VOL_SIZE as u16, 100.into());
-        let mut sm = SplitMix64::new(3489492);
-        for z in 0..VOL_SIZE {
-            for y in 0..VOL_SIZE {
-                for x in 0..VOL_SIZE {
-                    if u64_to_open01(sm.next_u64()) > 0.01 {
-                        self.vol.set(x as u16, y as u16, z as u16, 0.into());
-                    } else {
-                        let color = (u64_to_open01(sm.next_u64()) * 256.0) as u8;
-                        self.vol.set(x as u16, y as u16, z as u16, color.into());
-                    }
-                }
-            }
-        }
+//        let mut sm = SplitMix64::new(3489492);
+//        for z in 0..VOL_SIZE {
+//            for y in 0..VOL_SIZE {
+//                for x in 0..VOL_SIZE {
+//                    if u64_to_open01(sm.next_u64()) > 0.01 {
+//                        self.vol.set(x as u16, y as u16, z as u16, 0.into());
+//                    } else {
+//                        let color = (u64_to_open01(sm.next_u64()) * 256.0) as u8;
+//                        self.vol.set(x as u16, y as u16, z as u16, color.into());
+//                    }
+//                }
+//            }
+//        }
 
         println!("filled...");
 
@@ -156,7 +156,7 @@ impl VoxStruct {
 
             for y in 0..VOL_SIZE {
                 let iy  = y / SUBVOL_SIZE;
-                let iyi = y % SUBVOL_SIZE;
+                let iyi = (SUBVOL_SIZE - 1) - (y % SUBVOL_SIZE);
 
                 for x in 0..VOL_SIZE {
                     let ix  = x / SUBVOL_SIZE;
