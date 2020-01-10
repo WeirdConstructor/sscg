@@ -28,7 +28,7 @@ void fragment() {
 	float line_val = max(clamp(xv, 0.0, 1.0), clamp(yv, 0.0, 1.0));
 	
 	// Base color of the voxel with some darkness gradiant so it doesn't look so flat:
-	vec3 base_color = COLOR.rgb * clamp(1.0 - length(vec2(0.5, 0.5) - UV), 0.0, 1.0);
+	vec3 base_color = COLOR.rgb * clamp(1.0 - pow(length(vec2(0.5, 0.5) - UV), 2), 0.0, 1.0);
 	
 	// Color of the line fragment
 	vec3 emit_base_color = vec3(0, line_val, line_val);
@@ -38,7 +38,7 @@ void fragment() {
 	// Fade out the line color to the base color with more z distance
 	vec3 emit_color = mix(emit_base_color, base_color, depth);
 	
-	ALBEDO = mix(base_color, emit_color,line_val);
+	ALBEDO = mix(base_color, emit_color, line_val);
 	// 4.0 to make the glow more glaring:
 	EMISSION = emit_base_color * 4.0 * (idepth * idepth) * line_val;
 }

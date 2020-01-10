@@ -139,8 +139,6 @@ near = 0.01
 far = 4712.0
 
 [node name="OmniLight" type="OmniLight" parent="Drone/Camera"]
-light_energy = 0.75
-light_indirect_energy = 0.75
 omni_range = 32.0
 omni_attenuation = 4.59479
 
