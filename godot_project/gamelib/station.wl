@@ -60,6 +60,10 @@
             "sell_rocks" {||
                 STATE.code.sell_ship_cargo_good :rock;
                 STATE.code.sell_ship_cargo_good :element_he;
+                STATE.code.sell_ship_cargo_good :element_o;
+                STATE.code.sell_ship_cargo_good :element_h;
+                STATE.code.sell_ship_cargo_good :element_ag;
+                STATE.code.sell_ship_cargo_good :element_c;
             }
             {||
                 sscg:win.set_window WID:STATION;

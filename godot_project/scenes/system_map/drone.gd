@@ -36,7 +36,7 @@ func set_active(is_active):
 		if test_mode:
 			self.set_translation(
 			   self.get_parent().get_node("ship").get_translation()
-			   + Vector3(0, 120, 0))
+			   + Vector3(0, -2, 0))
 		else:
 			self.set_translation(
 			   self.get_parent().get_node("ship").get_translation()
