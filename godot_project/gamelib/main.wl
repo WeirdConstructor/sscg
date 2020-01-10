@@ -9,9 +9,55 @@
 !STATE = ${
     good_types = ${
         rock = ${
+            name        = "Unknown Minerals",
             kg_p_m3     = 1800,
-            unit_kg     = 100,
+            unit_g      = 100000,
             baseprice   = 10,
+        },
+        element_c = ${
+            short       = "C",
+            name        = "Carbon",
+            kg_p_m3     = 1300, # 1300 kg/m3 is stone coal, 2,27g/cm3 graphite, 3,51g/cm3 is diamond
+            unit_g      = 50000,
+            baseprice   = 20,
+            mineable    = $true,
+            vol_color   = 6,
+        },
+        element_h = ${
+            short       = "H",
+            name        = "Hydrogen",
+            kg_p_m3     = 1, # gas
+            unit_g      = 50,
+            baseprice   = 50,
+            mineable    = $true,
+            vol_color   = 1,
+        },
+        element_he = ${
+            short       = "He",
+            name        = "Helium",
+            kg_p_m3     = 2, # gas
+            unit_g      = 100,
+            baseprice   = 90,
+            mineable    = $true,
+            vol_color   = 2,
+        },
+        element_o = ${
+            short       = "O",
+            name        = "Oxygen",
+            kg_p_m3     = 2, # gas
+            unit_g      = 200,
+            baseprice   = 100,
+            mineable    = $true,
+            vol_color   = 8,
+        },
+        element_ag = ${
+            short       = "Ag",
+            name        = "Silver",
+            kg_p_m3     = 10490,
+            unit_g      = 1000,
+            baseprice   = 200,
+            mineable    = $true,
+            vol_color   = 47,
         },
     },
     ship_types = ${
@@ -64,6 +110,7 @@ STATE.code.sell_ship_cargo_good = {!(good_t) = @;
     STATE.player.credits =
         STATE.player.credits
         + (float units_money) * (1.0 - STATE.player.base_tax);
+    std:displayln "SELL Ship Goods=" STATE.ship.cargo.goods;
     STATE.ship.cargo.goods.(good_t) = $n;
     STATE.code.recalc_ship_cargo[];
 };
@@ -75,7 +122,7 @@ STATE.code.calc_unit_capacity_for_good = {!(good_t) = @;
     !m3_free    = ship_type.cargo_max_m3 - STATE.ship.cargo.m3;
     !m3_free_kg = (m3_free * good_type.kg_p_m3) / 1000;
     !min_kg_free = (kg_free < m3_free_kg) { kg_free } { m3_free_kg };
-    min_kg_free / good_type.unit_kg
+    (min_kg_free * 1000) / good_type.unit_g
 };
 
 STATE.code.recalc_ship_cargo = {
@@ -85,9 +132,10 @@ STATE.code.recalc_ship_cargo = {
     s.cargo.goods {!(v, k) = @;
         !good_type = STATE.good_types.(k);
         s.cargo.kg =
-            s.cargo.kg + good_type.unit_kg * v;
+            s.cargo.kg + (good_type.unit_g * v) / 1000;
         s.cargo.m3 =
-            s.cargo.m3 + ((good_type.unit_kg * v * 1000) / good_type.kg_p_m3);
+            s.cargo.m3 + ((good_type.unit_g * v * 1000)
+                          / (1000 * good_type.kg_p_m3));
     };
 };
 
@@ -111,7 +159,7 @@ STATE.code.recalc_ship_cargo = {
                 ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_m3, w = 333, fg = c:SE2, bg = "000" },
             ]},
             ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
-                ${ t = :l_text, text = "kg³",                                        w = 333, fg = c:SE2_L, bg = "000" },
+                ${ t = :l_text, text = "kg",                                        w = 333, fg = c:SE2_L, bg = "000" },
                 ${ t = :l_text, ref = :kg, text = STATE.ship.cargo.kg,                          w = 333, fg = c:SE1_L, bg = "000" },
                 ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_kg, w = 333, fg = c:SE2, bg = "000" },
             ]},
@@ -150,6 +198,18 @@ STATE.code.recalc_ship_cargo = {
     };
 };
 
+STATE.code.get_good_by_color = {!(color) = @;
+    block :ret {
+        STATE.good_types {!(v, k) = @;
+            std:displayln :COMP v ">>" k ">" color;
+            (int[v.vol_color] == int[color]) {
+                return :ret $[k, v];
+            }
+        };
+        $none
+    }
+};
+
 STATE.callbacks.on_mine = {
     std:displayln "MINE:" @;
 
@@ -160,10 +220,13 @@ STATE.callbacks.on_mine = {
 };
 
 STATE.callbacks.on_mined_voxel = {
-    std:displayln "MINE:" @;
-    STATE.ship.cargo.goods.rock =
-        STATE.ship.cargo.goods.rock + 1;
-    STATE.code.recalc_ship_cargo[];
+    std:displayln "MINEDD:" @ STATE.code.get_good_by_color[_2];
+    !(k, v) = STATE.code.get_good_by_color[_2];
+    not[is_none[k]] {
+        STATE.ship.cargo.goods.(k) =
+            STATE.ship.cargo.goods.(k) + 1;
+        STATE.code.recalc_ship_cargo[];
+    };
     $t
 };
 
@@ -177,7 +240,15 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     vp.fill main_vol 0
         0 0 0
         128 128 128
-        0.7;
+        2.0 / 255.0;
+    vp.fill main_vol 0
+        0 0 0
+        128 1 128
+        1.0 / 255.0;
+    vp.fill main_vol 0
+        0 1 0
+        128 1 128
+        6.0 / 255.0;
     std:displayln "NEWVOL:" main_vol;
 
     std:displayln "DONE!";
@@ -294,8 +365,8 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
             "Gargaj (shader suggestions)",
             "Ilmuri (help with shaders and feedback)",
             "Tom from 'Recall Singularity' (feedback and suggestions)",
-            "Itmuckel",
-            "szczm",
+            "Itmuckel (feedback)",
+            "szczm (dragging me back into game dev)",
         ] ],
         $["Engine", $[
             "Godot game engine developers",
