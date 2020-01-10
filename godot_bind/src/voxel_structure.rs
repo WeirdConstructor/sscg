@@ -12,6 +12,7 @@ pub struct VoxStruct {
     collision_shapes: std::vec::Vec<(StaticBody, i64)>,
     vol:              Vol<u8>,
     octrees:          std::vec::Vec<Octree<u8>>,
+    color_map:        ColorMap,
 
     cursor:         [u16; 3],
 }
@@ -22,6 +23,20 @@ const VOL_SIZE    : usize = 128;
 const SUBVOL_SIZE : usize = 16;
 const SUBVOLS     : usize = VOL_SIZE / SUBVOL_SIZE;
 
+fn vval2colors(clr: VVal) -> ColorMap {
+    let mut colors = [[0.0; 3]; 256];
+    use sscg::wlambda_api::color_hex24tpl;
+    for (i, c) in clr.iter().enumerate() {
+        let tpl = color_hex24tpl(&c.s_raw());
+        colors[i] = [
+            tpl.0 as f32 / 255.0,
+            tpl.1 as f32 / 255.0,
+            tpl.2 as f32 / 255.0,
+        ];
+    }
+    ColorMap::new_from(colors)
+}
+
 #[methods]
 impl VoxStruct {
     fn _init(_owner: Spatial) -> Self {
@@ -30,7 +45,8 @@ impl VoxStruct {
             collision_shapes: vec![],
             vol:              Vol::new(VOL_SIZE),
             octrees:          vec![],
-            cursor:         [0, 0, 0],
+            color_map:        ColorMap::new_8bit(),
+            cursor:           [0, 0, 0],
         }
     }
 
@@ -46,6 +62,7 @@ impl VoxStruct {
                 .borrow()[ret.v_i(0) as usize]
                 .borrow()
                 .write_into_u8_vol(ret.v_i(1) as usize, &mut self.vol);
+            self.color_map = vval2colors(ret.v_(2));
             self.load_vol(owner);
         }
     }
@@ -323,7 +340,7 @@ impl VoxStruct {
 
             let mut m = part.get_material_override().unwrap()
                             .cast::<SpatialMaterial>().unwrap();
-            let cm = ColorMap::new_8bit();
+            let cm = self.color_map;
             let clr = cm.map(color);
             m.set_albedo(clr);
             m.set_emission(clr);
@@ -427,7 +444,7 @@ impl VoxStruct {
         let (mut static_body, shape_owner_idx) = self.collision_shapes[sub_idx];
 
         if !n.empty {
-            let cm = ColorMap::new_8bit();
+            let cm = self.color_map;
 
             render_octree_to_am(
                 &mut am, &mut cvshape, &cm, &self.octrees[sub_idx]);
