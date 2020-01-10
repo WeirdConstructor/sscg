@@ -6,6 +6,265 @@
 !@import WID        gui_window_ids;
 !@import gui        gui_common;
 
+!color_map = $[
+    "#000",     # 0
+    "#f99",     # 1
+    "#ff0",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 5
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 10
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 15
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 20
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 25
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 30
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 35
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 40
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 45
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 50
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 55
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 60
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 65
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 70
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 75
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 80
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 85
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 90
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 95
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 100
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 105
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 110
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 115
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",     # 120
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+    "#f0f",
+];
+
 !STATE = ${
     good_types = ${
         rock = ${
@@ -212,9 +471,10 @@ STATE.code.get_good_by_color = {!(color) = @;
 
 STATE.callbacks.on_mine = {
     std:displayln "MINE:" @;
+    !(k, v) = STATE.code.get_good_by_color[_3];
 
     !capacity_units =
-        STATE.code.calc_unit_capacity_for_good :rock;
+        STATE.code.calc_unit_capacity_for_good k;
 
     (capacity_units > 0) &and (_2 != 0)
 };
@@ -252,7 +512,7 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     std:displayln "NEWVOL:" main_vol;
 
     std:displayln "DONE!";
-    $[vp.id[], main_vol]
+    $[vp.id[], main_vol, color_map]
 #    ; $n
 };
 

@@ -112,6 +112,7 @@ impl Face {
 }
 
 
+#[derive(Copy, Clone)]
 pub struct ColorMap {
     pub colors: [[f32; 3]; 256],
 }
@@ -129,6 +130,10 @@ impl ColorMap {
                 (0x3 as f32) / (b as f32),
             ];
         }
+        Self { colors }
+    }
+
+    pub fn new_from(colors: [[f32; 3]; 256]) -> Self {
         Self { colors }
     }
 

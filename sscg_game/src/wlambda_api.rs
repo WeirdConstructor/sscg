@@ -513,7 +513,7 @@ impl WindowManagerWlWrapper {
 
 fn shiftaddup4(u: u8) -> u8 { (u << 4) | u }
 
-fn color_hex24tpl(s: &str) -> (u8, u8, u8, u8) {
+pub fn color_hex24tpl(s: &str) -> (u8, u8, u8, u8) {
     match s.len() {
         8 => (
             u8::from_str_radix(&s[0..2], 16).unwrap_or(0),
