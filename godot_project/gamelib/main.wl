@@ -502,11 +502,11 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     vp.sample_3dnoise_octaves
         main_vol 0
         0 0 0
-        128 128 128
+        64 64 64
         123123
-        3
-        4.0
-        0.4;
+        4
+        2.0
+        0.2;
     vp.fill main_vol 0
         0 0 0
         128 1 128
@@ -530,7 +530,8 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     std:displayln "NEWVOL:" main_vol;
 
     std:displayln "DONE!";
-    $[vp.id[], main_vol, color_map]
+#    $[vp.id[], main_vol, color_map]
+    $[vp.id[], main_vol]
 #    ; $n
 };
 

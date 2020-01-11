@@ -137,14 +137,15 @@ impl VoxelPainter {
         let vol = &mut self.volumes[vol_id];
         let n = Sampled3DNoise::new(vol.size, seed);
 
-        for z in 0..vol.size {
-            for y in 0..vol.size {
-                for x in 0..vol.size {
+        for z in 0..rect.d {
+            for y in 0..rect.h {
+                for x in 0..rect.w {
                     let mut val =
                         n.at_octaved(
                             x as f64, y as f64, z as f64,
                             octaves, factor, persistence);
-                    if val < 0.1 { val = 0.0; }
+                    if val > 0.5 { val = 0.0; }
+                    let val = (val * 3.0).floor() / 255.0;
                     vol.set(x as u16, y as u16, z as u16, val.into());
                 }
             }
