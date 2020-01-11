@@ -130,22 +130,59 @@ impl VoxelPainter {
         }
     }
 
-    pub fn sample_3dnoise_octaves(
-        &mut self, vol_id: usize, mask: usize, rect: Rect,
-        seed: i64, octaves: usize, factor: f64, persistence: f64)
+    pub fn fill_noise(
+        &mut self, vol_id: usize, mask: usize,
+        rect: Rect,
+        seed: i64, noise_size: usize, noise_scale: f64)
     {
         let vol = &mut self.volumes[vol_id];
-        let n = Sampled3DNoise::new(vol.size, seed);
+        let n = Sampled3DNoise::new(noise_size, seed);
 
         for z in 0..rect.d {
             for y in 0..rect.h {
                 for x in 0..rect.w {
                     let mut val =
-                        n.at_octaved(
-                            x as f64, y as f64, z as f64,
-                            octaves, factor, persistence);
+                        n.at(
+                            noise_scale * x as f64 / (rect.w as f64),
+                            noise_scale * y as f64 / (rect.h as f64),
+                            noise_scale * z as f64 / (rect.d as f64));
                     if val > 0.5 { val = 0.0; }
-                    let val = (val * 3.0).floor() / 255.0;
+                    else { val = 2.0 / 255.0; }
+                    vol.set(
+                        rect.x + x as u16,
+                        rect.y + y as u16,
+                        rect.z + z as u16,
+                        val.into());
+                }
+            }
+        }
+    }
+
+    pub fn sample_fbm(
+        &mut self, vol_id: usize, mask: usize,
+        rect: Rect,
+        seed: i64,
+        noise_size: usize,
+        noise_scale: f64,
+        octaves: usize,
+        lacunarity: f64,
+        gain: f64)
+    {
+        let vol = &mut self.volumes[vol_id];
+        let n = Sampled3DNoise::new(noise_size, seed);
+
+        for z in 0..rect.d {
+            for y in 0..rect.h {
+                for x in 0..rect.w {
+                    let mut val =
+                        n.at_fbm(
+                            noise_scale * (x as f64) / (rect.w as f64),
+                            noise_scale * (y as f64) / (rect.h as f64),
+                            noise_scale * (z as f64) / (rect.d as f64),
+                            octaves, lacunarity, gain);
+                    if val > 0.5 { val = 0.0; }
+                    else { val = 2.0 / 255.0; }
+//                    let val = (val * 3.0).floor() / 255.0;
                     vol.set(x as u16, y as u16, z as u16, val.into());
                 }
             }
@@ -178,15 +215,29 @@ pub fn new_voxel_painter(id: usize) -> (Rc<RefCell<VoxelPainter>>, VVal) {
             env.arg(1).f())))
     });
 
-    set_vval_method!(o, painter, sample_3dnoise_octaves, Some(12), Some(12), env, _argc, {
-        painter.borrow_mut().sample_3dnoise_octaves(
+    set_vval_method!(o, painter, fill_noise, Some(11), Some(11), env, _argc, {
+        painter.borrow_mut().fill_noise(
             env.arg(0).i() as usize,
             env.arg(1).i() as usize,
             Rect::from_wlambda_env(env, 2),
-            env.arg(8).i(), // seed
-            env.arg(9).i() as usize, // octaves
-            env.arg(10).f(), // factor
-            env.arg(11).f()); // persistence
+            env.arg(8).i(),
+            env.arg(9).i() as usize, // seed
+            env.arg(10).f());        // noise scale
+
+        Ok(VVal::Bol(true))
+    });
+
+    set_vval_method!(o, painter, sample_fbm, Some(14), Some(14), env, _argc, {
+        painter.borrow_mut().sample_fbm(
+            env.arg(0).i() as usize,
+            env.arg(1).i() as usize,
+            Rect::from_wlambda_env(env, 2),
+            env.arg(8).i(),           // seed
+            env.arg(9).i() as usize,  // noise size
+            env.arg(10).f(),          // noise scale
+            env.arg(11).i() as usize, // octaves
+            env.arg(12).f(),          // lacunarity
+            env.arg(13).f());         // gain
 
         Ok(VVal::Bol(true))
     });

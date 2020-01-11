@@ -499,34 +499,9 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     std:displayln "LOADDED on_draw_voxel_structure " vp "|" sys_id ent_id;
     vp.clear[];
     !main_vol = vp.new 128 0.0;
-    vp.sample_3dnoise_octaves
-        main_vol 0
-        0 0 0
-        64 64 64
-        123123
-        4
-        2.0
-        0.2;
-    vp.fill main_vol 0
-        0 0 0
-        128 1 128
-        1.0 / 255.0;
-    vp.fill main_vol 0
-        0 1 0
-        128 1 128
-        2.0 / 255.0;
-    vp.fill main_vol 0
-        0 2 0
-        128 1 128
-        6.0 / 255.0;
-    vp.fill main_vol 0
-        0 3 0
-        128 1 128
-        8.0 / 255.0;
-    vp.fill main_vol 0
-        0 4 0
-        128 1 128
-        47.0 / 255.0;
+    !pattern = std:io:file:read_text "pat.wl";
+    !fun = std:eval pattern;
+    fun[vp, main_vol];
     std:displayln "NEWVOL:" main_vol;
 
     std:displayln "DONE!";
