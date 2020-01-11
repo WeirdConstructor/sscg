@@ -2,6 +2,5 @@
 
 [ext_resource path="res://scenes/entities/materials/voxel_material.shader" type="Shader" id=1]
 
-
 [resource]
 shader = ExtResource( 1 )

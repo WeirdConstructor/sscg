@@ -1,6 +1,7 @@
 shader_type spatial;
 
 render_mode diffuse_burley;
+//render_mode unshaded;
 
 void fragment() {
 	float xv = 0.0;
@@ -40,5 +41,5 @@ void fragment() {
 	
 	ALBEDO = mix(base_color, emit_color, line_val);
 	// 4.0 to make the glow more glaring:
-	EMISSION = emit_base_color * 4.0 * (idepth * idepth) * line_val;
+	EMISSION = emit_base_color * 2.0 * (idepth * idepth * idepth) * line_val;
 }

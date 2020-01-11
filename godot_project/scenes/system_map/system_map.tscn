@@ -131,6 +131,7 @@ process_material = SubResource( 3 )
 draw_pass_1 = SubResource( 5 )
 
 [node name="CollisionShape" type="CollisionShape" parent="Drone"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.270151, 0 )
 shape = SubResource( 6 )
 
 [node name="Camera" type="Camera" parent="Drone"]
@@ -139,7 +140,7 @@ near = 0.01
 far = 4712.0
 
 [node name="OmniLight" type="OmniLight" parent="Drone/Camera"]
-omni_range = 32.0
+omni_range = 128.0
 omni_attenuation = 4.59479
 
 [node name="Sprite3D" type="Sprite3D" parent="Drone/Camera"]

@@ -45,7 +45,7 @@ impl VoxStruct {
             collision_shapes: vec![],
             vol:              Vol::new(VOL_SIZE),
             octrees:          vec![],
-            color_map:        ColorMap::new_8bit(),
+            color_map:        ColorMap::new_gray(),
             cursor:           [0, 0, 0],
         }
     }
@@ -53,17 +53,20 @@ impl VoxStruct {
     #[export]
     fn on_wlambda_init(&mut self, mut owner: Spatial) {
         println!("FOFO");
+        let d = std::time::Instant::now();
         let (sysid, entid) = self.parent_info(&mut owner);
         lock_sscg!(sscg);
         let ret = sscg.call_cb("on_draw_voxel_structure", &vec![sysid, entid]);
         if !ret.is_none() {
-            println!("WRITE VOL {}", ret.s());
             sscg.vox_painters
                 .borrow()[ret.v_i(0) as usize]
                 .borrow()
                 .write_into_u8_vol(ret.v_i(1) as usize, &mut self.vol);
-            self.color_map = vval2colors(ret.v_(2));
+            if !ret.v_(2).is_none() {
+                self.color_map = vval2colors(ret.v_(2));
+            }
             self.load_vol(owner);
+            println!("Reloaded voxel volume, took {} ms", d.elapsed().as_millis());
         }
     }
 

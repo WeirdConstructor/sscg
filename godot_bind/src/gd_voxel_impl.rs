@@ -118,6 +118,17 @@ pub struct ColorMap {
 }
 
 impl ColorMap {
+    pub fn new_gray() -> Self {
+        let mut colors = [[0.0; 3]; 256];
+        for i in 0..256 {
+            colors[i] = [
+                i as f32 / 255.0,
+                i as f32 / 255.0,
+                i as f32 / 255.0,
+            ];
+        }
+        Self { colors }
+    }
     pub fn new_8bit() -> Self {
         let mut colors = [[0.0; 3]; 256];
         for i in 0..256 {
