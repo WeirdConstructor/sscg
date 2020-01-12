@@ -28,12 +28,16 @@ pub struct GUIPaintNode {
     cache: std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
     w: i64,
     h: i64,
+    textures: Option<std::vec::Vec<Texture>>,
 }
+
+unsafe impl Send for GUIPaintNode { }
 
 fn draw_cmds(xxo: i32, yyo: i32,
              cache: &mut std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
              n: &mut Node2D,
              fh: &FontHolder,
+             textures: &[Texture],
              cmds: &[DrawCmd])
 {
     for c in cmds {
@@ -46,8 +50,40 @@ fn draw_cmds(xxo: i32, yyo: i32,
             },
             DrawCmd::DrawCache { x, y, w: _w, h: _h, id } => {
                 let my_cmds = std::mem::replace(&mut cache[*id], None);
-                draw_cmds(xxo + x, yyo + y, cache, n, fh, my_cmds.as_ref().unwrap());
+                draw_cmds(xxo + x, yyo + y, cache, n, fh, textures, my_cmds.as_ref().unwrap());
                 std::mem::replace(&mut cache[*id], my_cmds);
+            },
+            DrawCmd::Texture { txt_idx, x, y, w, h, centered } => {
+                unsafe {
+                    let txt = &textures[*txt_idx];
+                    let sz  = txt.get_size();
+
+                    let xo = if *centered { -(sz.x / 2.0) } else { 0.0 };
+                    let yo = if *centered { -(sz.y / 2.0) } else { 0.0 };
+
+                    let w = if *w == 0 { sz.x } else { *w as f32 };
+                    let h = if *h == 0 { sz.y } else { *h as f32 };
+
+                    let aspect = if sz.y > 0.0 { sz.x / sz.y } else { 1.0 };
+                    let min_edge = w.min(h);
+                    let (w, h) =
+                        if sz.x > sz.y {
+                            ((sz.x / sz.y) * min_edge, min_edge)
+                        } else {
+                            (min_edge, (sz.y / sz.x) * min_edge)
+                        };
+
+                    n.draw_texture_rect(
+                        Some(txt.clone()),
+                        rect(xo + (xxo + *x) as f32,
+                             yo + (yyo + *y) as f32,
+                             w,
+                             h),
+                        false,
+                        Color::rgba(1.0, 1.0, 1.0, 1.0),
+                        false,
+                        None);
+                }
             },
             DrawCmd::Text { txt, align, color, x, y, w, fs } => {
                 unsafe {
@@ -140,7 +176,12 @@ fn draw_cmds(xxo: i32, yyo: i32,
 #[methods]
 impl GUIPaintNode {
     fn _init(_owner: Node2D) -> Self {
-        Self { w: 0, h: 0, cache: vec![] }
+        Self {
+            w:          0,
+            h:          0,
+            cache:      vec![],
+            textures:   None,
+        }
     }
 
     #[export]
@@ -250,6 +291,29 @@ impl GUIPaintNode {
     fn _draw(&mut self, mut s: Node2D) {
         lock_sscg!(sscg);
 
+        if self.textures.is_none() {
+            let ret = sscg.call_cb("on_texture_description", &vec![]);
+            let mut textures : std::vec::Vec<Texture> = vec![];
+            for t in ret.iter() {
+                let txt = match &t.v_s_raw(0)[..] {
+                    "image" => {
+                        ResourceLoader::godot_singleton().load(
+                            GodotString::from_str(t.v_s_raw(1)),
+                            GodotString::from_str("ImageTexture"),
+                            false).expect(&format!("Loading texture {}", t.s()))
+                                  .cast::<Texture>()
+                                  .expect(
+                                      &format!("Failed casting to Texture {}",
+                                               t.s()))
+                    },
+                    _ => { panic!(format!("Unknown texture type: {}", t.s())); },
+                };
+
+                textures.push(txt);
+            }
+            self.textures = Some(textures);
+        }
+
         //d// println!("DRAW CALLBACK!");
         let tp = &mut sscg.tp;
         tp.clear_cmds();
@@ -257,7 +321,9 @@ impl GUIPaintNode {
             |win| win.draw(win.id, self.w as u32, self.h as u32, tp));
         let fh_rc = sscg.fonts.clone();
         //d// println!("DRAW CMDS {:?}", tp.ref_cmds());
-        draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc, tp.ref_cmds());
+        draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc,
+                  &self.textures.as_ref().expect("Textures loaded"),
+                  tp.ref_cmds());
         sscg.wm.borrow_mut().redraw_done();
     }
 }

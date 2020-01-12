@@ -13,7 +13,7 @@ pub enum DrawCmd {
     FilledCircle { x: i32, y: i32, r: u32, color: (u8, u8, u8, u8) },
     Line         { x: i32, y: i32, x2: i32, y2: i32, t: u32, color: (u8, u8, u8, u8) },
     TextureCrop  { txt_idx: usize, x: i32, y: i32, w: u32, h: u32, },
-    Texture      { txt_idx: usize, x: i32, y: i32, centered: bool },
+    Texture      { txt_idx: usize, x: i32, y: i32, w: u32, h: u32, centered: bool },
     Text         { txt: String, align: i32, color: (u8, u8, u8, u8), x: i32, y: i32, w: u32, fs: FontSize },
     CacheDraw    { w: u32, h: u32, id: usize, cmds: std::vec::Vec<DrawCmd> },
     DrawCache    { x: i32, y: i32, w: u32, h: u32, id: usize },
@@ -164,6 +164,16 @@ impl GamePainter for TreePainter {
             color,
         });
     }
+    fn draw_texture(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32) {
+        self.cmds.push(DrawCmd::Texture {
+            txt_idx: idx,
+            x: self.offs.0 + xo,
+            y: self.offs.1 + yo,
+            w: w,
+            h: h,
+            centered: false,
+        });
+    }
     fn text_size(&mut self, txt: &str, fs: FontSize) -> (u32, u32) {
         self.text_metric.text_size(txt, fs)
     }
@@ -182,8 +192,10 @@ impl GamePainter for TreePainter {
     fn texture(&mut self, idx: usize, xo: i32, yo: i32, centered: bool) {
         self.cmds.push(DrawCmd::Texture {
             txt_idx: idx,
-            x:  self.offs.0 + xo,
-            y:  self.offs.1 + yo,
+            x: self.offs.0 + xo,
+            y: self.offs.1 + yo,
+            w: 0,
+            h: 0,
             centered,
         });
     }

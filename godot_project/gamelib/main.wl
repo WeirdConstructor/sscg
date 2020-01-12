@@ -494,12 +494,17 @@ STATE.callbacks.on_mined_voxel = {
 
 !vp = $&&$n;
 
+STATE.callbacks.on_texture_description = {|| std:displayln "Describing textures ..."; $[
+    $["image", "res://icon.png"],
+] };
+
 STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     !vp = $*vp;
     std:displayln "LOADDED on_draw_voxel_structure " vp "|" sys_id ent_id;
     vp.clear[];
     !main_vol = vp.new 128 0.0;
-    !pattern = std:io:file:read_text "pat.wl";
+    !pattern = on_error { std:displayln "Couldn't load pat.wl: " @; "{ std:displayln :NOPATERR @; }" } ~
+                   std:io:file:read_text "pat.wl";
     !fun = std:eval pattern;
     fun[vp, main_vol];
     std:displayln "NEWVOL:" main_vol;
@@ -798,6 +803,7 @@ STATE.callbacks.on_ready = {
                 status_value "Cargo m³/kg" :cargo_load,
                 status_value "Fuel usage"  :fuel_usage,
                 ${ t = :l_button, text = "Menu", w = 1000, bg = c:CON, fg = "000", ref = "menu" },
+                ${ t = :texture, idx = 0, w = 200, h = 200 },
             ]
         }
     } {||

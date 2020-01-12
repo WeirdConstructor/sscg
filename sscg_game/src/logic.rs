@@ -331,6 +331,7 @@ pub trait GamePainter {
                  color: (u8, u8, u8, u8));
     fn draw_rect_filled(&mut self, xo: i32, yo: i32, w: u32, h: u32,
                         color: (u8, u8, u8, u8));
+    fn draw_texture(&mut self, idx: usize, xo: i32, yo: i32, w: u32, h: u32);
     fn draw_dot(&mut self, xo: i32, yo: i32, r: u32, color: (u8, u8, u8, u8));
     fn draw_circle(&mut self, xo: i32, yo: i32, r: u32, color: (u8, u8, u8, u8));
     fn draw_line(&mut self, xo: i32, yo: i32, x2o: i32, y2o: i32, t: u32,

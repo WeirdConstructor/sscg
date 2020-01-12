@@ -7,6 +7,7 @@ pub enum Widget {
     Layout(usize, Size, Layout),
     Label(usize, Size, Label),
     Canvas(usize, Size, Canvas),
+    Texture(usize, Size, usize),
 }
 
 fn calc_m_wo_spacing(child_count: usize, spacing: u32, border: i32, mw: u32) -> u32 {
@@ -24,9 +25,10 @@ fn calc_m_wo_spacing(child_count: usize, spacing: u32, border: i32, mw: u32) -> 
 impl Widget {
     pub fn id(&self) -> usize {
         match self {
-            Widget::Layout(id, _, _) => *id,
-            Widget::Label(id, _, _)  => *id,
-            Widget::Canvas(id, _, _) => *id,
+            Widget::Layout(id, _, _)  => *id,
+            Widget::Label(id, _, _)   => *id,
+            Widget::Canvas(id, _, _)  => *id,
+            Widget::Texture(id, _, _) => *id,
         }
     }
     pub fn calc_feedback<P>(&self, max_w: u32, max_h: u32, p: &mut P)
@@ -43,6 +45,10 @@ impl Widget {
                 (*id, l.size(max_w, max_h))
             },
             Widget::Canvas(id, l, _)  => {
+                p.push_add_offs(l.margin as i32, l.margin as i32);
+                (*id, l.size(max_w, max_h))
+            },
+            Widget::Texture(id, l, _)  => {
                 p.push_add_offs(l.margin as i32, l.margin as i32);
                 (*id, l.size(max_w, max_h))
             },
@@ -273,6 +279,9 @@ impl Widget {
                 p.draw_rect_filled(0, mh as i32 - border, mw, border as u32, c.border_color);
                 p.draw_rect_filled(0, 0, border as u32, mh, c.border_color);
                 p.draw_rect_filled(mw as i32 - border, 0, border as u32, mh, c.border_color);
+            },
+            Widget::Texture(id, size, txt_idx) => {
+                p.draw_texture(*txt_idx, 0, 0, mw, mh);
             },
             Widget::Label(id, _size, lbl) => {
                 let mut bg_color =
@@ -656,6 +665,13 @@ impl Window {
             border,
             border_color,
         }));
+        self.does_need_redraw();
+        id
+    }
+
+    pub fn add_texture(&mut self, s: Size, txt_idx: usize) -> usize {
+        let id = self.widgets.len();
+        self.widgets.push(Widget::Texture(id, s, txt_idx));
         self.does_need_redraw();
         id
     }
