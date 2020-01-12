@@ -15,7 +15,12 @@ func _input(event):
 				self.find_node("GUIDrawing").on_input(event.get_unicode())
 	elif event is InputEventMouseMotion:
 		var mp = self.get_local_mouse_position()
-		self.find_node("GUIDrawing").on_mouse_move(mp.x, mp.y)
+		self.find_node("GUIDrawing").on_mouse_move(
+		    mp.x, mp.y,
+			Input.is_mouse_button_pressed(BUTTON_LEFT),
+			Input.is_mouse_button_pressed(BUTTON_RIGHT),
+			Input.is_key_pressed(KEY_CONTROL),
+			Input.is_key_pressed(KEY_SHIFT))
 	elif event is InputEventMouseButton:
 		if event.is_pressed():
 			var mp = self.get_local_mouse_position()

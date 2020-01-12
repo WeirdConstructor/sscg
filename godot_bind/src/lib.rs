@@ -15,6 +15,7 @@ extern crate gdnative;
 use gdnative::*;
 use euclid::rect;
 use euclid::vec2;
+use euclid::Vector2D;
 use sscg::tree_painter::{DrawCmd, FontSize};
 use sscg::gui::*;
 use state::*;
@@ -29,6 +30,7 @@ pub struct GUIPaintNode {
     w: i64,
     h: i64,
     textures: Option<std::vec::Vec<Texture>>,
+    num_input: Option<(usize, f64, f64)>,
 }
 
 unsafe impl Send for GUIPaintNode { }
@@ -181,6 +183,7 @@ impl GUIPaintNode {
             h:          0,
             cache:      vec![],
             textures:   None,
+            num_input:  None,
         }
     }
 
@@ -227,16 +230,62 @@ impl GUIPaintNode {
     fn on_mouse_click(&mut self, mut s: Node2D, x: f64, y: f64) {
         lock_sscg!(sscg);
 
+        let mut numeric_input_start  = false;
+        let mut numeric_input_win_id = 0;
+
         sscg.wm.borrow_mut().for_each_window_stop_on_true(
-            |win| { win.handle_event(WindowEvent::Click(x as i32, y as i32)) });
+            |win| {
+                let handled = win.handle_event(WindowEvent::Click(x as i32, y as i32));
+                if win.is_numeric_input_active() {
+                    numeric_input_start  = true;
+                    numeric_input_win_id = win.id;
+                }
+                handled
+            });
+
+        if numeric_input_start {
+            self.num_input = Some((numeric_input_win_id, x, y));
+        } else {
+            self.num_input = None;
+        }
+
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
             unsafe { s.update(); }
         }
     }
 
     #[export]
-    fn on_mouse_move(&mut self, mut s: Node2D, x: f64, y: f64) {
+    fn on_mouse_move(&mut self, mut s: Node2D, x: f64, y: f64,
+                     button1_pressed: bool,
+                     button2_pressed: bool,
+                     mod1: bool,
+                     mod2: bool) {
         lock_sscg!(sscg);
+
+        if button2_pressed && self.num_input.is_some() {
+            let (win_id, _x, _y) = self.num_input.unwrap();
+            sscg.wm.borrow_mut().windows[win_id].as_mut().unwrap().handle_event(
+                WindowEvent::NumericDrag {
+                    dist: 0,
+                    res: NumericDragRes::Original
+                });
+
+        } else if button1_pressed && self.num_input.is_some() {
+            let (win_id, x1, y1) = self.num_input.unwrap();
+            let orig_vec = vec2::<f64, f64>(x1, y1);
+            let cur_vec  = vec2::<f64, f64>(x, y);
+            sscg.wm.borrow_mut().windows[win_id].as_mut().unwrap().handle_event(
+                WindowEvent::NumericDrag {
+                    dist: (orig_vec - cur_vec).length().round() as i32,
+                    res: if mod1 && mod2 { NumericDragRes::VeryFine }
+                         else if mod1    { NumericDragRes::Fine }
+                         else if mod2    { NumericDragRes::Coarse }
+                         else            { NumericDragRes::Normal },
+                });
+
+        } else {
+            self.num_input = None;
+        }
 
         sscg.wm.borrow_mut().for_each_window_stop_on_true(
             |win| { win.handle_event(WindowEvent::MousePos(x as i32, y as i32)) });

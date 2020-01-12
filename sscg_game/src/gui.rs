@@ -280,7 +280,7 @@ impl Widget {
                 p.draw_rect_filled(0, 0, border as u32, mh, c.border_color);
                 p.draw_rect_filled(mw as i32 - border, 0, border as u32, mh, c.border_color);
             },
-            Widget::Texture(id, size, txt_idx) => {
+            Widget::Texture(_id, _size, txt_idx) => {
                 p.draw_texture(*txt_idx, 0, 0, mw, mh);
             },
             Widget::Label(id, _size, lbl) => {
@@ -459,23 +459,25 @@ impl WidgetFeedback {
 
 #[derive(Debug, Clone)]
 pub struct Window {
-    pub title:    String,
+    pub title:       String,
     pub title_color: (u8, u8, u8, u8),
-    pub id:       usize,
-    widgets:      std::vec::Vec<Widget>,
-    feedback:     std::vec::Vec<WidgetFeedback>,
-    pub child:    usize,
-    focus_child:  Option<usize>,
-    hover_child:  Option<usize>,
+    pub id:          usize,
+    widgets:         std::vec::Vec<Widget>,
+    feedback:        std::vec::Vec<WidgetFeedback>,
+    pub child:       usize,
+    focus_child:     Option<usize>,
+    hover_child:     Option<usize>,
     hover_sub_child: Option<usize>,
-    activ_child:  Option<usize>,
+    activ_child:     Option<usize>,
     activ_sub_child: Option<usize>,
-    pub x:        i32,
-    pub y:        i32,
-    pub w:        i32,
-    pub h:        i32,
-    needs_redraw: bool,
-    win_feedback: WidgetFeedback,
+    num_inp_child:   Option<usize>,
+    num_inp_value:   f64,
+    pub x:           i32,
+    pub y:           i32,
+    pub w:           i32,
+    pub h:           i32,
+    needs_redraw:    bool,
+    win_feedback:    WidgetFeedback,
 }
 
 /// All values are in 0.1% scale. that means, to represent 100% you have to
@@ -485,7 +487,19 @@ fn p2r(value: u32, ratio: i32) -> u32 {
     else { (value * ratio as u32) / 1000 }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum NumericDragRes {
+    VeryFine,
+    Fine,
+    Normal,
+    Coarse,
+    Default,
+    Original,
+}
+
+#[derive(Debug, Clone)]
 pub enum WindowEvent {
+    NumericDrag { dist: i32, res: NumericDragRes },
     MousePos(i32, i32),
     Click(i32, i32),
     TextInput(String),
@@ -507,6 +521,8 @@ impl Window {
             hover_sub_child:    None,
             activ_child:        None,
             activ_sub_child:    None,
+            num_inp_child:      None,
+            num_inp_value:      0.0,
             x:                  0,
             y:                  0,
             w:                  0,
@@ -708,6 +724,23 @@ impl Window {
         None
     }
 
+    pub fn get_label_numeric_value(&self, id: usize) -> f64 {
+        match &self.widgets[id] {
+            Widget::Label(_, _, lbl) => {
+                use std::str::FromStr;
+                match f64::from_str(&lbl.text) {
+                    Ok(n)  => n,
+                    Err(_) => { 0.0 }
+                }
+            },
+            _ => { 0.0 },
+        }
+    }
+
+    pub fn is_numeric_input_active(&self) -> bool {
+        self.num_inp_child.is_some()
+    }
+
     pub fn collect_label_texts(&self) -> std::vec::Vec<(String, String)> {
         let mut ret = vec![];
         for c in self.widgets.iter() {
@@ -829,7 +862,8 @@ impl Window {
                 if self.win_feedback.is_inside(x as u32, y as u32) {
                     handled = true;
 
-                    let prev_fc = self.focus_child;
+                    let prev_fc      = self.focus_child;
+                    let prev_ni      = self.num_inp_child;
                     let prev_act_sub = self.activ_sub_child;
 
                     self.activ_child =
@@ -847,11 +881,25 @@ impl Window {
                     self.focus_child =
                         if let Some((child, _)) =
                             self.get_widget_at(
-                                x as u32, y as u32, |l: &Label| { l.editable })
+                                x as u32, y as u32,
+                                |l: &Label| { l.editable && l.numeric.is_none() })
                         { Some(child) }
                         else { None };
 
-                    prev_fc != self.focus_child
+                    self.num_inp_child =
+                        if let Some((child, _)) =
+                            self.get_widget_at(
+                                x as u32, y as u32,
+                                |l: &Label| { l.editable && l.numeric.is_some() })
+                        {
+                            self.num_inp_value = self.get_label_numeric_value(child);
+                            Some(child)
+                        } else { None };
+
+
+
+                       prev_fc      != self.focus_child
+                    || prev_ni      != self.num_inp_child
                     || prev_act_sub != self.activ_sub_child
                 } else {
                     false
@@ -884,6 +932,36 @@ impl Window {
                                     lbl.text.chars()
                                         .take(lbl.text.chars().count() - 1)
                                         .collect();
+                            }
+                        }
+                        _ => ()
+                    }
+                }
+                true
+            },
+            WindowEvent::NumericDrag { dist, res } => {
+                if let Some(id) = self.num_inp_child {
+                    let num = self.get_label_numeric_value(id);
+
+                    match &mut self.widgets[id] {
+                        Widget::Label(_, _, lbl) => {
+                            handled = true;
+
+                            if let Some(num_settings) = lbl.numeric {
+                                let new_num = match res {
+                                    NumericDragRes::Default  => num_settings.default,
+                                    NumericDragRes::Original => num,
+                                    NumericDragRes::Coarse   =>
+                                        num + dist as f64 * num_settings.coarse_step,
+                                    NumericDragRes::Fine     =>
+                                        num + dist as f64 * num_settings.fine_step,
+                                    NumericDragRes::VeryFine =>
+                                        num + dist as f64 * num_settings.very_fine_step,
+                                    NumericDragRes::Normal   =>
+                                        num + dist as f64 * num_settings.normal_step,
+                                };
+
+                                lbl.text = new_num.to_string();
                             }
                         }
                         _ => ()
@@ -971,10 +1049,20 @@ pub struct Label {
     editable:   bool,
     edit_regex: String,
     clickable:  bool,
+    numeric:    Option<NumericInput>,
     font_size:  FontSize,
     hlt_color:  (u8, u8, u8, u8),
     fg_color:   (u8, u8, u8, u8),
     bg_color:   (u8, u8, u8, u8),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct NumericInput {
+    pub default:            f64,
+    pub normal_step:        f64,
+    pub fine_step:          f64,
+    pub very_fine_step:     f64,
+    pub coarse_step:        f64,
 }
 
 #[allow(dead_code)]
@@ -992,6 +1080,7 @@ impl Label {
             fg_color:  fg,
             bg_color:  bg,
             font_size: FontSize::Normal,
+            numeric:   None,
         }
     }
 
@@ -1027,6 +1116,11 @@ impl Label {
 
     pub fn left(mut self) -> Self {
         self.align = 1;
+        self
+    }
+
+    pub fn numeric(mut self, settings: NumericInput) -> Self {
+        self.numeric = Some(settings);
         self
     }
 

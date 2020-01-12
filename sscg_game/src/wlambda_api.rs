@@ -676,6 +676,15 @@ fn vval2widget(v: VVal, win: &mut gui::Window) -> usize {
             lbl.left().editable(
                 &v.get_key("regex").unwrap_or(VVal::new_str(".*")).s_raw())
         },
+        "field_numeric" => {
+            lbl.left().editable(".*").numeric(gui::NumericInput {
+                default:        v.v_fk("num_default"),
+                normal_step:    v.v_fk("num_normal_step"),
+                fine_step:      v.v_fk("num_fine_step"),
+                very_fine_step: v.v_fk("num_very_fine_step"),
+                coarse_step:    v.v_fk("num_coarse_step"),
+            })
+        },
         "c_text"  => lbl.center().wrap(),
         "l_text"  => lbl.left().wrap(),
         "r_text"  => lbl.right().wrap(),
