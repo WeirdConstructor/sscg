@@ -11,6 +11,10 @@ func _input(event):
 		if event.is_pressed():
 			if event.get_scancode() == KEY_BACKSPACE:
 				self.find_node("GUIDrawing").on_input(-1)
+			elif event.get_scancode() == KEY_ENTER:
+				self.find_node("GUIDrawing").on_input(-2)
+			elif event.get_scancode() == KEY_ESCAPE:
+				self.find_node("GUIDrawing").on_input(-3)
 			else:
 				self.find_node("GUIDrawing").on_input(event.get_unicode())
 	elif event is InputEventMouseMotion:
@@ -25,6 +29,10 @@ func _input(event):
 		if event.is_pressed():
 			var mp = self.get_local_mouse_position()
 			self.find_node("GUIDrawing").on_mouse_click(mp.x, mp.y)
+		else:
+			var mp = self.get_local_mouse_position()
+			self.find_node("GUIDrawing").on_mouse_release(mp.x, mp.y)
+
 
 func _process(delta):
 	fps_label.text = "FPS: " + str(Engine.get_frames_per_second())

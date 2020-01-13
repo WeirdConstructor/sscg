@@ -227,6 +227,18 @@ impl GUIPaintNode {
     }
 
     #[export]
+    fn on_mouse_release(&mut self, mut s: Node2D, x: f64, y: f64) {
+        lock_sscg!(sscg);
+
+        if let Some((win_id, _, _)) = self.num_input {
+            sscg.wm.borrow_mut()
+                .windows[win_id]
+                .as_mut().unwrap().handle_event(WindowEvent::Enter);
+        }
+        self.num_input = None;
+    }
+
+    #[export]
     fn on_mouse_click(&mut self, mut s: Node2D, x: f64, y: f64) {
         lock_sscg!(sscg);
 
@@ -236,7 +248,7 @@ impl GUIPaintNode {
         sscg.wm.borrow_mut().for_each_window_stop_on_true(
             |win| {
                 let handled = win.handle_event(WindowEvent::Click(x as i32, y as i32));
-                if win.is_numeric_input_active() {
+                if handled && win.is_numeric_input_active() {
                     numeric_input_start  = true;
                     numeric_input_win_id = win.id;
                 }
@@ -266,7 +278,7 @@ impl GUIPaintNode {
             let (win_id, _x, _y) = self.num_input.unwrap();
             sscg.wm.borrow_mut().windows[win_id].as_mut().unwrap().handle_event(
                 WindowEvent::NumericDrag {
-                    dist: 0,
+                    dist: 0.0,
                     res: NumericDragRes::Original
                 });
 
@@ -276,7 +288,9 @@ impl GUIPaintNode {
             let cur_vec  = vec2::<f64, f64>(x, y);
             sscg.wm.borrow_mut().windows[win_id].as_mut().unwrap().handle_event(
                 WindowEvent::NumericDrag {
-                    dist: (orig_vec - cur_vec).length().round() as i32,
+                    dist: ((orig_vec - cur_vec).length()
+                           * (orig_vec - cur_vec).normalize().dot(vec2(1.0, 0.0)))
+                          .round(),
                     res: if mod1 && mod2 { NumericDragRes::VeryFine }
                          else if mod1    { NumericDragRes::Fine }
                          else if mod2    { NumericDragRes::Coarse }
@@ -306,8 +320,14 @@ impl GUIPaintNode {
                 move |win| { win.handle_event(WindowEvent::TextInput(charstr.clone())) });
 
         } else if character < 0 {
+            let event = match character {
+                -1 => WindowEvent::Backspace,
+                -2 => WindowEvent::Enter,
+                -3 => WindowEvent::Escape,
+                _  => WindowEvent::Escape,
+            };
             sscg.wm.borrow_mut().for_each_window_stop_on_true(
-                |win| { win.handle_event(WindowEvent::Backspace) });
+                |win| { win.handle_event(event.clone()) });
         }
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
             unsafe { s.update(); }

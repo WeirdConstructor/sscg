@@ -803,6 +803,12 @@ STATE.callbacks.on_ready = {
                 status_value "Cargo m³/kg" :cargo_load,
                 status_value "Fuel usage"  :fuel_usage,
                 ${ t = :l_button, text = "Menu", w = 1000, bg = c:CON, fg = "000", ref = "menu" },
+                ${ t = :field_numeric, text = "1.0", w = 1000, bg = c:CON, fg = "000",
+                    num_default        = 2.0,
+                    num_normal_step    = 0.1,
+                    num_fine_step      = 0.01,
+                    num_very_fine_step = 0.001,
+                    num_coarse_step    = 1.0, },
                 ${ t = :texture, idx = 0, w = 200, h = 200 },
             ]
         }

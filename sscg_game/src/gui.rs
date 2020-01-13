@@ -73,7 +73,7 @@ impl Widget {
         where P: GamePainter {
 
         let border_pad = 4;
-        *mw = *mw + 2 * border_pad;
+        *mw = *mw - 2 * border_pad;
         p.draw_line(1, 0, 1, *mh as i32 - 1, 2, bg_color);
         p.draw_line(
             *mw as i32 - 1, 0,
@@ -499,11 +499,13 @@ pub enum NumericDragRes {
 
 #[derive(Debug, Clone)]
 pub enum WindowEvent {
-    NumericDrag { dist: i32, res: NumericDragRes },
+    NumericDrag { dist: f64, res: NumericDragRes },
     MousePos(i32, i32),
     Click(i32, i32),
     TextInput(String),
     Backspace,
+    Escape,
+    Enter,
 }
 
 #[allow(dead_code)]
@@ -882,7 +884,7 @@ impl Window {
                         if let Some((child, _)) =
                             self.get_widget_at(
                                 x as u32, y as u32,
-                                |l: &Label| { l.editable && l.numeric.is_none() })
+                                |l: &Label| { l.editable })
                         { Some(child) }
                         else { None };
 
@@ -895,8 +897,6 @@ impl Window {
                             self.num_inp_value = self.get_label_numeric_value(child);
                             Some(child)
                         } else { None };
-
-
 
                        prev_fc      != self.focus_child
                     || prev_ni      != self.num_inp_child
@@ -922,6 +922,25 @@ impl Window {
                 }
                 true
             },
+            WindowEvent::Escape => {
+                self.focus_child = None;
+                if let Some(id) = self.num_inp_child {
+                    let num = self.num_inp_value;
+                    match &mut self.widgets[id] {
+                        Widget::Label(_, _, lbl) => {
+                            lbl.text = ((num * 1000.0).round() / 1000.0).to_string();
+                        },
+                        _ => ()
+                    }
+                }
+                self.num_inp_child = None;
+                true
+            },
+            WindowEvent::Enter => {
+                self.focus_child   = None;
+                self.num_inp_child = None;
+                true
+            }
             WindowEvent::Backspace => {
                 if let Some(id) = self.focus_child {
                     match &mut self.widgets[id] {
@@ -941,7 +960,7 @@ impl Window {
             },
             WindowEvent::NumericDrag { dist, res } => {
                 if let Some(id) = self.num_inp_child {
-                    let num = self.get_label_numeric_value(id);
+                    let num = self.num_inp_value;
 
                     match &mut self.widgets[id] {
                         Widget::Label(_, _, lbl) => {
@@ -952,16 +971,16 @@ impl Window {
                                     NumericDragRes::Default  => num_settings.default,
                                     NumericDragRes::Original => num,
                                     NumericDragRes::Coarse   =>
-                                        num + dist as f64 * num_settings.coarse_step,
+                                        num + dist * num_settings.coarse_step,
                                     NumericDragRes::Fine     =>
-                                        num + dist as f64 * num_settings.fine_step,
+                                        num + dist * num_settings.fine_step,
                                     NumericDragRes::VeryFine =>
-                                        num + dist as f64 * num_settings.very_fine_step,
+                                        num + dist * num_settings.very_fine_step,
                                     NumericDragRes::Normal   =>
-                                        num + dist as f64 * num_settings.normal_step,
+                                        num + dist * num_settings.normal_step,
                                 };
 
-                                lbl.text = new_num.to_string();
+                                lbl.text = ((new_num * 1000.0).round() / 1000.0).to_string();
                             }
                         }
                         _ => ()
