@@ -73,13 +73,13 @@ impl Widget {
         where P: GamePainter {
 
         let border_pad = 4;
-        *mw = *mw - 2 * border_pad;
+        let mw = *mw;
         p.draw_line(1, 0, 1, *mh as i32 - 1, 2, bg_color);
         p.draw_line(
-            *mw as i32 - 1, 0,
-            *mw as i32 - 1,
+            mw as i32 - 1, 0,
+            mw as i32 - 1,
             *mh as i32 - 1, 2, bg_color);
-        let text_field_width = *mw - 2 * border_pad;
+        let text_field_width = mw - 2 * border_pad;
         p.draw_rect_filled(
             border_pad as i32, 0,
             text_field_width, *mh, lbl.bg_color);
@@ -923,7 +923,6 @@ impl Window {
                 true
             },
             WindowEvent::Escape => {
-                self.focus_child = None;
                 if let Some(id) = self.num_inp_child {
                     let num = self.num_inp_value;
                     match &mut self.widgets[id] {
@@ -932,12 +931,16 @@ impl Window {
                         },
                         _ => ()
                     }
+                } else {
+                    self.focus_child = None;
                 }
                 self.num_inp_child = None;
                 true
             },
             WindowEvent::Enter => {
-                self.focus_child   = None;
+                if self.num_inp_child.is_none() {
+                    self.focus_child = None;
+                }
                 self.num_inp_child = None;
                 true
             }
