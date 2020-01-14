@@ -503,16 +503,21 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     std:displayln "LOADDED on_draw_voxel_structure " vp "|" sys_id ent_id;
     vp.clear[];
     !main_vol = vp.new 128 0.0;
-    !pattern = on_error { std:displayln "Couldn't load pat.wl: " @; "{ std:displayln :NOPATERR @; }" } ~
+    !pattern = on_error { std:displayln "Couldn't load pat.wl: "
+                                        @; "{ std:displayln :NOPATERR @; }" } ~
                    std:io:file:read_text "pat.wl";
     !fun = std:eval pattern;
-    fun[vp, main_vol];
-    std:displayln "NEWVOL:" main_vol;
+    !cm = fun[vp, main_vol];
 
-    std:displayln "DONE!";
-#    $[vp.id[], main_vol, color_map]
-    $[vp.id[], main_vol]
-#    ; $n
+    .cm =
+        (is_bool[cm] &and cm) {
+            color_map
+        } {
+            cm
+        };
+
+    std:displayln "DONE!" $[vp.id[], main_vol, cm];
+    $[vp.id[], main_vol, cm]
 };
 
 STATE.callbacks.on_saved_godot_state = {!(state) = @;

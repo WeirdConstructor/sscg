@@ -62,9 +62,18 @@ impl VoxStruct {
                 .borrow()[ret.v_i(0) as usize]
                 .borrow()
                 .write_into_u8_vol(ret.v_i(1) as usize, &mut self.vol);
-            if !ret.v_(2).is_none() {
+
+            if ret.v_(2).is_str() {
+                self.color_map =
+                    match &ret.v_s_raw(2)[..] {
+                        "8bit" => ColorMap::new_8bit(),
+                        _      => ColorMap::new_gray(),
+                    };
+            } else if !ret.v_(2).is_none() {
                 self.color_map = vval2colors(ret.v_(2));
             }
+
+            println!("Drawing voxel volume, took {} ms", d.elapsed().as_millis());
             self.load_vol(owner);
             println!("Reloaded voxel volume, took {} ms", d.elapsed().as_millis());
         }

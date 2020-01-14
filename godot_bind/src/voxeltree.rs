@@ -123,6 +123,10 @@ impl<C> Vol<C> where C: VoxelColor {
         &self.data[pos.z as usize * self.size * self.size + pos.y as usize * self.size + pos.x as usize]
     }
 
+    pub fn color_at(&self, pos: Pos) -> &C {
+        &self.data[pos.z as usize * self.size * self.size + pos.y as usize * self.size + pos.x as usize].color
+    }
+
     pub fn get(&mut self, pos: Pos) -> &Voxel<C> {
         let mut faces: u8 = 0x0;
 
