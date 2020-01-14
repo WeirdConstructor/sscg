@@ -17,7 +17,7 @@ block :r {
             range 0 (len header) 1 {!col = _;
                 !cell = trim row.(col);
                 !title = trim header.(col);
-                std:displayln "CELL:" title ":::" row.(col) "=>" cell;
+#                std:displayln "CELL:" title ":::" row.(col) "=>" cell;
                 element.(title) = cell;
             };
             std:push elements element;
@@ -26,4 +26,27 @@ block :r {
     };
 };
 
-std:displayln elements.10;
+!occurence_weight          = { 0.9 ^ _.gScore };
+!gen_compound_count_weight = { (1.0 - (float[_] / 20.0))^float[_] };
+
+!compound_counts = $[];
+range 1 10 1 {
+    std:push compound_counts $[_, gen_compound_count_weight _];
+};
+std:displayln compound_counts;
+
+!get_weighted = \:r {
+#        elems { .sum = sum + _.0; };
+#        !sel_weight = $&(std:num:ceil ~ gen_cb[] * $*sum);
+#        !out = \:r { elems {!(x) = @;
+#            .sel_weight = sel_weight - x.0;
+#            (sel_weight <= 0) { return :r x.1; };
+#            x.1
+#        } }[];
+};
+
+#elements {!el = _;
+#    std:displayln el.symbol el.gScore occurence_weight[el];
+#};
+
+#std:displayln elements.10;
