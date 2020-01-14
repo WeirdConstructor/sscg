@@ -17,7 +17,7 @@ impl From<u8> for FColor {
 
 impl Into<u8> for FColor {
     fn into(self) -> u8 {
-        (self.0.min(1.0).max(0.0) * 255.0).round() as u8
+        (self.0.min(1.0).max(0.0) * 255.0).floor() as u8
     }
 }
 
@@ -33,6 +33,12 @@ impl Into<Voxel<u8>> for FColor {
             color: (self.0.min(1.0).max(0.0) * 255.0) as u8,
             faces: 0,
         }
+    }
+}
+
+impl Into<f64> for FColor {
+    fn into(self) -> f64 {
+        self.0
     }
 }
 
@@ -101,6 +107,137 @@ impl Rect {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum DrawOp {
+    UseSrc,                     // output = src
+    UseDst,                     // output = dst
+    AddSrcDst,                  // output = src + dst
+    SubDstSrc,                  // output = dst - src
+    SubSrcDst,                  // output = src - dst
+    MulSrcDst,                  // output = src * dst
+    Mul(f64),                   // output = src * v
+    Add(f64),                   // output = src + v
+    Value(f64),                 // output = v
+    Clamp(f64, f64),            // output = clamp(src, a, b)
+    Map(f64, f64, f64, f64),    // output = map(src, a1, b1, a2, b2) or src if outside a1/b1
+    MaskMap(f64, f64, f64, f64),    // output = map(src, a1, b1, a2, b2) or dst if outside a1/b1
+    ClampedMap(f64, f64, f64, f64), // output = map(clamp(src, a1, b1), a1, b1, a2, b2)
+    MultiRemap(std::vec::Vec<(f64, f64, f64, f64)>), // output = multimap
+    Min(f64),                   // output = min(src, v)
+    Max(f64),                   // output = max(src, v)
+    Chain(Box<DrawOp>, Box<DrawOp>),// output = drawop2(drawop1(src, dst), dst)
+}
+
+impl DrawOp {
+    pub fn from_vval(vv: VVal) -> Self {
+        if vv.v_(0).is_vec() {
+            return
+                DrawOp::Chain(
+                    Box::new(Self::from_vval(vv.v_(0))),
+                    Box::new(Self::from_vval(vv.v_(1))));
+        }
+
+        match &vv.v_s_raw(0)[..] {
+            "use_src"       => DrawOp::UseSrc,
+            "use_dst"       => DrawOp::UseDst,
+            "mul"           => DrawOp::Mul(vv.v_f(1)),
+            "add"           => DrawOp::Add(vv.v_f(1)),
+            "add_src_dst"   => DrawOp::AddSrcDst,
+            "sub_dst_src"   => DrawOp::SubDstSrc,
+            "sub_src_dst"   => DrawOp::SubSrcDst,
+            "mul_src_dst"   => DrawOp::MulSrcDst,
+            "value"         => DrawOp::Value(vv.v_f(1)),
+            "clamp"         => DrawOp::Clamp(vv.v_f(1), vv.v_f(2)),
+            "multi_remap"   => {
+                let mut v = vec![];
+                let mut i = 1;
+                while i < vv.len() {
+                    v.push((vv.v_f(i), vv.v_f(i + 1), vv.v_f(i + 2), vv.v_f(i + 3)));
+                    i += 4;
+                }
+                DrawOp::MultiRemap(v)
+            },
+            "map"           => DrawOp::Map(
+                                   vv.v_f(1), vv.v_f(2),
+                                   vv.v_f(3), vv.v_f(4)),
+            "mask_map"      => DrawOp::MaskMap(
+                                   vv.v_f(1), vv.v_f(2),
+                                   vv.v_f(3), vv.v_f(4)),
+            "clamped_map"   => DrawOp::ClampedMap(
+                                   vv.v_f(1), vv.v_f(2),
+                                   vv.v_f(3), vv.v_f(4)),
+            "min"           => DrawOp::Min(vv.v_f(1)),
+            "max"           => DrawOp::Min(vv.v_f(1)),
+            "chain"         => DrawOp::Chain(
+                                   Box::new(Self::from_vval(vv.v_(1))),
+                                   Box::new(Self::from_vval(vv.v_(2)))),
+            _ => DrawOp::UseSrc,
+        }
+    }
+
+    pub fn apply(&self, src: f64, dest: f64) -> f64 {
+        match self {
+            DrawOp::AddSrcDst => src + dest,
+            DrawOp::SubDstSrc => dest - src,
+            DrawOp::SubSrcDst => src - dest,
+            DrawOp::MulSrcDst => src + dest,
+            DrawOp::UseSrc    => src,
+            DrawOp::UseDst    => dest,
+            DrawOp::Add(v)   => *v + src,
+            DrawOp::Mul(v)   => *v * src,
+            DrawOp::Value(v) => *v,
+            DrawOp::Clamp(a, b) => {
+                if src < *a { return *a }
+                if src > *b { return *b }
+                src
+            },
+            DrawOp::Map(a1, b1, a2, b2) => {
+                if src < *a1 { return src; }
+                else if src > *b1 { return src; }
+
+                let x = (*b1 - src) / (*b1 - *a1);
+                *a2 * x + *b2 * (1.0 - x)
+            },
+            DrawOp::MaskMap(a1, b1, a2, b2) => {
+                if src < *a1 { return dest; }
+                else if src > *b1 { return dest; }
+
+                let x = (*b1 - src) / (*b1 - *a1);
+                *a2 * x + *b2 * (1.0 - x)
+            },
+            DrawOp::ClampedMap(a1, b1, a2, b2) => {
+                let src = if src > *b1 { *b1 }
+                          else if src < *a1 { *a1 }
+                          else { src };
+
+                let x = (*b1 - src) / (*b1 - *a1);
+                *a2 * x + *b2 * (1.0 - x)
+            },
+            DrawOp::MultiRemap(v) => {
+                for mapop in v {
+                    if src >= mapop.0 && src < mapop.1 {
+                        let x = (mapop.0 - src) / (mapop.1 - mapop.0);
+                        return mapop.2 * x + mapop.3 * (1.0 - x);
+                    }
+                }
+                src
+            },
+            DrawOp::Min(min) => {
+                if src < *min { src }
+                else { *min }
+            },
+            DrawOp::Max(max) => {
+                if src > *max { src }
+                else { *max }
+            },
+            DrawOp::Chain(op_a, op_b) => {
+                let next_src_val = op_a.apply(src, dest);
+                op_b.apply(next_src_val, dest)
+            }
+        }
+    }
+}
+
 impl VoxelPainter {
     pub fn new() -> Self {
         Self {
@@ -133,7 +270,7 @@ impl VoxelPainter {
     pub fn fill_noise(
         &mut self, vol_id: usize, mask: usize,
         rect: Rect,
-        seed: i64, noise_size: usize, noise_scale: f64)
+        seed: i64, noise_size: usize, noise_scale: f64, op: DrawOp)
     {
         let vol = &mut self.volumes[vol_id];
         let n = Sampled3DNoise::new(noise_size, seed);
@@ -141,18 +278,22 @@ impl VoxelPainter {
         for z in 0..rect.d {
             for y in 0..rect.h {
                 for x in 0..rect.w {
-                    let mut val =
+                    let dst_val =
+                        vol.color_at(Pos {
+                            x: rect.x + x,
+                            y: rect.y + y,
+                            z: rect.z + z,
+                        });
+                    let src_val =
                         n.at(
                             noise_scale * x as f64 / (rect.w as f64),
                             noise_scale * y as f64 / (rect.h as f64),
                             noise_scale * z as f64 / (rect.d as f64));
-                    if val > 0.5 { val = 0.0; }
-                    else { val = 2.0 / 255.0; }
                     vol.set(
                         rect.x + x as u16,
                         rect.y + y as u16,
                         rect.z + z as u16,
-                        val.into());
+                        op.apply(src_val, (*dst_val).into()).into());
                 }
             }
         }
@@ -166,7 +307,8 @@ impl VoxelPainter {
         noise_scale: f64,
         octaves: usize,
         lacunarity: f64,
-        gain: f64)
+        gain: f64,
+        op: DrawOp)
     {
         let vol = &mut self.volumes[vol_id];
         let n = Sampled3DNoise::new(noise_size, seed);
@@ -174,16 +316,22 @@ impl VoxelPainter {
         for z in 0..rect.d {
             for y in 0..rect.h {
                 for x in 0..rect.w {
-                    let mut val =
+                    let dst_val = vol.color_at(Pos {
+                        x: rect.x + x as u16,
+                        y: rect.y + y as u16,
+                        z: rect.z + z as u16,
+                    });
+                    let src_val =
                         n.at_fbm(
                             noise_scale * (x as f64) / (rect.w as f64),
                             noise_scale * (y as f64) / (rect.h as f64),
                             noise_scale * (z as f64) / (rect.d as f64),
                             octaves, lacunarity, gain);
-                    if val > 0.5 { val = 0.0; }
-                    else { val = 2.0 / 255.0; }
-//                    let val = (val * 3.0).floor() / 255.0;
-                    vol.set(x as u16, y as u16, z as u16, val.into());
+                    vol.set(
+                        rect.x + x as u16,
+                        rect.y + y as u16,
+                        rect.z + z as u16,
+                        op.apply(src_val, (*dst_val).into()).into());
                 }
             }
         }
@@ -215,19 +363,20 @@ pub fn new_voxel_painter(id: usize) -> (Rc<RefCell<VoxelPainter>>, VVal) {
             env.arg(1).f())))
     });
 
-    set_vval_method!(o, painter, fill_noise, Some(11), Some(11), env, _argc, {
+    set_vval_method!(o, painter, fill_noise, Some(11), Some(12), env, _argc, {
         painter.borrow_mut().fill_noise(
             env.arg(0).i() as usize,
             env.arg(1).i() as usize,
             Rect::from_wlambda_env(env, 2),
             env.arg(8).i(),
             env.arg(9).i() as usize, // seed
-            env.arg(10).f());        // noise scale
+            env.arg(10).f(),
+            DrawOp::from_vval(env.arg(11)));        // noise scale
 
         Ok(VVal::Bol(true))
     });
 
-    set_vval_method!(o, painter, sample_fbm, Some(14), Some(14), env, _argc, {
+    set_vval_method!(o, painter, sample_fbm, Some(14), Some(15), env, _argc, {
         painter.borrow_mut().sample_fbm(
             env.arg(0).i() as usize,
             env.arg(1).i() as usize,
@@ -237,13 +386,13 @@ pub fn new_voxel_painter(id: usize) -> (Rc<RefCell<VoxelPainter>>, VVal) {
             env.arg(10).f(),          // noise scale
             env.arg(11).i() as usize, // octaves
             env.arg(12).f(),          // lacunarity
-            env.arg(13).f());         // gain
+            env.arg(13).f(),
+            DrawOp::from_vval(env.arg(14)));         // gain
 
         Ok(VVal::Bol(true))
     });
 
     set_vval_method!(o, painter, fill, Some(9), Some(9), env, _argc, {
-        println!("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         painter.borrow_mut().fill(
             env.arg(0).i() as usize,
             env.arg(1).i() as usize,
