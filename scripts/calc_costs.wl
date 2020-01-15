@@ -26,7 +26,7 @@ block :r {
     };
 };
 
-!occurence_weight          = { 0.9 ^ _.gScore };
+!occurence_weight          = { 0.9 ^ _.gScore + 0.4 ^ _.Period };
 !gen_compound_count_weight = { (1.0 - (float[_] / 20.0))^float[_] };
 
 !compound_counts = $[];
@@ -45,8 +45,8 @@ std:displayln compound_counts;
 #        } }[];
 };
 
-#elements {!el = _;
-#    std:displayln el.symbol el.gScore occurence_weight[el];
-#};
+elements {!el = _;
+    std:displayln el.symbol el.gScore occurence_weight[el];
+};
 
 #std:displayln elements.10;
