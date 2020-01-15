@@ -204,19 +204,43 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ControlsInfo" type="Label" parent="GUI"]
+[node name="ShipControlsInfo" type="Label" parent="GUI"]
+anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 1109.21
-margin_top = 644.094
-margin_right = -4.79272
-margin_bottom = -6.90588
+margin_left = -166.0
+margin_top = -69.0
 custom_fonts/font = SubResource( 12 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "[A]         - Thrust to left
 [D]         - Thrust to right
 [Space] - Accelerate
 [Ctrl]     - Decelerate"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="DroneControlsInfo" type="Label" parent="GUI"]
+visible = false
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -230.429
+margin_top = -142.715
+margin_right = 0.570557
+margin_bottom = -1.71484
+custom_fonts/font = SubResource( 12 )
+custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
+text = "[F]         - Return drone to ship
+[W]        - Move drone forward
+[S]         - Move drone backward
+[A]         - Move drone left
+[D]         - Move drone right
+[Space] - Boost drone upwards
+[Hold Shift]    - Move drone faster
+[Left Mouse]  - Start mining beam"
 __meta__ = {
 "_edit_use_anchors_": false
 }

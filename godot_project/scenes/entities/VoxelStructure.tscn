@@ -57,7 +57,7 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.37369, 72.589, -3.8129 )
 shape = SubResource( 1 )
 
 [node name="VoxStruct" type="Spatial" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -68, -6, -68 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -68, -7, -68 )
 script = ExtResource( 2 )
 
 [node name="CursorBox" type="MeshInstance" parent="VoxStruct"]
