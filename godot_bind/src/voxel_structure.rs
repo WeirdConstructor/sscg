@@ -3,7 +3,11 @@ use crate::state::SSCG;
 use gdnative::*;
 use crate::voxeltree::*;
 use crate::gd_voxel_impl::*;
+use crate::util::WorkerPool;
 use wlambda::VVal;
+
+use std::sync::RwLock;
+use std::sync::Arc;
 
 #[derive(NativeClass)]
 #[inherit(gdnative::Spatial)]
@@ -11,10 +15,12 @@ pub struct VoxStruct {
     meshes:           std::vec::Vec<MeshInstance>,
     collision_shapes: std::vec::Vec<(StaticBody, i64)>,
     vol:              Vol<u8>,
-    octrees:          std::vec::Vec<Octree<u8>>,
+    octrees:          std::vec::Vec<Arc<RwLock<Octree<u8>>>>,
     color_map:        ColorMap,
 
-    cursor:         [u16; 3],
+    cursor:           [u16; 3],
+    workers:          WorkerPool<VoxRendJob,VoxRendResult>,
+    last_load_vol:    std::time::Instant,
 }
 
 unsafe impl Send for VoxStruct { }
@@ -37,6 +43,50 @@ fn vval2colors(clr: VVal) -> ColorMap {
     ColorMap::new_from(colors)
 }
 
+struct VoxRendJob {
+    am:         Option<ArrayMesh>,
+    cvshape:    Option<ConcavePolygonShape>,
+    color_map: ColorMap,
+    oct_subtree_idx: usize,
+    oct_subtree: Arc<RwLock<Octree<u8>>>,
+}
+
+unsafe impl Send for VoxRendJob { }
+
+impl VoxRendJob {
+    pub fn render(&mut self) -> VoxRendResult {
+        let n = self.oct_subtree.write().unwrap().recompute();
+
+        let mut am = self.am.take().unwrap();
+        let mut cvshape = self.cvshape.take().unwrap();
+
+        if !n.empty {
+            let cm = self.color_map;
+
+            let oct_guard = self.oct_subtree.read().unwrap();
+            render_octree_to_am(
+                &mut am, &mut cvshape, &cm, &*oct_guard);
+//            println!("CVSHAPE[{}] {} {}", std::thread::current().name().unwrap_or(&String::from("?")), self.oct_subtree_idx, cvshape.get_faces().len());
+        }
+
+        VoxRendResult {
+            oct_subtree_idx: self.oct_subtree_idx,
+            am,
+            cvshape,
+            empty: n.empty,
+        }
+    }
+}
+
+struct VoxRendResult {
+    oct_subtree_idx: usize,
+    am: ArrayMesh,
+    cvshape: ConcavePolygonShape,
+    empty: bool,
+}
+
+unsafe impl Send for VoxRendResult { }
+
 #[methods]
 impl VoxStruct {
     fn _init(_owner: Spatial) -> Self {
@@ -47,6 +97,10 @@ impl VoxStruct {
             octrees:          vec![],
             color_map:        ColorMap::new_gray(),
             cursor:           [0, 0, 0],
+            last_load_vol:    std::time::Instant::now(),
+            workers:          WorkerPool::new(|mut j: VoxRendJob| {
+                j.render()
+            }, 20),
         }
     }
 
@@ -137,7 +191,10 @@ impl VoxStruct {
                         owner.add_child(sb.cast::<Node>(), false);
                     }
 
-                    self.octrees.push(Octree::new_from_size(SUBVOL_SIZE));
+                    self.octrees.push(
+                        std::sync::Arc::new(
+                            std::sync::RwLock::new(
+                                Octree::new_from_size(SUBVOL_SIZE))));
 
                     i += 1;
                 }
@@ -166,7 +223,7 @@ impl VoxStruct {
                         self.octrees[
                               iz * (SUBVOLS * SUBVOLS)
                             + iy * SUBVOLS
-                            + ix].get(
+                            + ix].read().unwrap().get(
                                 ixi as u16,
                                 iyi as u16,
                                 izi as u16));
@@ -179,33 +236,61 @@ impl VoxStruct {
 
     #[export]
     fn load_vol(&mut self, mut _owner: Spatial) {
-        for z in 0..VOL_SIZE {
-            let iz  = z / SUBVOL_SIZE;
-            let izi = z % SUBVOL_SIZE;
+        self.last_load_vol = std::time::Instant::now();
 
-            for y in 0..VOL_SIZE {
-                let iy  = y / SUBVOL_SIZE;
-                let iyi = (SUBVOL_SIZE - 1) - (y % SUBVOL_SIZE);
 
-                for x in 0..VOL_SIZE {
-                    let ix  = x / SUBVOL_SIZE;
-                    let ixi = x % SUBVOL_SIZE;
+        for z in 0..SUBVOLS {
+            for y in 0..SUBVOLS {
+                for x in 0..SUBVOLS {
+                    let mut ot = self.octrees[
+                          z * (SUBVOLS * SUBVOLS)
+                        + y * SUBVOLS
+                        + x].write().unwrap();
 
-                    self.octrees[
-                          iz * (SUBVOLS * SUBVOLS)
-                        + iy * SUBVOLS
-                        + ix].set(
-                            ixi as u16,
-                            iyi as u16,
-                            izi as u16,
-                            *self.vol.at(Pos {
-                              x: x as u16,
-                              y: y as u16,
-                              z: z as u16
-                            }));
+                    for sz in 0..SUBVOL_SIZE {
+                        for sy in 0..SUBVOL_SIZE {
+                            for sx in 0..SUBVOL_SIZE {
+                                ot.set(sx as u16, sy as u16, sz as u16,
+                                       *self.vol.at(Pos {
+                                           x: x as u16 * SUBVOL_SIZE as u16 + sx as u16,
+                                           y: y as u16 * SUBVOL_SIZE as u16 + sy as u16,
+                                           z: z as u16 * SUBVOL_SIZE as u16 + sz as u16,
+                                       }));
+                            }
+                        }
+                    }
                 }
             }
         }
+//        for z in 0..VOL_SIZE {
+//            let iz  = z / SUBVOL_SIZE;
+//            let izi = z % SUBVOL_SIZE;
+//
+//            for y in 0..VOL_SIZE {
+//                let iy  = y / SUBVOL_SIZE;
+//                let iyi = (SUBVOL_SIZE - 1) - (y % SUBVOL_SIZE);
+//
+//                for x in 0..VOL_SIZE {
+//                    let ix  = x / SUBVOL_SIZE;
+//                    let ixi = x % SUBVOL_SIZE;
+//
+//                    self.octrees[
+//                          iz * (SUBVOLS * SUBVOLS)
+//                        + iy * SUBVOLS
+//                        + ix].write().unwrap().set(
+//                            ixi as u16,
+//                            iyi as u16,
+//                            izi as u16,
+//                            *self.vol.at(Pos {
+//                              x: x as u16,
+//                              y: y as u16,
+//                              z: z as u16
+//                            }));
+//                }
+//            }
+//        }
+        println!("Copy To sub octrees took {}ms",
+                 self.last_load_vol.elapsed().as_millis());
 
         for z in 0..SUBVOLS {
             for y in 0..SUBVOLS {
@@ -217,9 +302,11 @@ impl VoxStruct {
                 }
             }
         }
+        println!("Issue reload jobs took {}ms",
+                 self.last_load_vol.elapsed().as_millis());
     }
 
-    fn get_octree_at(&mut self, x: usize, y: usize, z: usize) -> (&mut Octree<u8>, [u16; 3]) {
+    fn get_octree_at(&mut self, x: usize, y: usize, z: usize) -> (&std::sync::Arc<std::sync::RwLock<Octree<u8>>>, [u16; 3]) {
         let iz  = z / SUBVOL_SIZE;
         let izi = z % SUBVOL_SIZE;
 
@@ -234,7 +321,7 @@ impl VoxStruct {
             + iy * SUBVOLS
             + ix;
 
-        (&mut self.octrees[sub_idx], [ixi as u16, iyi as u16, izi as u16])
+        (&self.octrees[sub_idx], [ixi as u16, iyi as u16, izi as u16])
     }
 
     #[export]
@@ -244,7 +331,7 @@ impl VoxStruct {
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
-        let v = ot.get_inv_y(pos[0], pos[1], pos[2]);
+        let v = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
         let mut dict = gdnative::Dictionary::new();
         dict.set(&Variant::from_str("material"), &Variant::from_i64(v.color as i64));
         dict.set(&Variant::from_str("time"),     &Variant::from_f64(1.2));
@@ -284,7 +371,7 @@ impl VoxStruct {
                     self.cursor[0] as usize,
                     self.cursor[1] as usize,
                     self.cursor[2] as usize);
-            let v = ot.get_inv_y(pos[0], pos[1], pos[2]);
+            let v = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
             v.color != 0
 
 //            {
@@ -378,7 +465,7 @@ impl VoxStruct {
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
-        let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
+        let m = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
 
         let (sysid, entid) = self.parent_info(&mut owner);
         lock_sscg!(sscg);
@@ -402,10 +489,10 @@ impl VoxStruct {
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
-        let m = ot.get_inv_y(pos[0], pos[1], pos[2]);
+        let m = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
 
         if m.color != 0 {
-            ot.set_inv_y(pos[0], pos[1], pos[2], 0.into());
+            ot.write().unwrap().set_inv_y(pos[0], pos[1], pos[2], 0.into());
             self.reload_at(
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
@@ -437,6 +524,37 @@ impl VoxStruct {
 
     #[export]
     fn _process(&mut self, mut _owner: Spatial, _delta: f64) {
+        let mut max = 20;
+        while let Some(VoxRendResult { am, cvshape, oct_subtree_idx, empty }) = self.workers.get_result() {
+            max -= 1;
+            if max == 0 { return; }
+
+            let d = std::time::Instant::now();
+            let (mut static_body, shape_owner_idx) = self.collision_shapes[oct_subtree_idx];
+            unsafe {
+                self.meshes[oct_subtree_idx].set_mesh(am.cast::<Mesh>());
+                let mut ssb = static_body.cast::<StaticBody>().unwrap();
+                ssb.shape_owner_clear_shapes(shape_owner_idx);
+
+                if !empty {
+//                    println!("C {} {}", oct_subtree_idx, cvshape.get_faces().len() );
+                    if cvshape.get_faces().len() > 0 {
+                        ssb.shape_owner_add_shape(
+                            shape_owner_idx,
+                            cvshape.cast::<Shape>());
+                    }
+                    self.meshes[oct_subtree_idx].show();
+                    static_body.show();
+                } else {
+                    self.meshes[oct_subtree_idx].hide();
+                    static_body.hide();
+                }
+            }
+
+            if self.workers.queued_job_count() == 0 {
+                println!("Workers done after {}ms", self.last_load_vol.elapsed().as_millis());
+            }
+        }
     }
 
     fn reload_at(&mut self, x: usize, y: usize, z: usize) {
@@ -449,34 +567,12 @@ impl VoxStruct {
             + iy * SUBVOLS
             + ix;
 
-        let n = self.octrees[sub_idx].recompute();
-
-        let mut am = ArrayMesh::new();
-        let mut cvshape = ConcavePolygonShape::new();
-        let (mut static_body, shape_owner_idx) = self.collision_shapes[sub_idx];
-
-        if !n.empty {
-            let cm = self.color_map;
-
-            render_octree_to_am(
-                &mut am, &mut cvshape, &cm, &self.octrees[sub_idx]);
-        }
-
-        unsafe {
-            self.meshes[sub_idx].set_mesh(am.cast::<Mesh>());
-            let mut ssb = static_body.cast::<StaticBody>().unwrap();
-            ssb.shape_owner_clear_shapes(shape_owner_idx);
-
-            if !n.empty {
-                ssb.shape_owner_add_shape(
-                    shape_owner_idx,
-                    cvshape.cast::<Shape>());
-                self.meshes[sub_idx].show();
-                static_body.show();
-            } else {
-                self.meshes[sub_idx].hide();
-                static_body.hide();
-            }
-        }
+        self.workers.send(VoxRendJob {
+            am:              Some(ArrayMesh::new()),
+            cvshape:         Some(ConcavePolygonShape::new()),
+            color_map:       self.color_map,
+            oct_subtree_idx: sub_idx,
+            oct_subtree:     self.octrees[sub_idx].clone()
+        });
     }
 }

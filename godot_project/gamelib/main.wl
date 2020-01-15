@@ -376,7 +376,9 @@ STATE.code.sell_ship_cargo_good = {!(good_t) = @;
     STATE.code.recalc_ship_cargo[];
 };
 
-STATE.code.calc_unit_capacity_for_good = {!(good_t) = @;
+STATE.code.calc_unit_capacity_for_good = \:r {!(good_t) = @;
+    (is_none good_t) { return :r $none; };
+
     !good_type  = STATE.good_types.(good_t);
     !ship_type  = STATE.ship_types.(STATE.ship.t);
     !kg_free    = ship_type.cargo_max_kg - STATE.ship.cargo.kg;
@@ -462,7 +464,6 @@ STATE.code.recalc_ship_cargo = {
 STATE.code.get_good_by_color = {!(color) = @;
     block :ret {
         STATE.good_types {!(v, k) = @;
-            std:displayln :COMP v ">>" k ">" color;
             (int[v.vol_color] == int[color]) {
                 return :ret $[k, v];
             }
@@ -471,9 +472,12 @@ STATE.code.get_good_by_color = {!(color) = @;
     }
 };
 
-STATE.callbacks.on_mine = {
-    std:displayln "MINE:" @;
+STATE.callbacks.on_mine = \:r{
     !(k, v) = STATE.code.get_good_by_color[_3];
+
+    (is_none k) { return :r $false; };
+
+    std:displayln "MINE:" @;
 
     !capacity_units =
         STATE.code.calc_unit_capacity_for_good k;

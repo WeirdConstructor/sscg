@@ -68,3 +68,103 @@ pub fn c2c(c: (u8, u8, u8, u8)) -> Color {
         c.3 as f32 / 255.0)
 }
 
+pub struct WorkerPool<J,R> where J: Send, R: Send
+{
+    next_worker_idx: usize,
+    workers: std::vec::Vec<WorkerThreadRef<J>>,
+    result_rx: std::sync::mpsc::Receiver<R>,
+    queued_job_count: usize,
+}
+
+impl<J,R> WorkerPool<J,R>
+    where J: Send + 'static, R: Send + 'static
+{
+    pub fn new<F>(f: F, worker_count: usize) -> Self
+        where F: Fn(J) -> R,
+              F: Send + 'static,
+              F: Clone,
+    {
+        let (result_tx, result_rx) = std::sync::mpsc::channel();
+        let mut workers = vec![];
+
+        for i in 0..worker_count {
+            let name = format!("T[{}]", i);
+            workers.push(
+                WorkerThreadRef::new(
+                    name,
+                    f.clone(), result_tx.clone()));
+        }
+
+        Self {
+            next_worker_idx: 0,
+            result_rx,
+            workers,
+            queued_job_count: 0,
+        }
+    }
+
+    pub fn send(&mut self, j: J) {
+        self.workers[self.next_worker_idx].job_tx.send(j).unwrap();
+        self.queued_job_count += 1;
+        self.next_worker_idx += 1;
+        if self.next_worker_idx >= self.workers.len() {
+            self.next_worker_idx = 0;
+        }
+    }
+
+    pub fn queued_job_count(&self) -> usize { self.queued_job_count }
+
+    pub fn get_result(&mut self) -> Option<R> {
+        match self.result_rx.try_recv() {
+            Ok(v) => {
+                self.queued_job_count -= 1;
+                Some(v)
+            },
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct WorkerThreadRef<J>
+    where J: Send
+{
+    job_tx: std::sync::mpsc::Sender<J>,
+}
+
+impl<J> WorkerThreadRef<J>
+    where J: Send,
+{
+    pub fn new<F,R>(name: String, f: F, result_tx: std::sync::mpsc::Sender<R>) -> Self
+        where F: Fn(J) -> R,
+              R: Send + 'static,
+              J: Send + 'static,
+              F: Send + 'static
+    {
+        let (tx, rx) = std::sync::mpsc::channel();
+
+        std::thread::Builder::new().name(name).spawn(move ||{
+            loop {
+                let job = match rx.recv() {
+                    Ok(j) => j,
+                    Err(e) => {
+                        eprintln!("Stopping worker thread, sender closed: {}", e);
+                        return;
+                    },
+                };
+                let res = f(job);
+                match result_tx.send(res) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        eprintln!("Stopping worker thread, receiver closed: {}", e);
+                        return;
+                    },
+                }
+            }
+        });
+
+        Self {
+            job_tx: tx,
+        }
+    }
+}

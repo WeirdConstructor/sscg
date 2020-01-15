@@ -248,6 +248,7 @@ pub fn render_octree_to_am(
     arr.push(&Variant::new()); // weights
     arr.push(&Variant::from_int32_array(&indices));
 
+//    println!("AM[{}] VTX={}, VA={}", std::thread::current().name().unwrap_or(&String::from("?")), vtxlen, idxlen);
     am.add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arr, VariantArray::new(), 97280);
     cv.set_faces(va);
 }
