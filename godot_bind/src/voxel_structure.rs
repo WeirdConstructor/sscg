@@ -104,7 +104,7 @@ impl VoxStruct {
             queued_jobs:      vec![],
             workers:          WorkerPool::new(|mut j: VoxRendJob| {
                 j.render()
-            }, 20),
+            }, 8),
         }
     }
 
