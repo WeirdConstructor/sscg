@@ -83,6 +83,10 @@ vox_rerender={
  ]
 }
 
+[physics]
+
+2d/thread_model=2
+
 [rendering]
 
 quality/directional_shadow/size=2048

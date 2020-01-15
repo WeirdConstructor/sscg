@@ -20,6 +20,7 @@ pub struct VoxStruct {
 
     cursor:           [u16; 3],
     workers:          WorkerPool<VoxRendJob,VoxRendResult>,
+    queued_jobs:      std::vec::Vec<VoxRendJob>,
     last_load_vol:    std::time::Instant,
 }
 
@@ -64,8 +65,10 @@ impl VoxRendJob {
             let cm = self.color_map;
 
             let oct_guard = self.oct_subtree.read().unwrap();
+//            println!("AAA");
             render_octree_to_am(
                 &mut am, &mut cvshape, &cm, &*oct_guard);
+//            println!("BBB");
 //            println!("CVSHAPE[{}] {} {}", std::thread::current().name().unwrap_or(&String::from("?")), self.oct_subtree_idx, cvshape.get_faces().len());
         }
 
@@ -98,6 +101,7 @@ impl VoxStruct {
             color_map:        ColorMap::new_gray(),
             cursor:           [0, 0, 0],
             last_load_vol:    std::time::Instant::now(),
+            queued_jobs:      vec![],
             workers:          WorkerPool::new(|mut j: VoxRendJob| {
                 j.render()
             }, 20),
@@ -302,6 +306,8 @@ impl VoxStruct {
                 }
             }
         }
+
+        self.wait_for_mesh_rendering();
         println!("Issue reload jobs took {}ms",
                  self.last_load_vol.elapsed().as_millis());
     }
@@ -497,6 +503,7 @@ impl VoxStruct {
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
+            self.wait_for_mesh_rendering();
 
             lock_sscg!(sscg);
             let (sysid, entid) = self.parent_info(&mut owner);
@@ -524,11 +531,16 @@ impl VoxStruct {
 
     #[export]
     fn _process(&mut self, mut _owner: Spatial, _delta: f64) {
-        let mut max = 20;
-        while let Some(VoxRendResult { am, cvshape, oct_subtree_idx, empty }) = self.workers.get_result() {
-            max -= 1;
-            if max == 0 { return; }
+    }
 
+    fn wait_for_mesh_rendering(&mut self) {
+        if !self.queued_jobs.is_empty() {
+            while let Some(j) = self.queued_jobs.pop() {
+                self.workers.send(j);
+            }
+        }
+
+        while let Some(VoxRendResult { am, cvshape, oct_subtree_idx, empty }) = self.workers.get_result_blocking() {
             let d = std::time::Instant::now();
             let (mut static_body, shape_owner_idx) = self.collision_shapes[oct_subtree_idx];
             unsafe {
@@ -553,6 +565,7 @@ impl VoxStruct {
 
             if self.workers.queued_job_count() == 0 {
                 println!("Workers done after {}ms", self.last_load_vol.elapsed().as_millis());
+                return;
             }
         }
     }
@@ -567,7 +580,7 @@ impl VoxStruct {
             + iy * SUBVOLS
             + ix;
 
-        self.workers.send(VoxRendJob {
+        self.queued_jobs.push(VoxRendJob {
             am:              Some(ArrayMesh::new()),
             cvshape:         Some(ConcavePolygonShape::new()),
             color_map:       self.color_map,

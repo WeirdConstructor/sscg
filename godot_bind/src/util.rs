@@ -114,6 +114,16 @@ impl<J,R> WorkerPool<J,R>
 
     pub fn queued_job_count(&self) -> usize { self.queued_job_count }
 
+    pub fn get_result_blocking(&mut self) -> Option<R> {
+        match self.result_rx.recv() {
+            Ok(v) => {
+                self.queued_job_count -= 1;
+                Some(v)
+            },
+            _ => None,
+        }
+    }
+
     pub fn get_result(&mut self) -> Option<R> {
         match self.result_rx.try_recv() {
             Ok(v) => {
