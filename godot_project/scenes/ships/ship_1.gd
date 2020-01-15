@@ -44,8 +44,6 @@ func sscg_load(state):
 func deploy_drone(ent):
 	var entities = self.get_parent().get_node("entities")
 	var drone_spawn_point = entities.get_child(ent.id).get_node("DroneSpawn")
-	print("SHIP POINT:", self.get_parent().to_global(self.transform.origin))
-	print("DRONE POINT:", drone_spawn_point.get_parent().to_global(drone_spawn_point.transform.origin))
 	var glob_spawn_point = drone_spawn_point.get_parent().to_global(drone_spawn_point.transform.origin)
 	self.get_parent().get_node("Drone").set_active(true, glob_spawn_point)
 	drone_active = true
@@ -144,7 +142,7 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 	if speed > safe_dock_speed:
 		self.get_parent().get_node("GUI").get_child(0).show()
 		var v = self.get_global_transform().basis
-		if s.shape.extents:
+		if "extents" in s.shape:
 			self.translation = self.translation - v.z.normalized() * (s.shape.extents.x * 0.5)
 		else:
 			self.translation = self.translation - v.z.normalized() * (s.shape.radius * 2)
@@ -154,7 +152,7 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 		self.get_parent().on_ship_arrived(true, area.get_parent().system_id, area.get_parent().entity_id)
 	else:
 		var v = self.get_global_transform().basis
-		if s.shape.extents:
+		if "extents" in s.shape:
 			self.translation = self.translation - v.z.normalized() * (s.shape.extents.x * 0.1)
 		else:
 			self.translation = self.translation - v.z.normalized() * (s.shape.radius * 0.5)

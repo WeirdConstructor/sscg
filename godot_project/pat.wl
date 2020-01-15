@@ -30,7 +30,9 @@
         seed    # seed
         4      # size
         1.97    # noise scale
-        ;
+        $[:map,
+			0.0000001, 1.0, 0.0 / 255.0, 10.0 / 255.0,
+		];
     vp.fill main_vol 0
         60 0 0
         16 128 128
@@ -39,7 +41,7 @@
         main_vol 0
         0 0 0
         128 128 128
-        seed    # seed
+        (seed + 1)   # seed
         64      # size
         1.0     # noise scale
         6       # octaves

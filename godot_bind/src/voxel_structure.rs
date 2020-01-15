@@ -230,7 +230,7 @@ impl VoxStruct {
                 for x in 0..SUBVOLS {
                     let mut ot = self.octrees[
                           z * (SUBVOLS * SUBVOLS)
-                        + y * SUBVOLS
+                        + (SUBVOLS - (y + 1)) * SUBVOLS
                         + x].write().unwrap();
 
                     for sz in 0..SUBVOL_SIZE {
