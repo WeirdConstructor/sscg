@@ -154,11 +154,23 @@ impl ColorMap {
     }
 }
 
-pub fn render_octree_to_am(
-    am: &mut ArrayMesh,
-    cv: &mut ConcavePolygonShape,
-    cm: &ColorMap,
-    vt: &Octree<u8>)
+pub struct RenderedMeshArrays {
+    arr: VariantArray,
+    cvshape_arr: Vector3Array,
+}
+
+impl RenderedMeshArrays {
+    pub fn write_to(
+        self,
+        am: &mut ArrayMesh,
+        cv: &mut ConcavePolygonShape)
+    {
+        am.add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, self.arr, VariantArray::new(), 97280);
+        cv.set_faces(self.cvshape_arr);
+    }
+}
+
+pub fn render_octree_to_am(cm: &ColorMap, vt: &Octree<u8>) -> RenderedMeshArrays
 {
     let mut va      = Vector3Array::new();
     let mut verts   = Vector3Array::new();
@@ -248,9 +260,10 @@ pub fn render_octree_to_am(
     arr.push(&Variant::new()); // weights
     arr.push(&Variant::from_int32_array(&indices));
 
-//    println!("AM[{}] VTX={}, VA={}", std::thread::current().name().unwrap_or(&String::from("?")), vtxlen, idxlen);
-    am.add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arr, VariantArray::new(), 97280);
-    cv.set_faces(va);
+    RenderedMeshArrays {
+        arr: arr,
+        cvshape_arr: va,
+    }
 }
 
 

@@ -15,12 +15,12 @@ pub struct VoxStruct {
     meshes:           std::vec::Vec<MeshInstance>,
     collision_shapes: std::vec::Vec<(StaticBody, i64)>,
     vol:              Vol<u8>,
+    vol_generation:   usize,
     octrees:          std::vec::Vec<Arc<RwLock<Octree<u8>>>>,
     color_map:        ColorMap,
 
     cursor:           [u16; 3],
     workers:          WorkerPool<VoxRendJob,VoxRendResult>,
-    queued_jobs:      std::vec::Vec<VoxRendJob>,
     last_load_vol:    std::time::Instant,
 }
 
@@ -45,8 +45,7 @@ fn vval2colors(clr: VVal) -> ColorMap {
 }
 
 struct VoxRendJob {
-    am:         Option<ArrayMesh>,
-    cvshape:    Option<ConcavePolygonShape>,
+    vol_generation: usize,
     color_map: ColorMap,
     oct_subtree_idx: usize,
     oct_subtree: Arc<RwLock<Octree<u8>>>,
@@ -56,35 +55,40 @@ unsafe impl Send for VoxRendJob { }
 
 impl VoxRendJob {
     pub fn render(&mut self) -> VoxRendResult {
+//        if self.vol_generation < vg {
+//            return VoxRendResult {
+//                vol_generation:  self.vol_generation,
+//                oct_subtree_idx: self.oct_subtree_idx,
+//                empty: true,
+//                arrs: None,
+//            };
+//        }
+
         let n = self.oct_subtree.write().unwrap().recompute();
 
-        let mut am = self.am.take().unwrap();
-        let mut cvshape = self.cvshape.take().unwrap();
-
-        if !n.empty {
-            let cm = self.color_map;
-
-            let oct_guard = self.oct_subtree.read().unwrap();
-//            println!("AAA");
-            render_octree_to_am(
-                &mut am, &mut cvshape, &cm, &*oct_guard);
-//            println!("BBB");
-//            println!("CVSHAPE[{}] {} {}", std::thread::current().name().unwrap_or(&String::from("?")), self.oct_subtree_idx, cvshape.get_faces().len());
-        }
+        let arr =
+            if !n.empty {
+                let cm = self.color_map;
+                let oct_guard = self.oct_subtree.read().unwrap();
+                let arr = render_octree_to_am(&cm, &*oct_guard);
+                Some(arr)
+            } else {
+                None
+            };
 
         VoxRendResult {
+            vol_generation:  self.vol_generation,
             oct_subtree_idx: self.oct_subtree_idx,
-            am,
-            cvshape,
             empty: n.empty,
+            arrs: arr,
         }
     }
 }
 
 struct VoxRendResult {
+    vol_generation: usize,
     oct_subtree_idx: usize,
-    am: ArrayMesh,
-    cvshape: ConcavePolygonShape,
+    arrs: Option<RenderedMeshArrays>,
     empty: bool,
 }
 
@@ -97,11 +101,11 @@ impl VoxStruct {
             meshes:           vec![],
             collision_shapes: vec![],
             vol:              Vol::new(VOL_SIZE),
+            vol_generation:   0,
             octrees:          vec![],
             color_map:        ColorMap::new_gray(),
             cursor:           [0, 0, 0],
             last_load_vol:    std::time::Instant::now(),
-            queued_jobs:      vec![],
             workers:          WorkerPool::new(|mut j: VoxRendJob| {
                 j.render()
             }, 8),
@@ -242,7 +246,6 @@ impl VoxStruct {
     fn load_vol(&mut self, mut _owner: Spatial) {
         self.last_load_vol = std::time::Instant::now();
 
-
         for z in 0..SUBVOLS {
             for y in 0..SUBVOLS {
                 for x in 0..SUBVOLS {
@@ -296,6 +299,7 @@ impl VoxStruct {
         println!("Copy To sub octrees took {}ms",
                  self.last_load_vol.elapsed().as_millis());
 
+        self.inc_vol_generation();
         for z in 0..SUBVOLS {
             for y in 0..SUBVOLS {
                 for x in 0..SUBVOLS {
@@ -307,9 +311,15 @@ impl VoxStruct {
             }
         }
 
-        self.wait_for_mesh_rendering();
         println!("Issue reload jobs took {}ms",
                  self.last_load_vol.elapsed().as_millis());
+    }
+
+    fn inc_vol_generation(&mut self) {
+        self.vol_generation = self.vol_generation.wrapping_add(1);
+
+//        let new_vol_gen = (*self.vol_generation.get_mut()).wrapping_add(1);
+//        *self.vol_generation.get_mut() = new_vol_gen;
     }
 
     fn get_octree_at(&mut self, x: usize, y: usize, z: usize) -> (&std::sync::Arc<std::sync::RwLock<Octree<u8>>>, [u16; 3]) {
@@ -490,6 +500,11 @@ impl VoxStruct {
 
     #[export]
     fn mine_at_cursor(&mut self, mut owner: Spatial) -> bool {
+        // Prevent any change of the volume while it's being rerendered.
+        if self.workers.queued_job_count() > 0 {
+            return false;
+        }
+
         let (ot, pos) =
             self.get_octree_at(
                 self.cursor[0] as usize,
@@ -499,11 +514,11 @@ impl VoxStruct {
 
         if m.color != 0 {
             ot.write().unwrap().set_inv_y(pos[0], pos[1], pos[2], 0.into());
+            self.inc_vol_generation();
             self.reload_at(
                 self.cursor[0] as usize,
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
-            self.wait_for_mesh_rendering();
 
             lock_sscg!(sscg);
             let (sysid, entid) = self.parent_info(&mut owner);
@@ -531,33 +546,40 @@ impl VoxStruct {
 
     #[export]
     fn _process(&mut self, mut _owner: Spatial, _delta: f64) {
+        self.wait_for_mesh_rendering();
     }
 
     fn wait_for_mesh_rendering(&mut self) {
-        if !self.queued_jobs.is_empty() {
-            while let Some(j) = self.queued_jobs.pop() {
-                self.workers.send(j);
-            }
-        }
+        let cur_vol_gen = self.vol_generation;
+        let mut max = 5;
+        while let Some(VoxRendResult { arrs, oct_subtree_idx, empty, vol_generation }) = self.workers.get_result() {
 
-        while let Some(VoxRendResult { am, cvshape, oct_subtree_idx, empty }) = self.workers.get_result_blocking() {
+            if vol_generation < cur_vol_gen {
+                continue;
+            }
+
             let d = std::time::Instant::now();
             let (mut static_body, shape_owner_idx) = self.collision_shapes[oct_subtree_idx];
             unsafe {
-                self.meshes[oct_subtree_idx].set_mesh(am.cast::<Mesh>());
+                let mut am = ArrayMesh::new();
+                let mut cvshape = ConcavePolygonShape::new();
+
                 let mut ssb = static_body.cast::<StaticBody>().unwrap();
                 ssb.shape_owner_clear_shapes(shape_owner_idx);
 
-                if !empty {
-//                    println!("C {} {}", oct_subtree_idx, cvshape.get_faces().len() );
+                if let Some(rend_arrs) = arrs {
+                    rend_arrs.write_to(&mut am, &mut cvshape);
+
                     if cvshape.get_faces().len() > 0 {
                         ssb.shape_owner_add_shape(
                             shape_owner_idx,
                             cvshape.cast::<Shape>());
                     }
+                    self.meshes[oct_subtree_idx].set_mesh(am.cast::<Mesh>());
                     self.meshes[oct_subtree_idx].show();
                     static_body.show();
                 } else {
+                    self.meshes[oct_subtree_idx].set_mesh(am.cast::<Mesh>());
                     self.meshes[oct_subtree_idx].hide();
                     static_body.hide();
                 }
@@ -567,6 +589,9 @@ impl VoxStruct {
                 println!("Workers done after {}ms", self.last_load_vol.elapsed().as_millis());
                 return;
             }
+
+            max -= 1;
+            if max == 0 { return; }
         }
     }
 
@@ -580,12 +605,11 @@ impl VoxStruct {
             + iy * SUBVOLS
             + ix;
 
-        self.queued_jobs.push(VoxRendJob {
-            am:              Some(ArrayMesh::new()),
-            cvshape:         Some(ConcavePolygonShape::new()),
-            color_map:       self.color_map,
-            oct_subtree_idx: sub_idx,
-            oct_subtree:     self.octrees[sub_idx].clone()
-        });
+          self.workers.send(VoxRendJob {
+              vol_generation:  self.vol_generation,
+              color_map:       self.color_map,
+              oct_subtree_idx: sub_idx,
+              oct_subtree:     self.octrees[sub_idx].clone()
+          });
     }
 }
