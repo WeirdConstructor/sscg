@@ -114,7 +114,6 @@ impl VoxStruct {
 
     #[export]
     fn on_wlambda_init(&mut self, mut owner: Spatial) {
-        println!("FOFO");
         let d = std::time::Instant::now();
         let (sysid, entid) = self.parent_info(&mut owner);
         lock_sscg!(sscg);
@@ -144,26 +143,6 @@ impl VoxStruct {
     #[export]
     fn _ready(&mut self, mut owner: Spatial) {
         use wlambda::util::*;
-        self.vol.fill(0, 0, 0, VOL_SIZE as u16, VOL_SIZE as u16, VOL_SIZE as u16, 100.into());
-//        let mut sm = SplitMix64::new(3489492);
-//        for z in 0..VOL_SIZE {
-//            for y in 0..VOL_SIZE {
-//                for x in 0..VOL_SIZE {
-//                    if u64_to_open01(sm.next_u64()) > 0.01 {
-//                        self.vol.set(x as u16, y as u16, z as u16, 0.into());
-//                    } else {
-//                        let color = (u64_to_open01(sm.next_u64()) * 256.0) as u8;
-//                        self.vol.set(x as u16, y as u16, z as u16, color.into());
-//                    }
-//                }
-//            }
-//        }
-
-        println!("filled...");
-
-//        let vv = self.vol.serialize();
-//        println!("BYTES: {}", vv.len());
-//        self.vol.deserialize(&vv);
 
         let voxel_material =
             ResourceLoader::godot_singleton().load(
@@ -210,8 +189,8 @@ impl VoxStruct {
         }
         println!("initialized godot objects");
 
-        self.load_vol(owner);
-        println!("loaded godot objects");
+//        self.load_vol(owner);
+//        println!("loaded godot objects");
     }
 
     fn serialize_vol(&mut self) -> Vec<u8> {

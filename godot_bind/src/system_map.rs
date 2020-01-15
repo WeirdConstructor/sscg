@@ -59,7 +59,14 @@ impl SystemMap {
     }
 
     #[export]
-    fn on_ship_arrived(&mut self, mut _owner: Spatial, too_fast: bool, system: i64, entity: i64) {
+    fn call_cb(&mut self, _owner: Spatial, cb_name: String, v: Variant) -> Variant {
+        lock_sscg!(sscg);
+        vval2variant(
+            &sscg.call_cb(&cb_name, &vec![variant2vval(&v)]))
+    }
+
+    #[export]
+    fn on_ship_arrived(&mut self, _owner: Spatial, too_fast: bool, system: i64, entity: i64) {
         lock_sscg!(sscg);
         sscg.call_cb(
             "on_arrived",
@@ -177,6 +184,12 @@ impl SystemMap {
                             ship.call(GodotString::from_str("sscg_load"),
                                       &vec![v]) };
                     },
+                    "deploy_drone" => {
+                        let ent_id = cmd.v_(1);
+                        unsafe {
+                            ship.call(GodotString::from_str("deploy_drone"),
+                                      &vec![vval2variant(&ent_id)]) };
+                    },
                     _ => {
                         godot_print!("Unknown WLambda->Godot Command: {}", cmd_str);
                     },
@@ -202,14 +215,18 @@ impl SystemMap {
 
     }
 
-    #[export]
-    fn _process(&mut self, mut owner: Spatial, delta: f64) {
-        let entities = unsafe {
+    fn get_entities_node(&mut self, mut owner: Spatial) -> Spatial {
+        unsafe {
             owner.get_node(NodePath::from_str("entities"))
                  .expect("Find 'entities' node")
                  .cast::<Spatial>()
                  .unwrap()
-        };
+        }
+    }
+
+    #[export]
+    fn _process(&mut self, mut owner: Spatial, delta: f64) {
+        let entities = self.get_entities_node(owner);
 
         let load_entity_state = {
             lock_sscg!(sscg);

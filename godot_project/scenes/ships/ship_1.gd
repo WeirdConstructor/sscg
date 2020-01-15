@@ -41,13 +41,25 @@ func sscg_load(state):
 	self.rotation.y = state["rot_z"]
 	print("LOAD SHIP:", state)
 
+func deploy_drone(ent):
+	var entities = self.get_parent().get_node("entities")
+	var drone_spawn_point = entities.get_child(ent.id).get_node("DroneSpawn")
+	print("SHIP POINT:", self.get_parent().to_global(self.transform.origin))
+	print("DRONE POINT:", drone_spawn_point.get_parent().to_global(drone_spawn_point.transform.origin))
+	var glob_spawn_point = drone_spawn_point.get_parent().to_global(drone_spawn_point.transform.origin)
+	self.get_parent().get_node("Drone").set_active(true, glob_spawn_point)
+	drone_active = true
+
 func _input(event):
+	if not drone_active:
+		return
+
 	if event.is_action_pressed("drone"):
-		drone_active = !drone_active;
-		self.get_parent().get_node("Drone").set_active(drone_active)
-		if !drone_active:
-			self.get_node("Camera").current = true;
-			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		drone_active = false
+		self.get_parent().get_node("Drone").set_active(drone_active, Vector3(0, 0, 0))
+		self.get_node("Camera").current = true
+		self.get_parent().call_cb("on_recall_drone", true)
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 				
 func _physics_process(delta):
 	if docked:
@@ -132,14 +144,20 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 	if speed > safe_dock_speed:
 		self.get_parent().get_node("GUI").get_child(0).show()
 		var v = self.get_global_transform().basis
-		self.translation = self.translation - v.z.normalized() * (s.shape.radius * 2)
+		if s.shape.extents:
+			self.translation = self.translation - v.z.normalized() * (s.shape.extents.x * 0.5)
+		else:
+			self.translation = self.translation - v.z.normalized() * (s.shape.radius * 2)
 		emergency_warning_timer.start(5)
 		speed = 0
 		thruster_speed = 0
 		self.get_parent().on_ship_arrived(true, area.get_parent().system_id, area.get_parent().entity_id)
 	else:
 		var v = self.get_global_transform().basis
-		self.translation = self.translation - v.z.normalized() * (s.shape.radius * 0.5)
+		if s.shape.extents:
+			self.translation = self.translation - v.z.normalized() * (s.shape.extents.x * 0.1)
+		else:
+			self.translation = self.translation - v.z.normalized() * (s.shape.radius * 0.5)
 		area.get_parent().selected = true
 		speed = 0
 		thruster_speed = 0

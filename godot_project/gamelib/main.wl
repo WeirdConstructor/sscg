@@ -1,10 +1,11 @@
 !@import wlambda;
-!@import std        std;
-!@import sscg       sscg;
-!@import c          colors;
-!@import e_station  station;
-!@import WID        gui_window_ids;
-!@import gui        gui_common;
+!@import std            std;
+!@import sscg           sscg;
+!@import c              colors;
+!@import e_station      station;
+!@import e_structure    structure;
+!@import WID            gui_window_ids;
+!@import gui            gui_common;
 
 # Took colors from https://en.wikipedia.org/wiki/CPK_coloring
 # The color scheme of Jmol
@@ -365,6 +366,20 @@
 
 !@export STATE STATE;
 
+STATE.code.enumerate_entities = {||
+    !i = $&0;
+    STATE.systems {!(sys) = @;
+        sys.id = i;
+        .i = i + 1;
+
+        !j = $&0;
+        sys.entities {!(ent) = @;
+            ent.id = j;
+            .j = j + 1;
+        };
+    };
+};
+
 STATE.code.sell_ship_cargo_good = {!(good_t) = @;
     !good_units  = STATE.ship.cargo.goods.(good_t);
     !units_money = STATE.good_types.(good_t).baseprice * good_units;
@@ -537,18 +552,26 @@ STATE.callbacks.on_saved_godot_state = {!(state) = @;
     };
 };
 
+STATE.callbacks.on_recall_drone = {||
+    std:displayln "RECALLED DRONE IN WLAMBDA!";
+    STATE.ship.docked = $f;
+};
+
 STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
-    std:displayln "ARRIVED!";
     (bool too_fast) {
         STATE.ship.fuel = std:num:floor 0.5 * STATE.ship.fuel
     };
+
     STATE.ship.docked = $t;
-    !ent = STATE.systems.(sys_id).entities.(ent_id);
+    !ent     = STATE.systems.(sys_id).entities.(ent_id);
     !ent_typ = STATE.entity_types.(ent.t);
 
+    std:displayln "ARRIVED! " ent_typ;
+
     match ent_typ.gui
-        "station" {|| e_station:show[STATE, ent, ent_typ]; }
-                  {|| show_asteroid_win[ent, ent_typ] };
+        "structure" {|| e_structure:show[STATE, ent, ent_typ]; }
+        "station"   {|| e_station:show  [STATE, ent, ent_typ]; }
+                    {|| show_asteroid_win[ent, ent_typ] };
 };
 
 !display_fuel_out_warning = \:warn {
@@ -682,6 +705,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     (bool state) {
         STATE.player = state.player;
         STATE.ship   = state.ship;
+        STATE.code.enumerate_entities[];
         sscg:game.cmd "load_state" state.ship_dyn;
     };
 };

@@ -4,3 +4,4 @@
 !@export STATUS     10;
 !@export OUTOFFUEL  50;
 !@export STATION    100;
+!@export STRUCTURE  101;

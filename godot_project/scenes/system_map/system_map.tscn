@@ -121,7 +121,7 @@ mesh = SubResource( 2 )
 material/0 = null
 
 [node name="Particles" type="Particles" parent="Drone/RayMesh"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 0, 0.5, 0 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.5, 0 )
 cast_shadow = 0
 amount = 128
 lifetime = 10.0
@@ -205,10 +205,12 @@ __meta__ = {
 }
 
 [node name="ControlsInfo" type="Label" parent="GUI"]
-margin_left = 7.35092
-margin_top = 8.08603
-margin_right = 173.351
-margin_bottom = 77.086
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 1109.21
+margin_top = 644.094
+margin_right = -4.79272
+margin_bottom = -6.90588
 custom_fonts/font = SubResource( 12 )
 custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
 text = "[A]         - Thrust to left

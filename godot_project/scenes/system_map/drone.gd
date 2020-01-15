@@ -1,6 +1,6 @@
 extends KinematicBody
 
-var test_mode = true
+var test_mode = false
 
 export var drone_active = false
 
@@ -9,10 +9,10 @@ var camera = null
 var view_sensitivity = 0.3
 var yaw = 0.0
 var pitch = 0.0
-var speed = 2.0
+var speed = 4.0
 var grav = 3.0
 var accel = 0.0
-var jump_strength = 0.8
+var jump_strength = 0.5
 var jump_motion = Vector3(0, 0, 0)
 var anti_grav = test_mode
 
@@ -24,7 +24,7 @@ var mining_time = 0
 
 var old_on_floor = false
 
-func set_active(is_active):
+func set_active(is_active, glob_point):
 	drone_active = is_active
 	if drone_active:
 		self.show()
@@ -33,14 +33,7 @@ func set_active(is_active):
 		pitch = 0
 		yaw = 180
 		self.set_rotation(Vector3(deg2rad(pitch),deg2rad(yaw), 0))
-		if test_mode:
-			self.set_translation(
-			   self.get_parent().get_node("ship").get_translation()
-			   + Vector3(0, -2, 0))
-		else:
-			self.set_translation(
-			   self.get_parent().get_node("ship").get_translation()
-			   + Vector3(0, 1, 0))
+		self.set_translation(glob_point)
 	else:
 		self.hide()
 
@@ -77,7 +70,7 @@ func process_movement(delta):
 		
 	var speed_factor = 1
 	if Input.is_action_pressed("faster"):
-		speed_factor = 5
+		speed_factor = 3
 		
 	motion *= speed_factor
 	
