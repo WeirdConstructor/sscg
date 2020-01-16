@@ -25,7 +25,7 @@
         match _1
             "deploy" {||
                 std:displayln ent;
-                sscg:game.cmd "deploy_drone" ent;
+                sscg:game.gd_call "ship" :deploy_drone ent;
                 sscg:win.set_window WID:STRUCTURE;
             }
             {||

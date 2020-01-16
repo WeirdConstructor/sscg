@@ -56,7 +56,7 @@ func _input(event):
 		drone_active = false
 		self.get_parent().get_node("Drone").set_active(drone_active, Vector3(0, 0, 0))
 		self.get_node("Camera").current = true
-		self.get_parent().call_cb("on_recall_drone", true)
+		self.get_parent().wl_cb("on_recall_drone", true)
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 				
 func _physics_process(delta):

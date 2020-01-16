@@ -59,10 +59,21 @@ impl SSCGState {
         let cmd_queue = Rc::new(RefCell::new(std::vec::Vec::new()));
 
         let o = VVal::map();
-        set_vval_method!(o, cmd_queue, cmd, Some(2), Some(2), env, _argc, {
+        set_vval_method!(o, cmd_queue, cmd, Some(2), None, env, argc, {
             let v = VVal::vec();
-            v.push(env.arg(0));
-            v.push(env.arg(1));
+            for i in 0..argc {
+                v.push(env.arg(i));
+            }
+            cmd_queue.borrow_mut().push(v);
+            Ok(VVal::Nul)
+        });
+
+        set_vval_method!(o, cmd_queue, gd_call, Some(2), None, env, argc, {
+            let v = VVal::vec();
+            v.push(VVal::new_str("gd_call"));
+            for i in 0..argc {
+                v.push(env.arg(i));
+            }
             cmd_queue.borrow_mut().push(v);
             Ok(VVal::Nul)
         });

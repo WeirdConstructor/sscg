@@ -59,10 +59,18 @@ impl SystemMap {
     }
 
     #[export]
-    fn call_cb(&mut self, _owner: Spatial, cb_name: String, v: Variant) -> Variant {
+    fn wl_cb(&mut self, _owner: Spatial, cb_name: String, v: Variant) -> Variant {
         lock_sscg!(sscg);
-        vval2variant(
-            &sscg.call_cb(&cb_name, &vec![variant2vval(&v)]))
+        let vv = variant2vval(&v);
+        let mut args = vec![];
+        if vv.is_vec() {
+            for v in vv.iter() {
+                args.push(v);
+            }
+        } else {
+            args.push(vv);
+        }
+        vval2variant(&sscg.call_cb(&cb_name, &args))
     }
 
     #[export]
@@ -184,11 +192,27 @@ impl SystemMap {
                             ship.call(GodotString::from_str("sscg_load"),
                                       &vec![v]) };
                     },
-                    "deploy_drone" => {
-                        let ent_id = cmd.v_(1);
+                    "gd_call" => {
+                        let path   = cmd.v_s_raw(1);
+                        let method = cmd.v_s_raw(2);
                         unsafe {
-                            ship.call(GodotString::from_str("deploy_drone"),
-                                      &vec![vval2variant(&ent_id)]) };
+                        let mut node = owner.get_node(NodePath::from_str(&path));
+                            match node {
+                                Some(mut n) => {
+                                    let mut argv = vec![];
+                                    for argidx in 3..cmd.len() {
+                                        argv.push(vval2variant(&cmd.v_(argidx)));
+                                    }
+                                    n.call(GodotString::from_str(&method), &argv);
+                                    godot_print!("CALLED {} . {}", path, method);
+                                },
+                                None => {
+                                    godot_print!(
+                                        "Couldn't find godot node in gd_call: {}",
+                                        path);
+                                },
+                            }
+                        }
                     },
                     _ => {
                         godot_print!("Unknown WLambda->Godot Command: {}", cmd_str);
