@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 lazy_static = "1.4.0"
+palette     = "0.5"
 gdnative = { path = "../../other/godot-rust/gdnative" }
 sscg     = { path = "../sscg_game" }
 wlambda  = { path = "../../wlambda" }

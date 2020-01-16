@@ -13,3 +13,7 @@ target/
 /godot/Godot_v3.1.1-stable_win64.exe.zip
 /godot_project/.import/
 *.bak
+/export
+Godot_v3*.64
+godot.*.64
+*.history

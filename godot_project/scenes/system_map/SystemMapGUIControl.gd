@@ -1,10 +1,9 @@
 extends Control
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-
 var fps_label
+
+func set_hud_info(text):
+	self.get_node("DroneHUDInfo").text = text
 
 func _input(event):
 	if event is InputEventKey:

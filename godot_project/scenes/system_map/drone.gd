@@ -18,9 +18,9 @@ var anti_grav = test_mode
 
 var mining_vox = null
 var mining_pos = null
-var mining_info = null
 var marker_vox = null
 var mining_time = 0
+var prev_vox_pos = null
 
 var old_on_floor = false
 
@@ -99,7 +99,6 @@ func stop_mining():
 		mining_vox.mine_status(false)
 		mining_vox = null
 		mining_pos = null
-		mining_info = null
 		$MiningBeamSound.disable_beam()
 		
 func process_mining_gun(delta):
@@ -137,12 +136,17 @@ func process_mining_gun(delta):
 			stop_mining()
 			
 		vox.looking_at(vv.x, vv.y, vv.z)
-		
+
+		if prev_vox_pos != vv:
+			var mining_info = vox.mine_info_at_cursor()
+			self.get_parent().wl_cb("on_update_mining_hud", [mining_info])
+			prev_vox_pos = vv
+
 		if Input.is_action_pressed("mine"):
 			if mining_vox != vox:
 				if vox.mine_status(true):
 					mining_vox = vox
-					mining_info = mining_vox.mine_info_at_cursor()
+#					var mining_info = mining_vox.mine_info_at_cursor()
 					mining_pos = vv
 					raym.show()
 					mining_vox.set_marker_status(true, true)
@@ -166,6 +170,10 @@ func process_mining_gun(delta):
 			marker_vox = vox
 			stop_mining()
 	else:
+		if prev_vox_pos:
+			self.get_parent().wl_cb("on_update_mining_hud", [null])
+			prev_vox_pos = null
+	
 		if marker_vox:
 			marker_vox.looking_at_nothing()
 		stop_mining()
