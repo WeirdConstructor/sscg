@@ -149,7 +149,7 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 		emergency_warning_timer.start(5)
 		speed = 0
 		thruster_speed = 0
-		self.get_parent().on_ship_arrived(true, area.get_parent().system_id, area.get_parent().entity_id)
+		self.get_parent().wl_cb("on_arrived", [true, area.get_parent().system_id, area.get_parent().entity_id])
 	else:
 		var v = self.get_global_transform().basis
 		if "extents" in s.shape:
@@ -159,7 +159,7 @@ func _on_Area_area_shape_entered(area_id, area, area_shape, self_shape):
 		area.get_parent().selected = true
 		speed = 0
 		thruster_speed = 0
-		self.get_parent().on_ship_arrived(false, area.get_parent().system_id, area.get_parent().entity_id)
+		self.get_parent().wl_cb("on_arrived", [false, area.get_parent().system_id, area.get_parent().entity_id])
 
 func _on_Area_area_shape_exited(area_id, area, area_shape, self_shape):
 	pass

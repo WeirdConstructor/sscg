@@ -73,16 +73,6 @@ impl SystemMap {
         vval2variant(&sscg.call_cb(&cb_name, &args))
     }
 
-    #[export]
-    fn on_ship_arrived(&mut self, _owner: Spatial, too_fast: bool, system: i64, entity: i64) {
-        lock_sscg!(sscg);
-        sscg.call_cb(
-            "on_arrived",
-            &vec![VVal::Bol(too_fast),
-                  VVal::Int(system),
-                  VVal::Int(entity)]);
-    }
-
     fn load_scene(&mut self, key: &str, path: &str) {
         let scene = ResourceLoader::godot_singleton().load(
             GodotString::from_str(path),
