@@ -19,8 +19,10 @@ var anti_grav = test_mode
 var mining_vox = null
 var mining_pos = null
 var marker_vox = null
-var mining_time = 0
+var mining_time = 0.0 # in seconds
+var mining_time_dest = 1.0 # in seconds
 var prev_vox_pos = null
+
 
 var old_on_floor = false
 
@@ -37,6 +39,7 @@ func set_active(is_active, glob_point):
 		self.set_rotation(Vector3(deg2rad(pitch),deg2rad(yaw), 0))
 		self.set_translation(glob_point)
 	else:
+		self.stop_mining()
 		self.get_parent().get_node("GUI/ShipControlsInfo").show()
 		self.get_parent().get_node("GUI/DroneControlsInfo").hide()
 		self.hide()
@@ -97,8 +100,11 @@ func stop_mining():
 		var raym = self.find_node("RayMesh")
 		raym.hide()
 		mining_vox.mine_status(false)
-		mining_vox = null
-		mining_pos = null
+		mining_vox   = null
+		mining_pos   = null
+		prev_vox_pos = null
+		self.get_parent().get_node("GUI/DroneHUDInfo").hide()
+		self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").hide()
 		$MiningBeamSound.disable_beam()
 		
 func process_mining_gun(delta):
@@ -139,6 +145,7 @@ func process_mining_gun(delta):
 
 		if prev_vox_pos != vv:
 			var mining_info = vox.mine_info_at_cursor()
+			self.get_parent().get_node("GUI/DroneHUDInfo").show()
 			self.get_parent().wl_cb("on_update_mining_hud", [mining_info])
 			prev_vox_pos = vv
 
@@ -151,6 +158,8 @@ func process_mining_gun(delta):
 					raym.show()
 					mining_vox.set_marker_status(true, true)
 					mining_time = 0.0
+					self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").show()
+					self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").value = 0.0
 					marker_vox = vox
 					$MiningBeamSound.enable_beam()
 				else:
@@ -158,7 +167,9 @@ func process_mining_gun(delta):
 					mining_pos = null
 			else:
 				mining_time = mining_time + delta
-				if mining_vox and mining_time > 1:
+				var done_value = (mining_time * 100.0) / mining_time_dest
+				self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").value = done_value
+				if mining_vox and mining_time > mining_time_dest:
 					mining_vox.mine_at_cursor()
 					$MiningBeamSound.play_pop()
 					stop_mining()

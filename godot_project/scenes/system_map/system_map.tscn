@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=2]
+[gd_scene load_steps=37 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -13,10 +13,13 @@
 [ext_resource path="res://sounds/mining_pop4.wav" type="AudioStream" id=11]
 [ext_resource path="res://scenes/system_map/SystemMapGUIControl.gd" type="Script" id=12]
 [ext_resource path="res://fonts/DejaVuSans-Bold.ttf" type="DynamicFontData" id=13]
-[ext_resource path="res://scenes/system_map/gui_blur.shader" type="Shader" id=14]
-[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=15]
-[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=16]
-[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=17]
+[ext_resource path="res://images/progress_bar_mining_bg.png" type="Texture" id=14]
+[ext_resource path="res://images/progress_bar_mining_fg.png" type="Texture" id=15]
+[ext_resource path="res://images/progress_bar_mining_prog.png" type="Texture" id=16]
+[ext_resource path="res://scenes/system_map/gui_blur.shader" type="Shader" id=17]
+[ext_resource path="res://scenes/system_map/GUIDrawing.gdns" type="Script" id=18]
+[ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=19]
+[ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=20]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -93,7 +96,7 @@ use_filter = true
 font_data = ExtResource( 13 )
 
 [sub_resource type="ShaderMaterial" id=14]
-shader = ExtResource( 14 )
+shader = ExtResource( 17 )
 
 [sub_resource type="SpatialMaterial" id=15]
 albedo_color = Color( 1, 0.72549, 0, 1 )
@@ -258,21 +261,33 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -116.447
-margin_top = 108.213
-margin_right = 114.552
-margin_bottom = 249.213
+margin_left = -170.0
+margin_top = 108.0
+margin_right = 166.0
+margin_bottom = 329.0
 custom_fonts/font = SubResource( 13 )
 custom_colors/font_color = Color( 0, 1, 1, 1 )
-text = "Composition:
-- 35% Oxygene
-- 55% Helium"
 align = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="DroneHUDInfo2" type="Label" parent="GUI"]
+[node name="MiningProgress" type="TextureProgress" parent="GUI/DroneHUDInfo"]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -29.89
+margin_top = -146.5
+margin_right = 98.11
+margin_bottom = -82.4999
+rect_scale = Vector2( 0.5, 0.5 )
+texture_under = ExtResource( 14 )
+texture_over = ExtResource( 15 )
+texture_progress = ExtResource( 16 )
+
+[node name="HelperEditorCenterO" type="Label" parent="GUI"]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -316,7 +331,7 @@ handle_input_locally = false
 render_target_update_mode = 3
 
 [node name="GUIDrawing" type="Node2D" parent="GUI/ViewportContainer/Viewport"]
-script = ExtResource( 15 )
+script = ExtResource( 18 )
 
 [node name="Sun Sphere" type="MeshInstance" parent="."]
 transform = Transform( 30, 0, 0, 0, 30, 0, 0, 0, 30, 0.00144982, -0.00536215, -0.00533855 )
@@ -355,11 +370,11 @@ omni_range = 800.0
 omni_attenuation = 0.0281641
 omni_shadow_detail = 0
 
-[node name="Grid" parent="." instance=ExtResource( 16 )]
+[node name="Grid" parent="." instance=ExtResource( 19 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 17 )
+stream = ExtResource( 20 )
 autoplay = true
 bus = "Music"
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
