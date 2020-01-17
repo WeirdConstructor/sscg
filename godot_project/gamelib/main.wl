@@ -498,6 +498,7 @@ STATE.code.get_good_by_color = {!(color) = @;
 };
 
 STATE.callbacks.on_update_mining_hud = \:r {!(mining_info) = @;
+    STATE.code.update_hud_cargo_meters[];
     (is_none mining_info) {
         sscg:game.gd_call "GUI" :set_hud_info "";
     } {
@@ -524,6 +525,15 @@ STATE.callbacks.on_mine = \:r {
     (capacity_units > 0) &and (_2 != 0)
 };
 
+STATE.code.update_hud_cargo_meters = {||
+    !m3_perc = (100 * STATE.ship.cargo.m3)
+               / STATE.ship_types.(STATE.ship.t).cargo_max_m3;
+    !kg_perc = (100 * STATE.ship.cargo.kg)
+               / STATE.ship_types.(STATE.ship.t).cargo_max_kg;
+
+    sscg:game.gd_call "GUI" :set_cargo_meter $[kg_perc, m3_perc];
+};
+
 STATE.callbacks.on_mined_voxel = {
     std:displayln "MINEDD:" @ STATE.code.get_good_by_color[_2];
     !(k, v) = STATE.code.get_good_by_color[_2];
@@ -531,6 +541,7 @@ STATE.callbacks.on_mined_voxel = {
         STATE.ship.cargo.goods.(k) =
             STATE.ship.cargo.goods.(k) + 1;
         STATE.code.recalc_ship_cargo[];
+        STATE.code.update_hud_cargo_meters[];
     };
     $t
 };

@@ -32,6 +32,7 @@ func set_active(is_active, glob_point):
 		self.show()
 		self.get_parent().get_node("GUI/ShipControlsInfo").hide()
 		self.get_parent().get_node("GUI/DroneControlsInfo").show()
+		self.get_parent().get_node("GUI/CargoMeter").show()
 		camera.current = true;
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		pitch = 0
@@ -42,6 +43,7 @@ func set_active(is_active, glob_point):
 		self.stop_mining()
 		self.get_parent().get_node("GUI/ShipControlsInfo").show()
 		self.get_parent().get_node("GUI/DroneControlsInfo").hide()
+		self.get_parent().get_node("GUI/CargoMeter").hide()
 		self.hide()
 
 func _input(event):
