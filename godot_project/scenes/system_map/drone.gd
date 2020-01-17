@@ -33,6 +33,7 @@ func set_active(is_active, glob_point):
 		self.get_parent().get_node("GUI/ShipControlsInfo").hide()
 		self.get_parent().get_node("GUI/DroneControlsInfo").show()
 		self.get_parent().get_node("GUI/CargoMeter").show()
+		self.get_parent().get_node("GUI/DroneHUDInfo").show()
 		camera.current = true;
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		pitch = 0
@@ -44,6 +45,7 @@ func set_active(is_active, glob_point):
 		self.get_parent().get_node("GUI/ShipControlsInfo").show()
 		self.get_parent().get_node("GUI/DroneControlsInfo").hide()
 		self.get_parent().get_node("GUI/CargoMeter").hide()
+		self.get_parent().get_node("GUI/DroneHUDInfo").hide()
 		self.hide()
 
 func _input(event):
@@ -105,7 +107,7 @@ func stop_mining():
 		mining_vox   = null
 		mining_pos   = null
 		prev_vox_pos = null
-		self.get_parent().get_node("GUI/DroneHUDInfo").hide()
+
 		self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").hide()
 		$MiningBeamSound.disable_beam()
 		
@@ -147,7 +149,6 @@ func process_mining_gun(delta):
 
 		if prev_vox_pos != vv:
 			var mining_info = vox.mine_info_at_cursor()
-			self.get_parent().get_node("GUI/DroneHUDInfo").show()
 			self.get_parent().wl_cb("on_update_mining_hud", [mining_info])
 			prev_vox_pos = vv
 
