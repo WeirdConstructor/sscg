@@ -17,10 +17,14 @@ If GitHub is failing, I recommend looking at my backup Git repositories:
 
 - [Backup Git Repositories](https://m8geil.de:3000/WeirdConstructor)
 
-# Code License
+# Code and Assets License
 
 This project is licensed under the GNU General Public License Version 3 or
-later.
+later. Individual assets might have a different license, usually a CC license.
+What ever you contribute, it must allow modification and redistribution.
+
+If you see an asset without a license or a wrong license please contact the
+project maintainer.
 
 ## Why GPL?
 
