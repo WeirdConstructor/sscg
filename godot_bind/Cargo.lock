@@ -232,31 +232,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "gdnative"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "gdnative-bindings 0.7.0",
- "gdnative-core 0.7.0",
- "gdnative-derive 0.7.0",
+ "gdnative-bindings 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gdnative-core 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gdnative-derive 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "gdnative-bindings"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "gdnative-core 0.7.0",
- "gdnative-sys 0.7.0",
- "gdnative_bindings_generator 0.7.0",
+ "gdnative-core 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gdnative-sys 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gdnative_bindings_generator 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.65 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "gdnative-core"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "euclid 0.20.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gdnative-sys 0.7.0",
- "gdnative_bindings_generator 0.7.0",
+ "gdnative-sys 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gdnative_bindings_generator 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.65 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -264,6 +267,7 @@ dependencies = [
 [[package]]
 name = "gdnative-derive"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -273,6 +277,7 @@ dependencies = [
 [[package]]
 name = "gdnative-sys"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bindgen 0.51.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.65 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -283,6 +288,7 @@ dependencies = [
 [[package]]
 name = "gdnative_bindings_generator"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.102 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -902,7 +908,7 @@ name = "sscg_gd"
 version = "0.1.0"
 dependencies = [
  "euclid 0.20.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gdnative 0.7.0",
+ "gdnative 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "palette 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sscg 0.1.0",
@@ -1065,6 +1071,12 @@ dependencies = [
 "checksum failure_derive 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0bc225b78e0391e4b8683440bf2e63c2deeeb2ce5189eab46e2b68c6d3725d08"
 "checksum fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "2fad85553e09a6f881f739c29f0b00b0f01357c743266d478b68951ce23285f3"
 "checksum fuchsia-cprng 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
+"checksum gdnative 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "03ab4424c22fee9f1080c31261a13263814d24055ff895817755f6dbb58d5523"
+"checksum gdnative-bindings 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c7c956bded8e1fb9e2e00c9aefbc1e5b3766b4d41b177188a2bdbe5b62a3ddb3"
+"checksum gdnative-core 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "eb09dc8e0e8cd0d1640a1a5eacadfd1c1264eb00aabf5ce0338541880448cbe0"
+"checksum gdnative-derive 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "df9ef6a363e0e31c15424919efde3c1b9e1c8c72b36ad309fe0bbc0cc99052b7"
+"checksum gdnative-sys 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ac724f52ed795246fcb4aa1c1e05b90a09a7d0ca2434a18c012469e7f7233a3c"
+"checksum gdnative_bindings_generator 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6a27bb33659ccac2d08d8bd4f3b0ee6ec58bae992795a91e25f66339b87891aa"
 "checksum getrandom 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "7abc8dd8451921606d809ba32e95b6111925cd2906060d2dcc29c070220503eb"
 "checksum glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 "checksum heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "20564e78d53d2bb135c343b3f47714a56af2061f1c928fdb541dc7b9fdd94205"
