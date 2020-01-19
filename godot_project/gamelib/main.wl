@@ -366,6 +366,16 @@
 
 !@export STATE STATE;
 
+STATE.code.build_color_to_element_index = {||
+    !vol_color_goods = $[];
+    STATE.good_types {!(v, k) = @;
+        v.t = k;
+        (not ~ is_none v.vol_color) { vol_color_goods.(v.vol_color) = v; };
+    };
+    std:displayln vol_color_goods;
+    STATE.vol_color_goods = vol_color_goods;
+};
+
 STATE.code.enumerate_entities = {||
     !i = $&0;
     STATE.systems {!(sys) = @;
@@ -403,6 +413,15 @@ STATE.code.calc_unit_capacity_for_good = \:r {!(good_t) = @;
     (min_kg_free * 1000) / good_type.unit_g
 };
 
+STATE.code.update_hud_cargo_meters = {||
+    !m3_perc = (100 * STATE.ship.cargo.m3)
+               / STATE.ship_types.(STATE.ship.t).cargo_max_m3;
+    !kg_perc = (100 * STATE.ship.cargo.kg)
+               / STATE.ship_types.(STATE.ship.t).cargo_max_kg;
+
+    sscg:game.gd_call "GUI" :set_cargo_meter $[kg_perc, m3_perc];
+};
+
 STATE.code.recalc_ship_cargo = {
     !s = STATE.ship;
     s.cargo.m3  = 0;
@@ -415,6 +434,8 @@ STATE.code.recalc_ship_cargo = {
             s.cargo.m3 + ((good_type.unit_g * v * 1000)
                           / (1000 * good_type.kg_p_m3));
     };
+
+    STATE.code.update_hud_cargo_meters[];
 };
 
 # Actions
@@ -487,7 +508,21 @@ STATE.code.get_good_by_color = {!(color) = @;
     }
 };
 
-STATE.callbacks.on_mine = \:r{
+STATE.callbacks.on_update_mining_hud = \:r {!(mining_info) = @;
+    (is_none mining_info) {
+        sscg:game.gd_call "GUI" :set_hud_info "";
+    } {
+        !good_type = STATE.vol_color_goods.(int mining_info.material);
+        (bool good_type) {
+            sscg:game.gd_call "GUI" :set_hud_info
+                ~ std:str:cat good_type.name " (" good_type.short ")";
+        } {
+            sscg:game.gd_call "GUI" :set_hud_info "";
+        };
+    };
+};
+
+STATE.callbacks.on_mine = \:r {
     !(k, v) = STATE.code.get_good_by_color[_3];
 
     (is_none k) { return :r $false; };
@@ -706,6 +741,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
         STATE.player = state.player;
         STATE.ship   = state.ship;
         STATE.code.enumerate_entities[];
+        STATE.code.build_color_to_element_index[];
         sscg:game.cmd "load_state" state.ship_dyn;
     };
 };

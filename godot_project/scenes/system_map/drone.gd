@@ -18,9 +18,11 @@ var anti_grav = test_mode
 
 var mining_vox = null
 var mining_pos = null
-var mining_info = null
 var marker_vox = null
-var mining_time = 0
+var mining_time = 0.0 # in seconds
+var mining_time_dest = 1.0 # in seconds
+var prev_vox_pos = null
+
 
 var old_on_floor = false
 
@@ -30,6 +32,8 @@ func set_active(is_active, glob_point):
 		self.show()
 		self.get_parent().get_node("GUI/ShipControlsInfo").hide()
 		self.get_parent().get_node("GUI/DroneControlsInfo").show()
+		self.get_parent().get_node("GUI/CargoMeter").show()
+		self.get_parent().get_node("GUI/DroneHUDInfo").show()
 		camera.current = true;
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		pitch = 0
@@ -37,8 +41,11 @@ func set_active(is_active, glob_point):
 		self.set_rotation(Vector3(deg2rad(pitch),deg2rad(yaw), 0))
 		self.set_translation(glob_point)
 	else:
+		self.stop_mining()
 		self.get_parent().get_node("GUI/ShipControlsInfo").show()
 		self.get_parent().get_node("GUI/DroneControlsInfo").hide()
+		self.get_parent().get_node("GUI/CargoMeter").hide()
+		self.get_parent().get_node("GUI/DroneHUDInfo").hide()
 		self.hide()
 
 func _input(event):
@@ -97,9 +104,11 @@ func stop_mining():
 		var raym = self.find_node("RayMesh")
 		raym.hide()
 		mining_vox.mine_status(false)
-		mining_vox = null
-		mining_pos = null
-		mining_info = null
+		mining_vox   = null
+		mining_pos   = null
+		prev_vox_pos = null
+
+		self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").hide()
 		$MiningBeamSound.disable_beam()
 		
 func process_mining_gun(delta):
@@ -137,16 +146,23 @@ func process_mining_gun(delta):
 			stop_mining()
 			
 		vox.looking_at(vv.x, vv.y, vv.z)
-		
+
+		if prev_vox_pos != vv:
+			var mining_info = vox.mine_info_at_cursor()
+			self.get_parent().wl_cb("on_update_mining_hud", [mining_info])
+			prev_vox_pos = vv
+
 		if Input.is_action_pressed("mine"):
 			if mining_vox != vox:
 				if vox.mine_status(true):
 					mining_vox = vox
-					mining_info = mining_vox.mine_info_at_cursor()
+#					var mining_info = mining_vox.mine_info_at_cursor()
 					mining_pos = vv
 					raym.show()
 					mining_vox.set_marker_status(true, true)
 					mining_time = 0.0
+					self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").show()
+					self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").value = 0.0
 					marker_vox = vox
 					$MiningBeamSound.enable_beam()
 				else:
@@ -154,7 +170,9 @@ func process_mining_gun(delta):
 					mining_pos = null
 			else:
 				mining_time = mining_time + delta
-				if mining_vox and mining_time > 1:
+				var done_value = (mining_time * 100.0) / mining_time_dest
+				self.get_parent().get_node("GUI/DroneHUDInfo/MiningProgress").value = done_value
+				if mining_vox and mining_time > mining_time_dest:
 					mining_vox.mine_at_cursor()
 					$MiningBeamSound.play_pop()
 					stop_mining()
@@ -166,6 +184,10 @@ func process_mining_gun(delta):
 			marker_vox = vox
 			stop_mining()
 	else:
+		if prev_vox_pos:
+			self.get_parent().wl_cb("on_update_mining_hud", [null])
+			prev_vox_pos = null
+	
 		if marker_vox:
 			marker_vox.looking_at_nothing()
 		stop_mining()

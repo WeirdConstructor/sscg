@@ -5,10 +5,26 @@ This is just a simple try for now. Getting down some ideas, playing
 around.  I want to see if I can start with some small idea, and build
 upon that.
 
-# Code License
+# Keep up to date
+
+If you are interested in the progress of this project, I post updates on
+my instagram and twitter accounts:
+
+- [Instagram](https://www.instagram.com/weirdconstructor/)
+- [Twitter](https://twitter.com/WeirdConstruct1)
+
+If GitHub is failing, I recommend looking at my backup Git repositories:
+
+- [Backup Git Repositories](https://m8geil.de:3000/WeirdConstructor)
+
+# Code and Assets License
 
 This project is licensed under the GNU General Public License Version 3 or
-later.
+later. Individual assets might have a different license, usually a CC license.
+What ever you contribute, it must allow modification and redistribution.
+
+If you see an asset without a license or a wrong license please contact the
+project maintainer.
 
 ## Why GPL?
 
@@ -105,6 +121,13 @@ without any additional terms or conditions.
   Centre. Copyright statement at hubblesite.org or 2008 copyright statement at
   spacetelescope.org. For material created by the European Space Agency on the
   spacetelescope.org site since 2009, use the {{ESA-Hubble}} tag.
+
+## Sounds
+
+- 240566\_\_onikage22\_\_blip-plock-pop.wav
+  - CC0 - https://freesound.org/people/onikage22/sounds/240566/
+- 11221\_\_jnr-hacksaw\_\_zap.flac
+  - CC0 - https://freesound.org/people/jnr%20hacksaw/sounds/11221/
 
 # Credits
 

@@ -12,10 +12,11 @@ extents = Vector3( 70.4524, 80, 68.6657 )
 size = Vector3( 1.2, 1.2, 1.2 )
 
 [sub_resource type="SpatialMaterial" id=3]
+flags_transparent = true
 flags_do_not_receive_shadows = true
 flags_disable_ambient_light = true
 params_blend_mode = 1
-albedo_color = Color( 0.172549, 1, 0, 1 )
+albedo_color = Color( 0.172549, 1, 0, 0.905882 )
 emission_enabled = true
 emission = Color( 0, 1, 0.0627451, 1 )
 emission_energy = 1.0
@@ -23,7 +24,7 @@ emission_operator = 0
 emission_on_uv2 = false
 
 [sub_resource type="Curve" id=4]
-_data = [ Vector2( 0, 1 ), 0.0, 0.0, 0, 0, Vector2( 1, 0 ), 0.0, 0.0, 0, 0 ]
+_data = [ Vector2( 0, 1 ), 0.0, 0.0, 0, 0, Vector2( 1, 0 ), -0.0497547, 0.0, 0, 0 ]
 
 [sub_resource type="CurveTexture" id=5]
 curve = SubResource( 4 )
@@ -33,9 +34,9 @@ emission_shape = 2
 emission_box_extents = Vector3( 0.6, 0.6, 0.6 )
 spread = 180.0
 gravity = Vector3( 0, 0, 0 )
-initial_velocity = 1.0
-angular_velocity = 1.0
-scale = 0.25
+initial_velocity = 2.0
+initial_velocity_random = 1.0
+scale = 0.5
 scale_curve = SubResource( 5 )
 
 [sub_resource type="CubeMesh" id=7]
@@ -74,8 +75,8 @@ material/0 = ExtResource( 4 )
 
 [node name="MineExplosion" type="Particles" parent="VoxStruct"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.97075, 0, -29.966 )
-visible = false
 material_override = SubResource( 3 )
+cast_shadow = 0
 amount = 128
 lifetime = 2.0
 speed_scale = 3.7

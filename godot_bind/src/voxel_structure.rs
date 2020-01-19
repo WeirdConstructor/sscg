@@ -426,6 +426,8 @@ impl VoxStruct {
 
     #[export]
     fn spawn_mine_pop_at_cursor(&mut self, owner: Spatial, color: u8) {
+        use palette::Hsv;
+        use palette::rgb::Rgb;
         unsafe {
             let mut part =
                 owner.get_child(2)
@@ -435,7 +437,15 @@ impl VoxStruct {
             let mut m = part.get_material_override().unwrap()
                             .cast::<SpatialMaterial>().unwrap();
             let cm = self.color_map;
-            let clr = cm.map(color);
+            let mut clr = cm.map(color);
+            let mut fx_color : Rgb = Rgb::new(clr.r, clr.g, clr.b);
+            let mut fx_color_hsv : Hsv = fx_color.into();
+            fx_color_hsv.saturation = 1.0;
+            fx_color_hsv.value = 0.7;
+            fx_color = fx_color_hsv.into();
+            clr.r = fx_color.red;
+            clr.g = fx_color.green;
+            clr.b = fx_color.blue;
             m.set_albedo(clr);
             m.set_emission(clr);
             part.set_material_override(m.cast::<Material>());
