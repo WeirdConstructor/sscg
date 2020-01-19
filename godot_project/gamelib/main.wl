@@ -839,7 +839,7 @@ STATE.callbacks.on_ready = {
     };
 
 #    open_menu[];
-    load_save[];
+#    load_save[];
 };
 
 !@export init {
