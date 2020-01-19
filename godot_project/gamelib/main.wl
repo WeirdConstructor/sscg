@@ -838,6 +838,8 @@ STATE.callbacks.on_ready = {
         rot_z           = 0,
     };
 
+    STATE.code.enumerate_entities[];
+    STATE.code.build_color_to_element_index[];
 #    open_menu[];
 #    load_save[];
 };
