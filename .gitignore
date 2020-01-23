@@ -17,3 +17,4 @@ target/
 Godot_v3*.64
 godot.*.64
 *.history
+*.so
