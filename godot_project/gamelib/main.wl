@@ -6,6 +6,9 @@
 !@import e_structure    structure;
 !@import WID            gui_window_ids;
 !@import gui            gui_common;
+!@import credits        credits;
+!@import u              util;
+!@import el             elements;
 
 # Took colors from https://en.wikipedia.org/wiki/CPK_coloring
 # The color scheme of Jmol
@@ -678,27 +681,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 };
 
 !open_credits = {
-    !credits = $[
-        $["Game Design and Programming", $[
-            "Weird Constructor",
-        ] ],
-        $["Music & Sound", $[
-            "'Synthwave' by Ryan Andersen, CC-BY-NC 4.0 from Free Music Archive",
-        ] ],
-        $["Artwork", $[
-        ] ],
-        $["Feedback, Hints, Ideas and Testing", $[
-            "Gargaj (shader suggestions)",
-            "Ilmuri (help with shaders and feedback)",
-            "Tom from 'Recall Singularity' (feedback and suggestions)",
-            "Itmuckel (feedback)",
-            "szczm (dragging me back into game dev)",
-        ] ],
-        $["Engine", $[
-            "Godot game engine developers",
-            "Godot-rust binding developers ('karroffel', 'toasteater' and all others)",
-        ] ],
-    ];
+    !credits = credits:list;
 
     sscg:win.set_window WID:MAIN_MENU ${
         x = 200, y = 100, w = 550, h = 800,
@@ -837,6 +820,11 @@ STATE.callbacks.on_ready = {
         y               = 0.0,
         rot_z           = 0,
     };
+
+    !elements =
+        el:read_elements ~
+            sscg:game.read_data_text "elements.csv";
+    std:displayln :ELEMENS ">>" elements "<<" ;
 
     STATE.code.enumerate_entities[];
     STATE.code.build_color_to_element_index[];

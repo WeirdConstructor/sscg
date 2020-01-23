@@ -1,9 +1,9 @@
 use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
-use sscg::tree_painter::{TreePainter, FontMetric, FontSize};
-use sscg::wlambda_api::WindowManager;
-use sscg::wlambda_api::window_manager_wlambda_obj;
+use crate::gui::tree_painter::{TreePainter, FontMetric, FontSize};
+use crate::gui::wlambda_api::WindowManager;
+use crate::gui::wlambda_api::window_manager_wlambda_obj;
 use gdnative::*;
 use wlambda::{VVal, Env, GlobalEnv, EvalContext, SymbolTable};
 use wlambda::set_vval_method;
@@ -78,6 +78,21 @@ impl SSCGState {
             Ok(VVal::Nul)
         });
         let _cmd_queue = cmd_queue.clone();
+        set_vval_method!(o, _cmd_queue, read_data_text, Some(1), Some(1), env, _argc, {
+            let filename = env.arg(0).s_raw();
+            let fileurl = format!("res://{}", filename);
+
+            let mut f = File::new();
+            match f.open(GodotString::from_str(fileurl.clone()), 1) {
+                Ok(_) => {
+                    Ok(VVal::new_str_mv(f.get_as_text().to_string()))
+                },
+                Err(e) => {
+                    Ok(VVal::err_msg(
+                        &format!("Couldn't load data '{}': {:?}", fileurl, e)))
+                }
+            }
+        });
         set_vval_method!(o, _cmd_queue, read_savegame, Some(1), Some(1), env, _argc, {
             let filename = env.arg(0).s_raw();
 

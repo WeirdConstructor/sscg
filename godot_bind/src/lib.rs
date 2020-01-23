@@ -7,6 +7,7 @@ mod voxel_structure;
 mod voxeltree;
 mod voxeltree_wlambda;
 mod gd_voxel_impl;
+mod gui;
 
 #[macro_use]
 extern crate lazy_static;
@@ -16,8 +17,8 @@ use gdnative::*;
 use euclid::rect;
 use euclid::vec2;
 use euclid::Vector2D;
-use sscg::tree_painter::{DrawCmd, FontSize};
-use sscg::gui::*;
+use crate::gui::tree_painter::{DrawCmd, FontSize};
+use crate::gui::widgets::*;
 use state::*;
 use util::c2c;
 use wlambda::VVal;

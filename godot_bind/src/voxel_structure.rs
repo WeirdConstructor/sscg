@@ -32,7 +32,7 @@ const SUBVOLS     : usize = VOL_SIZE / SUBVOL_SIZE;
 
 fn vval2colors(clr: VVal) -> ColorMap {
     let mut colors = [[0.0; 3]; 256];
-    use sscg::wlambda_api::color_hex24tpl;
+    use crate::gui::wlambda_api::color_hex24tpl;
     for (i, c) in clr.iter().enumerate() {
         let tpl = color_hex24tpl(&c.s_raw());
         colors[i] = [

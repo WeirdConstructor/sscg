@@ -18,7 +18,7 @@ impl GodotModuleResolver {
 }
 
 impl ModuleResolver for GodotModuleResolver {
-    fn resolve(&mut self, global: GlobalEnvRef, path: &[String])
+    fn resolve(&self, global: GlobalEnvRef, path: &[String])
         -> Result<SymbolTable, ModuleLoadError>
     {
         println!("***** GODOT RESOLVE MODULE: {:?}", path);

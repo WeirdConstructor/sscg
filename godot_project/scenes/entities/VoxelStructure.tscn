@@ -75,6 +75,7 @@ material/0 = ExtResource( 4 )
 
 [node name="MineExplosion" type="Particles" parent="VoxStruct"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.97075, 0, -29.966 )
+visible = false
 material_override = SubResource( 3 )
 cast_shadow = 0
 amount = 128
@@ -98,19 +99,19 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 157.465, 64 )
 shape = SubResource( 8 )
 
 [node name="CollFront" type="CollisionShape" parent="VoxStruct/floor"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 64, 78, -4.62242 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 64, 78, -4.62242 )
 shape = SubResource( 9 )
 
 [node name="CollBack" type="CollisionShape" parent="VoxStruct/floor"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 64, 78, 132.787 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 64, 78, 132.787 )
 shape = SubResource( 9 )
 
 [node name="CollLeft" type="CollisionShape" parent="VoxStruct/floor"]
-transform = Transform( -4.37114e-08, -1, 4.37114e-08, 0, -4.37114e-08, -1, 1, -4.37114e-08, 1.91069e-15, 132.673, 78, 64 )
+transform = Transform( -4.37114e-008, -1, 4.37114e-008, 0, -4.37114e-008, -1, 1, -4.37114e-008, 1.91069e-015, 132.673, 78, 64 )
 shape = SubResource( 9 )
 
 [node name="CollRight" type="CollisionShape" parent="VoxStruct/floor"]
-transform = Transform( -4.37114e-08, -1, 4.37114e-08, 0, -4.37114e-08, -1, 1, -4.37114e-08, 1.91069e-15, -4.69518, 78, 64 )
+transform = Transform( -4.37114e-008, -1, 4.37114e-008, 0, -4.37114e-008, -1, 1, -4.37114e-008, 1.91069e-015, -4.69518, 78, 64 )
 shape = SubResource( 9 )
 
 [node name="DroneSpawn" type="Spatial" parent="."]
