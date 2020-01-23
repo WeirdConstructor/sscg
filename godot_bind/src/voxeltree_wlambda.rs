@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 //use wlambda::{VVal, StackAction, GlobalEnv, EvalContext, SymbolTable};
 use wlambda::set_vval_method;
-use wlambda::util::{Sampled3DNoise};
+use crate::util::Sampled3DNoise;
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 struct FColor(f64);
