@@ -18,7 +18,7 @@ impl GodotModuleResolver {
 }
 
 impl ModuleResolver for GodotModuleResolver {
-    fn resolve(&self, global: GlobalEnvRef, path: &[String])
+    fn resolve(&self, global: GlobalEnvRef, path: &[String], _import_file_path: Option<&str>)
         -> Result<SymbolTable, ModuleLoadError>
     {
         println!("***** GODOT RESOLVE MODULE: {:?}", path);
@@ -42,7 +42,7 @@ impl ModuleResolver for GodotModuleResolver {
             },
             Err(e) => {
                 godot_print!("Couldn't load module: '{}': {:?}", pth, e);
-                Err(ModuleLoadError::NoSuchModule)
+                Err(ModuleLoadError::NoSuchModule(mod_path))
             },
         }
     }
