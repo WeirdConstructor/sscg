@@ -823,7 +823,7 @@ STATE.callbacks.on_ready = {
 
     !elements =
         el:read_elements ~
-            sscg:game.read_data_text "elements.csv";
+            sscg:game.read_data_text "data/elements.csv";
     std:displayln :ELEMENS ">>" elements "<<" ;
 
     STATE.code.enumerate_entities[];
