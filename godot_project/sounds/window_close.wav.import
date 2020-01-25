@@ -2,12 +2,12 @@
 
 importer="wav"
 type="AudioStreamSample"
-path="res://.import/mining_pop3.wav-b0fb9037e73b78b7a9634500587f99ae.sample"
+path="res://.import/window_close.wav-2b9a3a00da9a94fb94a70abc3b29d095.sample"
 
 [deps]
 
-source_file="res://sounds/mining_pop3.wav"
-dest_files=[ "res://.import/mining_pop3.wav-b0fb9037e73b78b7a9634500587f99ae.sample" ]
+source_file="res://sounds/window_close.wav"
+dest_files=[ "res://.import/window_close.wav-2b9a3a00da9a94fb94a70abc3b29d095.sample" ]
 
 [params]
 

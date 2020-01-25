@@ -716,9 +716,9 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     } {|| sscg:win.set_window WID:MAIN_MENU; };
 };
 
-!load_save = {
+!load_save = \:r {
     !state =
-        on_error {|| std:displayln "Couldn't load savegame: " @ }
+        on_error {|| std:displayln "Couldn't load savegame: " @; return :r $n; }
             ~ sscg:game.read_savegame "sv1";
     (bool state) {
         STATE.player = state.player;
@@ -829,7 +829,7 @@ STATE.callbacks.on_ready = {
     STATE.code.enumerate_entities[];
     STATE.code.build_color_to_element_index[];
 #    open_menu[];
-#    load_save[];
+    load_save[];
 };
 
 !@export init {

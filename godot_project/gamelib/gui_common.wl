@@ -14,7 +14,8 @@
     };
 };
 
-!@export dialog_window = {!(wid, title, child_fun, ev_cb) = @;
+!dialog_window = {!(wid, title, child_fun, ev_cb) = @;
+    std:displayln "DIAG" @;
     sscg:win.set_window wid ${
         x = 250, y = 250, w = 500, h = 500,
         title       = title,
@@ -28,6 +29,40 @@
         },
     } ev_cb;
 };
+
+!@export window = {!(wid, create_fun, events, close_fun) = @;
+    !std_ev = $&&$n;
+
+    sscg:game.gd_call "GUI" :open_window;
+
+    !reload = {
+        !(title, childs) = create_fun[];
+        dialog_window wid title { childs } $*std_ev;
+    };
+
+    !no_reload = $&&$false;
+
+    !close = {
+    std:displayln "CLOSOOOSOSOSO" wid;
+        sscg:game.gd_call "GUI" :close_window;
+        sscg:win.set_window wid;
+        close_fun[];
+        .*no_reload = $true;
+        .*std_ev = $n;
+    };
+
+    .*std_ev = {
+        !cb = events.(_1);
+        (cb == $none) close {
+            cb close;
+            (not $*no_reload) reload;
+        };
+    };
+
+    reload[];
+};
+
+!@export dialog_window = dialog_window;
 
 !@export hpanel = {!(h, child_cb) = @;
     ${

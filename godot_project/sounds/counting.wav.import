@@ -2,12 +2,12 @@
 
 importer="wav"
 type="AudioStreamSample"
-path="res://.import/mining_pop3.wav-b0fb9037e73b78b7a9634500587f99ae.sample"
+path="res://.import/counting.wav-7e98e59791aa86da5656edad7d884a48.sample"
 
 [deps]
 
-source_file="res://sounds/mining_pop3.wav"
-dest_files=[ "res://.import/mining_pop3.wav-b0fb9037e73b78b7a9634500587f99ae.sample" ]
+source_file="res://sounds/counting.wav"
+dest_files=[ "res://.import/counting.wav-7e98e59791aa86da5656edad7d884a48.sample" ]
 
 [params]
 

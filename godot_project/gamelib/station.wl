@@ -39,36 +39,33 @@
 
 !show = $&&$n;
 .*show = {!(STATE, ent, ent_type) = @;
-
-    gui:dialog_window WID:STATION ent.name { $[
-        gui:hpanel 700 { $[
-            gui:action_button 500 1000 :refuel "Refuel",
-            refuel_text STATE,
-        ] },
-        gui:hpanel 300 { $[
-            gui:action_button 500 1000 :sell_rocks "Sell rocks",
-            gui:button        500 1000 :depart "Depart",
-        ] },
-    ] } {||
-        match _1
-            "refuel" {||
-                !refuel = calc_refuel STATE;
-                STATE.ship.fuel = STATE.ship.fuel + refuel.fuel_delta;
-                STATE.player.credits = STATE.player.credits - refuel.price;
-                show STATE ent ent_type;
-            }
-            "sell_rocks" {||
-                STATE.code.sell_ship_cargo_good :rock;
-                STATE.code.sell_ship_cargo_good :element_he;
-                STATE.code.sell_ship_cargo_good :element_o;
-                STATE.code.sell_ship_cargo_good :element_h;
-                STATE.code.sell_ship_cargo_good :element_ag;
-                STATE.code.sell_ship_cargo_good :element_c;
-            }
-            {||
-                sscg:win.set_window WID:STATION;
-                STATE.ship.docked = $f;
-            };
+    gui:window WID:STATION {
+        $[ent.name, $[
+            gui:hpanel 700 { $[
+                gui:action_button 500 1000 :refuel "Refuel",
+                refuel_text STATE,
+            ] },
+            gui:hpanel 300 { $[
+                gui:action_button 500 1000 :sell_rocks "Sell rocks",
+                gui:button        500 1000 :depart "Depart",
+            ] }
+        ] ]
+    } ${
+        refuel = {||
+            !refuel = calc_refuel STATE;
+            STATE.ship.fuel = STATE.ship.fuel + refuel.fuel_delta;
+            STATE.player.credits = STATE.player.credits - refuel.price;
+        },
+        sell_rocks = {||
+            STATE.code.sell_ship_cargo_good :rock;
+            STATE.code.sell_ship_cargo_good :element_he;
+            STATE.code.sell_ship_cargo_good :element_o;
+            STATE.code.sell_ship_cargo_good :element_h;
+            STATE.code.sell_ship_cargo_good :element_ag;
+            STATE.code.sell_ship_cargo_good :element_c;
+        },
+    } {
+        STATE.ship.docked = $f;
     };
 };
 
