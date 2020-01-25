@@ -1,21 +1,9 @@
 !@import sscg sscg;
 !@import wlambda;
 !@import std std;
-!@import c          colors;
-
-!@export ml_l_vtext = {!(w, h, fg, lines) = @;
-    !per_line = 1000 / len[lines];
-    ${ t = :vbox, w = w, h = h, childs =
-        lines {
-            ${ t = :l_text, text = _,
-               w = 1000, h = per_line,
-               fg = fg, bg = "000" }
-        }
-    };
-};
+!@import c   colors;
 
 !dialog_window = {!(wid, title, child_fun, ev_cb) = @;
-    std:displayln "DIAG" @;
     sscg:win.set_window wid ${
         x = 250, y = 250, w = 500, h = 500,
         title       = title,
@@ -30,7 +18,7 @@
     } ev_cb;
 };
 
-!@export window = {!(wid, create_fun, events, close_fun) = @;
+!window = {!(wid, create_fun, events, close_fun) = @;
     !std_ev = $&&$n;
 
     sscg:game.gd_call "GUI" :open_window;
@@ -62,6 +50,18 @@
     reload[];
 };
 
+!@export ml_l_vtext = {!(w, h, fg, lines) = @;
+    !per_line = 1000 / len[lines];
+    ${ t = :vbox, w = w, h = h, childs =
+        lines {
+            ${ t = :l_text, text = _,
+               w = 1000, h = per_line,
+               fg = fg, bg = "000" }
+        }
+    };
+};
+
+!@export window = window;
 !@export dialog_window = dialog_window;
 
 !@export hpanel = {!(h, child_cb) = @;

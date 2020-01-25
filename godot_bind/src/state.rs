@@ -153,7 +153,6 @@ impl SSCGState {
         sscg_wl_mod.fun("new_voxel_painter", move |_e: &mut Env, _argc: usize| {
             let (painter_ref, obj) = new_voxel_painter(vox_painters_r.borrow().len());
             vox_painters_r.borrow_mut().push(painter_ref);
-            println!("OOO {}", obj.s());
             Ok(obj)
         }, Some(0), Some(0), false);
 

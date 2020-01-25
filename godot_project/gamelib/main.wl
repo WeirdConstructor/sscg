@@ -6,6 +6,7 @@
 !@import e_structure    structure;
 !@import WID            gui_window_ids;
 !@import gui            gui_common;
+!@import w_count        count_window;
 !@import credits        credits;
 !@import u              util;
 !@import el             elements;
@@ -375,7 +376,7 @@ STATE.code.build_color_to_element_index = {||
         v.t = k;
         (not ~ is_none v.vol_color) { vol_color_goods.(v.vol_color) = v; };
     };
-    std:displayln vol_color_goods;
+#    std:displayln vol_color_goods;
     STATE.vol_color_goods = vol_color_goods;
 };
 
@@ -483,7 +484,7 @@ STATE.code.recalc_ship_cargo = {
 #            },
         ]
     } {||
-        std:displayln @;
+#        std:displayln @;
         match _1
             "start_mining" {||
                 STATE.player.is_mining = $t;
@@ -557,7 +558,7 @@ STATE.callbacks.on_texture_description = {|| std:displayln "Describing textures 
 
 STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     !vp = $*vp;
-    std:displayln "LOADDED on_draw_voxel_structure " vp "|" sys_id ent_id;
+#    std:displayln "LOADDED on_draw_voxel_structure " vp "|" sys_id ent_id;
     vp.clear[];
     !main_vol = vp.new 128 0.0;
     !pattern = on_error { std:displayln "Couldn't load pat.wl: "
@@ -573,7 +574,7 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
             cm
         };
 
-    std:displayln "DONE!" $[vp.id[], main_vol, cm];
+#    std:displayln "DONE!" $[vp.id[], main_vol, cm];
     $[vp.id[], main_vol, cm]
 };
 
@@ -762,7 +763,13 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     };
 };
 
+!count = w_count:new[];
+std:displayln "TiIIIIIIIIIIIIIIIIIII:" count;
+
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
+    std:displayln "TI:" count;
+    count.tick[];
+
     (bool STATE.player.is_mining) {
         !capacity_units =
             STATE.code.calc_unit_capacity_for_good :rock;
@@ -824,12 +831,15 @@ STATE.callbacks.on_ready = {
     !elements =
         el:read_elements ~
             sscg:game.read_data_text "data/elements.csv";
-    std:displayln :ELEMENS ">>" elements "<<" ;
+#    std:displayln :ELEMENS ">>" elements "<<" ;
 
     STATE.code.enumerate_entities[];
     STATE.code.build_color_to_element_index[];
 #    open_menu[];
     load_save[];
+
+    std:displayln "READY:" count;
+    count.open[];
 };
 
 !@export init {
@@ -880,7 +890,7 @@ STATE.callbacks.on_ready = {
     std:displayln "DISPLAY INIT";
 
     .*vp = sscg:new_voxel_painter[];
-    std:displayln "VOXPAINT INIT " vp;
+#    std:displayln "VOXPAINT INIT " vp;
 
 #    STATE.ship.cargo.goods.rock = 100;
 #    STATE.code.recalc_ship_cargo[];
