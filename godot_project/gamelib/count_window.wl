@@ -35,10 +35,8 @@
         sscg:win.set_label WID:COUNTING :cnt_lbl count;
     };
 
-    self.del = std:to_drop $true {
-        std:displayln "DROPPED COUNTER WINDOW";
-    std:displayln "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYy";
-        gui:dialog_window WID:COUNTING;
+    self.on_destroy = std:to_drop $true {
+        sscg:win.set_window WID:COUNTING;
     };
 
     std:strengthen self;
