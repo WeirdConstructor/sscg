@@ -763,13 +763,13 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     };
 };
 
-!count = $&& w_count:new[];
+!count = $&&( w_count:new[] );
 std:displayln "TiIIIIIIIIIIIIIIIIIII:" count;
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
     std:displayln "TI:" count;
     ($*count != $n &and count.tick[] > 7) {
-        std:displayln "DONE!";
+        std:displayln "DONE!" count;
         .*count = $none;
     };
 
