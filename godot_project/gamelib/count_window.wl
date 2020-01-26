@@ -6,13 +6,14 @@
 !@import WID gui_window_ids;
 
 !new = {
-    !count = $&0;
+    !count = $&&0;
 
     std:displayln "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     !self = $&${};
     self.tick = {
-        .count = count + 1;
+        .*count = $*count + 1;
         self.update[];
+        $*count
     };
     self.open = {
         sscg:game.gd_call "GUI" :open_window;
@@ -23,7 +24,7 @@
                        text = "Count:" },
                     ${ t = :l_label, fg = c:SE1, bg = "000", h = 1000, w = 500,
                        ref = :cnt_lbl,
-                       text = "0" },
+                       text = str $*count },
                 ]
             },
         ] } {
@@ -34,11 +35,13 @@
         sscg:win.set_label WID:COUNTING :cnt_lbl count;
     };
 
-    std:to_drop $*self {
+    self.del = std:to_drop $true {
         std:displayln "DROPPED COUNTER WINDOW";
     std:displayln "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYy";
         gui:dialog_window WID:COUNTING;
-    }
+    };
+
+    std:strengthen self;
 };
 
 !@export new = new;
