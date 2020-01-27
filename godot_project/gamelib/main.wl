@@ -768,10 +768,11 @@ std:displayln "TiIIIIIIIIIIIIIIIIIII:" count;
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
     std:displayln "TI:" count;
-    ($*count != $n &and count.tick[] > 7) {
-        std:displayln "DONE!" count;
-        .*count = $none;
-    };
+    count.tick[];
+#    ($*count != $n &and count.tick[] > 7) {
+#        std:displayln "DONE!" count;
+#        .*count = $none;
+#    };
 
     (bool STATE.player.is_mining) {
         !capacity_units =

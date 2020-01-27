@@ -8,12 +8,18 @@
 !new = {
     !count = $&&0;
 
-    std:displayln "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+    !rng = std:rand:split_mix64_new[];
+
     !self = $&${};
     self.tick = {
-        .*count = $*count + 1;
+        !digits = $[];
+        range 0 9 1 {||
+            std:push digits ~
+                std:num:floor ~
+                    1.0 + std:rand:split_mix64_next_open01[rng] * 9.0
+        };
+        .*count = std:str:cat[[digits]];
         self.update[];
-        $*count
     };
     self.open = {
         sscg:game.gd_call "GUI" :open_window;
@@ -32,7 +38,8 @@
         };
     };
     self.update = {
-        sscg:win.set_label WID:COUNTING :cnt_lbl count;
+        !nums = 
+        sscg:win.set_label WID:COUNTING :cnt_lbl $*count;
     };
 
     self.on_destroy = std:to_drop $true {
