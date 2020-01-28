@@ -85,7 +85,7 @@ impl Face {
             Face::Bottom => &CUBE_NORMALS[5],
         };
 
-        let mut uvs_w     = uvs.write();//.as_mut_slice();
+        let mut uvs_w     = uvs.write();
         let mut uvs2_w    = uvs2.write();
         let mut verts_w   = verts.write();
         let mut colors_w  = colors.write();
