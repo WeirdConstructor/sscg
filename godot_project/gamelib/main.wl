@@ -763,7 +763,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     };
 };
 
-!count = $&&( w_count:new[] );
+!count = $&&( w_count:new $[$[:cred, "Credits:"], $[:wust, "Wurst:"]] { _1.cred = int[_ * 1000]; _1.wust = int[_ * 102010] } );
 std:displayln "TiIIIIIIIIIIIIIIIIIII:" count;
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
