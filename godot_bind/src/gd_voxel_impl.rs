@@ -85,27 +85,36 @@ impl Face {
             Face::Bottom => &CUBE_NORMALS[5],
         };
 
+        let mut uvs_w     = uvs.write();//.as_mut_slice();
+        let mut uvs2_w    = uvs2.write();
+        let mut verts_w   = verts.write();
+        let mut colors_w  = colors.write();
+        let mut normals_w = normals.write();
+
         for i in 0..4 {
             let idx = tris[i];
-            uvs.set(*vtxlen as i32, &vec2(
+            uvs_w[*vtxlen as usize] = vec2(
                 FACE_TRIANGLE_VERTEX_UV[i][0],
-                FACE_TRIANGLE_VERTEX_UV[i][1]));
-            uvs2.set(*vtxlen as i32, &vec2(size as f32, size as f32));
+                FACE_TRIANGLE_VERTEX_UV[i][1]);
+            uvs2_w[*vtxlen as usize] = vec2(size as f32, size as f32);
             let v = vec3(
                 (CUBE_VERTICES[idx][0] * size + offs.x) * scale,
                 (CUBE_VERTICES[idx][1] * size + offs.y) * scale,
                 (CUBE_VERTICES[idx][2] * size + offs.z) * scale);
-            verts.set(*vtxlen as i32, &v);
-            colors.set(*vtxlen as i32, &color);
-            normals.set(*vtxlen as i32, &vec3(normal[0], normal[1], normal[2]));
+            verts_w[*vtxlen as usize]   = v;
+            colors_w[*vtxlen as usize]  = color;
+            normals_w[*vtxlen as usize] = vec3(normal[0], normal[1], normal[2]);
             *vtxlen += 1;
         }
+
+        let mut indices_w        = indices.write();
+        let mut collision_tris_w = collision_tris.write();
 
         for i in 4..10 {
             let idx = tris[i];
             let tri_vertex_index = *vtxlen as i32 - (4 - idx as i32);
-            indices.set(*idxlen as i32, tri_vertex_index);
-            collision_tris.set(*idxlen as i32, &verts.get(tri_vertex_index));
+            indices_w[*idxlen as usize] = tri_vertex_index;
+            collision_tris_w[*idxlen as usize] = verts_w[tri_vertex_index as usize];
             *idxlen += 1;
         }
     }
