@@ -14,3 +14,6 @@ euclid      = "0.20.1"
 
 [lib]
 crate-type = ["cdylib"]
+
+[profile.release]
+debug = true
