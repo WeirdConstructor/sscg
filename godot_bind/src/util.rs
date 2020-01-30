@@ -281,29 +281,32 @@ impl Sampled3DNoise {
         let y = y.floor() as usize % (self.size - 1);
         let z = z.floor() as usize % (self.size - 1);
 
-        let s = self.size;
-        let mut samples : [f64; 8] = [0.0; 8];
+        let x_stride : usize = 1;
+        let y_stride : usize = self.size;
+        let z_stride : usize = y_stride * y_stride;
 
-        samples[0] = self.data[z * s * s       + y * s       + x];
-        samples[1] = self.data[z * s * s       + y * s       + x + 1];
+        let base : usize = z * z_stride       + y * y_stride       + x;
 
-        samples[2] = self.data[z * s * s       + (y + 1) * s + x];
-        samples[3] = self.data[z * s * s       + (y + 1) * s + x + 1];
+        let c_0 = self.data[base];
+        let c_x = self.data[base + x_stride];
 
-        samples[4] = self.data[(z + 1) * s * s + y * s       + x];
-        samples[5] = self.data[(z + 1) * s * s + y * s       + x + 1];
+        let c_y = self.data[base + y_stride];
+        let c_xy = self.data[base + y_stride + x_stride];
 
-        samples[6] = self.data[(z + 1) * s * s + (y + 1) * s + x];
-        samples[7] = self.data[(z + 1) * s * s + (y + 1) * s + x + 1];
+        let c_z = self.data[base + z_stride];
+        let c_xz = self.data[base + z_stride + x_stride];
 
-        samples[0] = smoothstep_f64(samples[0], samples[1], xf);
-        samples[1] = smoothstep_f64(samples[2], samples[3], xf);
-        samples[2] = smoothstep_f64(samples[4], samples[5], xf);
-        samples[3] = smoothstep_f64(samples[6], samples[7], xf);
+        let c_yz = self.data[base + z_stride + y_stride];
+        let c_xyz = self.data[base + z_stride + y_stride + x_stride];
 
-        samples[0] = smoothstep_f64(samples[0], samples[1], yf);
-        samples[1] = smoothstep_f64(samples[2], samples[3], yf);
+        let e_x = smoothstep_f64(c_0, c_x, xf);
+        let e_y = smoothstep_f64(c_y, c_xy, xf);
+        let e_z = smoothstep_f64(c_z, c_xz, xf);
+        let e_all = smoothstep_f64(c_yz, c_xyz, xf);
 
-        smoothstep_f64(samples[0], samples[1], zf)
+        let z0 = smoothstep_f64(e_x, e_y, yf);
+        let z1 = smoothstep_f64(e_z, e_all, yf);
+
+        smoothstep_f64(z0, z1, zf)
     }
 }
