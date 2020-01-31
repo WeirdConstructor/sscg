@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=2]
+[gd_scene load_steps=46 format=2]
 
 [ext_resource path="res://gdnative/libsscg_gd.tres" type="GDNativeLibrary" id=1]
 [ext_resource path="res://scenes/ships/ship_1.tscn" type="PackedScene" id=2]
@@ -28,6 +28,7 @@
 [ext_resource path="res://sounds/window_close.wav" type="AudioStream" id=26]
 [ext_resource path="res://scenes/system_map/Grid.tscn" type="PackedScene" id=27]
 [ext_resource path="res://music/Ryan_Andersen_-_07_-_Synthwave.ogg" type="AudioStream" id=28]
+[ext_resource path="res://scenes/system_map/AudioStreamPlayer.gd" type="Script" id=29]
 
 [sub_resource type="NativeScript" id=1]
 resource_name = "SystemMap"
@@ -140,7 +141,7 @@ mesh = SubResource( 2 )
 material/0 = null
 
 [node name="Particles" type="Particles" parent="Drone/RayMesh"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-008, -1, 0, 1, -4.37114e-008, 0, 0.5, 0 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.5, 0 )
 cast_shadow = 0
 amount = 128
 lifetime = 10.0
@@ -458,4 +459,6 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0 )
 stream = ExtResource( 28 )
 autoplay = true
 bus = "Music"
+script = ExtResource( 29 )
 [connection signal="resized" from="GUI" to="GUI" method="_on_GUI_resized"]
+[connection signal="finished" from="AudioStreamPlayer" to="AudioStreamPlayer" method="_on_AudioStreamPlayer_finished"]

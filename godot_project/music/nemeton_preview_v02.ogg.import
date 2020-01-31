@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/nemeton_preview_v02.ogg-da7b569e00fe284c39a3cc022cc70669.oggstr"
+
+[deps]
+
+source_file="res://music/nemeton_preview_v02.ogg"
+dest_files=[ "res://.import/nemeton_preview_v02.ogg-da7b569e00fe284c39a3cc022cc70669.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0
