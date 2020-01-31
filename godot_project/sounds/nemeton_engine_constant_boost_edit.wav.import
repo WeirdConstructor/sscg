@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/nemeton_engine_constant_boost_edit.wav-b39d31c42e80d7fb569cac12393d545b.sample"
+
+[deps]
+
+source_file="res://sounds/nemeton_engine_constant_boost_edit.wav"
+dest_files=[ "res://.import/nemeton_engine_constant_boost_edit.wav-b39d31c42e80d7fb569cac12393d545b.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=true
+compress/mode=0

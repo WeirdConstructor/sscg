@@ -135,6 +135,7 @@ enabled = true
 cast_to = Vector3( 0, 0, -10 )
 
 [node name="RayMesh" type="MeshInstance" parent="Drone"]
+editor/display_folded = true
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, 0 )
 visible = false
 mesh = SubResource( 2 )
@@ -155,6 +156,7 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.270151, 0 )
 shape = SubResource( 6 )
 
 [node name="Camera" type="Camera" parent="Drone"]
+editor/display_folded = true
 fov = 80.0
 near = 0.01
 far = 4712.0
@@ -194,6 +196,7 @@ volume_db = -6.0
 bus = "SoundFx"
 
 [node name="GUI" type="Control" parent="."]
+editor/display_folded = true
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource( 12 )

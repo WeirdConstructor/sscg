@@ -19,6 +19,9 @@ var max_space_wind_friction = 0.001;
 
 var drone_active = false;
 
+var old_engine_running = false
+var engine_running = false
+
 func sscg_save():
 	return {
 		"speed": speed,
@@ -48,6 +51,18 @@ func deploy_drone(ent):
 	self.get_parent().get_node("Drone").set_active(true, glob_spawn_point)
 	drone_active = true
 
+func check_engine_sounds():
+	back_engine_particles.emitting = engine_running
+	if old_engine_running && !engine_running:
+		self.get_node("ShipSounds").play("Fadeout")
+		back_engine_light.light_energy = 1.0
+
+	elif !old_engine_running && engine_running:
+		self.get_node("ShipSounds").play("Fadein")
+		back_engine_light.light_energy = 2.0
+
+	old_engine_running = engine_running
+
 func _input(event):
 	if not drone_active:
 		return
@@ -69,19 +84,16 @@ func _physics_process(delta):
 	if Input.is_action_pressed("fly_forward"):
 		speed += accel * delta;
 		engine_on_fract += delta;
-		back_engine_particles.emitting = true;
-		back_engine_light.light_energy = 2.0
+		engine_running = true
 	elif Input.is_action_pressed("fly_stop"):
 		speed += -decel * delta;
 		engine_on_fract += delta;
-		back_engine_particles.emitting = false;
-		back_engine_light.light_energy = 1.0
+		engine_running = false
 	else:
 		var friction_x = (speed / max_speed)
 		var friction = (friction_x * max_space_wind_friction) + (friction_x * (0.1 * max_space_wind_friction));
 		speed += -friction * delta;
-		back_engine_particles.emitting = false;
-		back_engine_light.light_energy = 1.0
+		engine_running = false
 		
 	if speed < 0:
 		speed = 0
@@ -90,6 +102,8 @@ func _physics_process(delta):
 
 	if no_fuel && speed > no_fuel_max_speed:
 		speed = no_fuel_max_speed;
+
+	check_engine_sounds()
 
 	while engine_on_fract > 1.0:
 		engine_on_secs += 1

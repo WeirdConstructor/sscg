@@ -648,6 +648,8 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 };
 
 !open_start_info = {
+    sscg:game.gd_call "GUI" :open_window;
+
     sscg:win.set_window WID:MAIN_MENU ${
         x = 200, y = 100, w = 550, h = 800,
         title = std:str:cat["Infomation"],
@@ -678,7 +680,10 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
                    w = 300, h = 10, text = "Close", ref = "close" },
             ]
         }
-    } {|| sscg:win.set_window WID:MAIN_MENU; };
+    } {||
+        sscg:win.set_window WID:MAIN_MENU;
+        sscg:game.gd_call "GUI" :close_window;
+    };
 };
 
 !open_credits = {
@@ -731,6 +736,8 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 };
 
 !open_menu = {
+
+    sscg:game.gd_call "GUI" :open_window;
     sscg:win.set_window WID:MAIN_MENU ${
         x = 300, y = 200, w = 400, h = 550,
         title = std:str:cat["Main Menu"],
@@ -759,7 +766,10 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
             "save"      {|| sscg:game.cmd "save_state" $n; }
             "credits"   {|| open_credits[]; }
             "load"      {|| load_save[]; }
-            {|| sscg:win.set_window WID:MAIN_MENU; };
+            {||
+                sscg:win.set_window WID:MAIN_MENU;
+                sscg:game.gd_call "GUI" :close_window;
+            };
     };
 };
 
@@ -771,7 +781,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
           _1.wust = int[_ * 102010] });
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
-    count.tick[];
+#    count.tick[];
 
     (bool STATE.player.is_mining) {
         !capacity_units =
@@ -842,7 +852,7 @@ STATE.callbacks.on_ready = {
     load_save[];
 
     std:displayln "READY:" count;
-    count.open[];
+#    count.open[];
 };
 
 !@export init {
