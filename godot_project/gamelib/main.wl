@@ -432,6 +432,8 @@ STATE.code.recalc_ship_cargo = {
     s.cargo.kg  = 0;
     s.cargo.goods {!(v, k) = @;
         !good_type = STATE.good_types.(k);
+        std:displayln k "::" v "=" (std:ser:json good_type);
+#        std:displayln k "::" s.cargo.kg ";" s.cargo.m3
         s.cargo.kg =
             s.cargo.kg + (good_type.unit_g * v) / 1000;
         s.cargo.m3 =
@@ -545,6 +547,7 @@ STATE.callbacks.on_mined_voxel = {
     not[is_none[k]] {
         STATE.ship.cargo.goods.(k) =
             STATE.ship.cargo.goods.(k) + 1;
+        std:displayln "CARGO:" STATE.ship.cargo;
         STATE.code.recalc_ship_cargo[];
     };
     $t
@@ -844,6 +847,38 @@ STATE.callbacks.on_ready = {
     !elements =
         el:read_elements ~
             sscg:game.read_data_text "data/elements.csv";
+
+    !i = $&0;
+    !adj_kg_p_m3 = {!(kg/m³, unit/kg) = @;
+        !kgpm³  = $&(float[kg/m³]);
+        !unit_g = $&(float[unit/kg] * 1000.0);
+
+        while { int[kgpm³] <= 1000 } {
+            .kgpm³  = kgpm³         * 1000.0;
+            .unit_g = float[unit_g] * 1000.0;
+        };
+
+        $[int $*kgpm³, int $*unit_g]
+    };
+    elements {
+        color_map.(i + 1) = _.cpkHexColor;
+        !adjusted_weights = adj_kg_p_m3 _.kg/m³ _.kgperunit;
+        !good = ${
+            short       = _.symbol,
+            name        = _.name,
+            kg_p_m3     = adjusted_weights.0,
+            unit_g      = adjusted_weights.1,
+            baseprice   = std:num:round 1000.0 * _.BasePrice,
+            mineable    = $true,
+            vol_color   = i + 1,
+            orig_record = _,
+        };
+        STATE.good_types.(std:str:cat "element_" _.symbol | std:str:to_lowercase) = good;
+        .i = i + 1;
+        (i < 5) {
+            std:displayln "EL:" ~ std:ser:json good;
+        };
+    };
 #    std:displayln :ELEMENS ">>" elements "<<" ;
 
     STATE.code.enumerate_entities[];
