@@ -3,6 +3,7 @@
         "Weird Constructor",
     ] ],
     $["Music & Sound", $[
+        "Sounds and Music by Nemeton, CC-BY-NC",
         "Some sounds by Weird Constructor",
         "'Synthwave' by Ryan Andersen, CC-BY-NC 4.0 from Free Music Archive",
         "Sounds from freesounds.org, see assets/LICENSES_ATTRIB.txt",
