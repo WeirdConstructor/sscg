@@ -83,6 +83,10 @@ vox_rerender={
  ]
 }
 
+[logging]
+
+file_logging/enable_file_logging=true
+
 [physics]
 
 2d/thread_model=2
