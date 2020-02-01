@@ -581,7 +581,7 @@ STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
     !main_vol = vp.new 128 0.0;
     !pattern = on_error { std:displayln "Couldn't load pat.wl: "
                                         @; "{ std:displayln :NOPATERR @; }" } ~
-                   std:io:file:read_text "pat.wl";
+                   sscg:game.read_data_text "pat.wl";
     !fun = std:eval pattern;
     !cm = fun[vp, main_vol];
 
