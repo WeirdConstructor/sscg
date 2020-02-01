@@ -46,7 +46,7 @@
                 refuel_text STATE,
             ] },
             gui:hpanel 300 { $[
-                gui:action_button 500 1000 :sell_rocks "Sell rocks",
+                gui:action_button 500 1000 :sell "Sell",
                 gui:button        500 1000 :depart "Depart",
             ] }
         ] ]
@@ -56,13 +56,8 @@
             STATE.ship.fuel = STATE.ship.fuel + refuel.fuel_delta;
             STATE.player.credits = STATE.player.credits - refuel.price;
         },
-        sell_rocks = {||
-            STATE.code.sell_ship_cargo_good :rock;
-            STATE.code.sell_ship_cargo_good :element_he;
-            STATE.code.sell_ship_cargo_good :element_o;
-            STATE.code.sell_ship_cargo_good :element_h;
-            STATE.code.sell_ship_cargo_good :element_ag;
-            STATE.code.sell_ship_cargo_good :element_c;
+        sell = {||
+            STATE.code.sell_all_ship_cargo[];
         },
     } {
         STATE.ship.docked = $f;

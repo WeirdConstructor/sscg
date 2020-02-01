@@ -205,7 +205,11 @@ impl SSCGState {
                 self.state = state.clone();
                 dbg!("SET STATE INIT!");
             },
-            Err(e) => { godot_print!("main.wl error: {:?}", e); }
+            Err(e) => {
+                godot_print!("main.wl error: {:?}", e);
+                eprintln!("main.wl error: {:?}", e);
+                panic!(format!("main.wl error: {:?}", e));
+            }
         }
     }
 }

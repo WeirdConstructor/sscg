@@ -333,7 +333,7 @@
             max_kg_fuel_factor  = 200,
             cargo_max_m3        = 2000,
 #            cargo_max_m3        = 222,
-            cargo_max_kg        = 10000,
+            cargo_max_kg        = 5000,
         },
     },
     player = ${
@@ -394,13 +394,20 @@ STATE.code.enumerate_entities = {||
     };
 };
 
+STATE.code.sell_all_ship_cargo = {
+    for STATE.ship.cargo.goods {!(k, v) = _;
+#        std:displayln "SELLGOOD" k "||" v;
+        STATE.code.sell_ship_cargo_good k;
+    };
+};
+
 STATE.code.sell_ship_cargo_good = {!(good_t) = @;
     !good_units  = STATE.ship.cargo.goods.(good_t);
     !units_money = STATE.good_types.(good_t).baseprice * good_units;
     STATE.player.credits =
         STATE.player.credits
         + (float units_money) * (1.0 - STATE.player.base_tax);
-    std:displayln "SELL Ship Goods=" STATE.ship.cargo.goods;
+#    std:displayln "SELL Ship Goods=" STATE.ship.cargo.goods;
     STATE.ship.cargo.goods.(good_t) = $n;
     STATE.code.recalc_ship_cargo[];
 };
@@ -428,12 +435,20 @@ STATE.code.update_hud_cargo_meters = {||
 
 STATE.code.recalc_ship_cargo = {
     !s = STATE.ship;
-    s.cargo.m3  = 0;
-    s.cargo.kg  = 0;
-    s.cargo.goods {!(v, k) = @;
+    s.cargo.m3 = 0;
+    s.cargo.kg = 0;
+    for s.cargo.goods \:good_loop {!(k, v) = _;
+        (v <= 0) { return :good_loop $n };
+
         !good_type = STATE.good_types.(k);
-        std:displayln k "::" v "=" (std:ser:json good_type);
 #        std:displayln k "::" s.cargo.kg ";" s.cargo.m3
+#        std:displayln k "::" v "=" (std:ser:json good_type);
+#        std:displayln k "=> m³="
+#            (good_type.unit_g * v) / 1000
+#            "; kg="
+#            (good_type.unit_g * v * 1000)
+#             / (1000 * good_type.kg_p_m3);
+
         s.cargo.kg =
             s.cargo.kg + (good_type.unit_g * v) / 1000;
         s.cargo.m3 =
@@ -541,13 +556,13 @@ STATE.callbacks.on_mine = \:r {
     (capacity_units > 0) &and (_2 != 0)
 };
 
-STATE.callbacks.on_mined_voxel = {
-    std:displayln "MINEDD:" @ STATE.code.get_good_by_color[_2];
+STATE.callbacks.on_mined_voxel = {||
+#    std:displayln "MINEDD:" @ STATE.code.get_good_by_color[_2];
     !(k, v) = STATE.code.get_good_by_color[_2];
     not[is_none[k]] {
         STATE.ship.cargo.goods.(k) =
             STATE.ship.cargo.goods.(k) + 1;
-        std:displayln "CARGO:" STATE.ship.cargo;
+#        std:displayln "CARGO:" STATE.ship.cargo;
         STATE.code.recalc_ship_cargo[];
     };
     $t
@@ -866,8 +881,10 @@ STATE.callbacks.on_ready = {
         !good = ${
             short       = _.symbol,
             name        = _.name,
-            kg_p_m3     = adjusted_weights.0,
-            unit_g      = adjusted_weights.1,
+#            kg_p_m3     = adjusted_weights.0,
+#            unit_g      = adjusted_weights.1,
+            kg_p_m3     = int[1000.0 * _.kg/m³],
+            unit_g      = 1000 + int[1000.0 * _.kgperunit],
             baseprice   = std:num:round 1000.0 * _.BasePrice,
             mineable    = $true,
             vol_color   = i + 1,
@@ -875,8 +892,9 @@ STATE.callbacks.on_ready = {
         };
         STATE.good_types.(std:str:cat "element_" _.symbol | std:str:to_lowercase) = good;
         .i = i + 1;
-        (i < 5) {
-            std:displayln "EL:" ~ std:ser:json good;
+        (i < 20) {
+#            std:displayln "EL:" ~ std:ser:json good;
+            std:displayln "EL:" (std:str:padl 20 " " good.name) "; g/unit=" (std:str:padl 10 " " good.unit_g) ", kg/m³=" good.kg_p_m3;
         };
     };
 #    std:displayln :ELEMENS ">>" elements "<<" ;
