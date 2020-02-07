@@ -1,22 +1,34 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://scenes/factory/tiles/factory_tiles_lib.meshlib" type="MeshLibrary" id=1]
+[ext_resource path="res://scenes/factory/MapEditing.gd" type="Script" id=2]
+
+[sub_resource type="BoxShape" id=1]
+extents = Vector3( 200, 1, 200 )
 
 [node name="Spatial" type="Spatial"]
 
 [node name="GridMap" type="GridMap" parent="."]
 mesh_library = ExtResource( 1 )
 cell_size = Vector3( 10, 10, 10 )
+cell_center_y = false
 data = {
-"cells": PoolIntArray( 65525, 0, 655360, 65526, 0, -1609957376, 65527, 0, 655360, 65528, 0, -1609957376, 65529, 0, -1609957376, 65530, 0, 655360, 65531, 0, -1609957376, 65528, 1, -1609564160, 65528, 2, 1048576, 65528, 3, -1609564160, 65528, 4, -1609564160 )
+"cells": PoolIntArray( 65525, 0, 655360, 65526, 0, 655360, 65527, 0, 655360, 65528, 0, 655360, 65529, 0, -1609957376, 65530, 0, 655360, 65531, 0, -1609957376, 65528, 1, 1048576, 65528, 2, 1048576, 65528, 3, -1609564160, 65528, 4, 1048576 )
 }
 __meta__ = {
 "_editor_clip_": 0,
 "_editor_floor_": Vector3( 0, 0, 0 )
 }
 
+[node name="Area" type="Area" parent="GridMap"]
+script = ExtResource( 2 )
+
+[node name="CollisionShape" type="CollisionShape" parent="GridMap/Area"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0 )
+shape = SubResource( 1 )
+
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-008, 1, 0, -1, -4.37114e-008, -60.8675, 22.5885, -51.7767 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -60.8675, 22.5885, -51.7767 )
 
 [node name="OmniLight" type="OmniLight" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -77.4859, 19.3932, 1.50065 )
@@ -25,3 +37,4 @@ omni_range = 30.0497
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 0.598339, 0.750346, -0.28102, 0, 0.35073, 0.936476, 0.801243, -0.56033, 0.209856, -108.079, 121.733, 56.989 )
 far = 1000.0
+[connection signal="input_event" from="GridMap/Area" to="GridMap/Area" method="_on_Area_input_event"]
