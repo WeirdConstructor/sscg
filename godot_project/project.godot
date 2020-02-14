@@ -87,6 +87,10 @@ vox_rerender={
 
 file_logging/enable_file_logging=true
 
+[memory]
+
+limits/message_queue/max_size_kb=10240
+
 [physics]
 
 2d/thread_model=2
