@@ -1,21 +1,22 @@
 !@import std std;
 !@import wlambda;
 
-!@export gen {!(input, set, gen_cb) = @;
-std:str:join "" ~
-    input \:next{
-        !char = _;
-        !elems = char set;
-        (is_none elems) { return :next char; };
+!@export gen {!(input, weighted_word_set, rng_num_gen) = @;
+    std:str:join "" ~
+        input \:next{
+            !key = _;
+            !weighted_list = weighted_word_set.(key);
+            (is_none weighted_list) { return :next key; };
 
-        !sum = $&0;
-        elems { .sum = sum + _.0; };
-        !sel_weight = $&(std:num:ceil ~ gen_cb[] * $*sum);
-        !out = \:r { elems {!(x) = @;
-            .sel_weight = sel_weight - x.0;
-            (sel_weight <= 0) { return :r x.1; };
-            x.1
-        } }[];
-        out
-    } # || std:str:join ""
+            !weight_sum = $&0;
+            weighted_list { .weight_sum = weight_sum + _.0; };
+
+            !sel_weight = $&(std:num:ceil ~ rng_num_gen[] * $*weight_sum);
+            !out = \:r { weighted_list {!(weighted_elem) = @;
+                .sel_weight = sel_weight - weighted_elem.0;
+                (sel_weight <= 0) { return :r weighted_elem.1; };
+                weighted_elem.1
+            } }[];
+            out
+        }
 };
