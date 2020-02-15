@@ -1,5 +1,6 @@
 !txt = std:io:file:read_text "input.txt";
 
+!start_words = $[];
 !words = ${};
 !last_word = $&$none;
 std:re:map "([a-zA-Z]+|[.,])" \:next {
@@ -12,7 +13,10 @@ std:re:map "([a-zA-Z]+|[.,])" \:next {
         .last_word = word;
         return :next $n;
     };
-    !lc_last_word = std:str:to_lowercase last_word;
+    !lc_last_word = last_word; # std:str:to_lowercase last_word;
+    (lc_last_word == ".") {
+        std:push start_words word;
+    };
     (is_none words.(lc_last_word)) {
         words.(lc_last_word) = $[word];
     } {
@@ -33,7 +37,7 @@ words {
 
 range 1 10 1 {!(i) = @;
     !out = $&$[];
-    !vec = word_vec;
+    !vec = start_words;
 
     !word_min_len =
         5 + std:num:abs[std:rand:split_mix64_next r] % 4;

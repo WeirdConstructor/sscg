@@ -112,7 +112,7 @@
 
     Do so: farewell.
 
-    Exit BALTHASAR
+     BALTHASAR
 
     Come hither, Leonato. What was it you told me of
     to-day, that your niece Beatrice was in love with
@@ -380,7 +380,7 @@
     point and choke a daw withal. You have no stomach,
     signior: fare you well.
 
-    Exit
+    
 
 
     Ha! 'Against my will I am sent to bid you come in
@@ -391,7 +391,7 @@
     not take pity of her, I am a villain; if I do not
     love her, I am a Jew. I will go get her picture.
 
-    Exit
+    
 
 
 
@@ -413,7 +413,7 @@
 
     I'll make her come, I warrant you, presently.
 
-    Exit
+    
 
 
     Now, Ursula, when Beatrice doth come,
@@ -576,7 +576,7 @@
     For others say thou dost deserve, and I
     Believe it better than reportingly.
 
-    Exit
+    
 
 
 
@@ -1146,7 +1146,7 @@
 
     Well.
 
-    Exit
+    
 
 
     Troth, I think your other rabato were better.
@@ -2140,7 +2140,7 @@
     brought to Leonato's: I will go before and show
     him their examination.
 
-    Exit
+    
 
 
     Come, let them be opinioned.
@@ -2514,7 +2514,7 @@
     Lackbeard there, he and I shall meet: and, till
     then, peace be with him.
 
-    Exit
+    
 
 
     He is in earnest.
@@ -2797,7 +2797,7 @@
 
     And therefore will come.
 
-    Exit MARGARET
+     MARGARET
 
     Sings
 
@@ -3059,7 +3059,7 @@
 
     Call her forth, brother; here's the friar ready.
 
-    Exit ANTONIO
+     ANTONIO
 
 
     Good morrow, Benedick. Why, what's the matter,
