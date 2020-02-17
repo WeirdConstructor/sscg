@@ -1,9 +1,9 @@
 Space Ship Cargo Game - A space trading and collector game
 ==========================================================
 
-This is just a simple try for now. Getting down some ideas, playing
-around.  I want to see if I can start with some small idea, and build
-upon that.
+This is a weird game about you flying a space ship, mining raw matter and
+trading with merchants on space stations. The art style is a blend of
+retrowave.
 
 # Keep up to date
 
@@ -83,17 +83,15 @@ This makes two reasons for me to choose the GPL:
 2. I don't want to low ball my own wage and prices by giving away free software
    with no strings attached (for companies).
 
-## If you need a permissive or private license (MIT)
-
-Please contact me if you need a different license and really want to use
-my code. As long as I am the only author, I can change the license.
-We might find an agreement.
-
 # Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in WLambda by you, shall be licensed as GPLv3 or later,
+for inclusion in this project by you, shall be licensed as GPLv3 or later,
 without any additional terms or conditions.
+
+For assets the minimum is the CC BY-NC license
+( https://creativecommons.org/licenses/by-nc/3.0/ )
+or CC BY-NC-SA ( https://creativecommons.org/licenses/by-nc-sa/3.0/ ).
 
 # Asset Licenses and Attribution
 
