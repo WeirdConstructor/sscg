@@ -280,60 +280,57 @@
             unit_g      = 100000,
             baseprice   = 10,
         },
-        element_c = ${
-            short       = "C",
-            name        = "Carbon",
-            kg_p_m3     = 1300, # 1300 kg/m3 is stone coal, 2,27g/cm3 graphite, 3,51g/cm3 is diamond
-            unit_g      = 50000,
-            baseprice   = 20,
-            mineable    = $true,
-            vol_color   = 6,
-        },
-        element_h = ${
-            short       = "H",
-            name        = "Hydrogen",
-            kg_p_m3     = 1, # gas
-            unit_g      = 50,
-            baseprice   = 50,
-            mineable    = $true,
-            vol_color   = 1,
-        },
-        element_he = ${
-            short       = "He",
-            name        = "Helium",
-            kg_p_m3     = 2, # gas
-            unit_g      = 100,
-            baseprice   = 90,
-            mineable    = $true,
-            vol_color   = 2,
-        },
-        element_o = ${
-            short       = "O",
-            name        = "Oxygen",
-            kg_p_m3     = 2, # gas
-            unit_g      = 200,
-            baseprice   = 100,
-            mineable    = $true,
-            vol_color   = 8,
-        },
-        element_ag = ${
-            short       = "Ag",
-            name        = "Silver",
-            kg_p_m3     = 10490,
-            unit_g      = 1000,
-            baseprice   = 200,
-            mineable    = $true,
-            vol_color   = 47,
-        },
+#        element_c = ${
+#            short       = "C",
+#            name        = "Carbon",
+#            kg_p_m3     = 1300, # 1300 kg/m3 is stone coal, 2,27g/cm3 graphite, 3,51g/cm3 is diamond
+#            unit_g      = 50000,
+#            baseprice   = 20,
+#            mineable    = $true,
+#            vol_color   = 6,
+#        },
+#        element_h = ${
+#            short       = "H",
+#            name        = "Hydrogen",
+#            kg_p_m3     = 1, # gas
+#            unit_g      = 50,
+#            baseprice   = 50,
+#            mineable    = $true,
+#            vol_color   = 1,
+#        },
+#        element_he = ${
+#            short       = "He",
+#            name        = "Helium",
+#            kg_p_m3     = 2, # gas
+#            unit_g      = 100,
+#            baseprice   = 90,
+#            mineable    = $true,
+#            vol_color   = 2,
+#        },
+#        element_o = ${
+#            short       = "O",
+#            name        = "Oxygen",
+#            kg_p_m3     = 2, # gas
+#            unit_g      = 200,
+#            baseprice   = 100,
+#            mineable    = $true,
+#            vol_color   = 8,
+#        },
+#        element_ag = ${
+#            short       = "Ag",
+#            name        = "Silver",
+#            kg_p_m3     = 10490,
+#            unit_g      = 1000,
+#            baseprice   = 200,
+#            mineable    = $true,
+#            vol_color   = 47,
+#        },
     },
     ship_types = ${
         scout_mk1 = ${
             fuel_capacity       = 1000,
             fuel_per_sec        = 10,
-            max_kg_fuel_factor  = 200,
-            cargo_max_m3        = 2000,
-#            cargo_max_m3        = 222,
-            cargo_max_kg        = 5000,
+            max_units           = 256,
         },
     },
     player = ${
@@ -346,12 +343,11 @@
         docked          = $f,
         engine_on_secs  = 0,
         fuel            = 1000,
-        cargo           = ${ m3 = 0, kg = 0, goods = ${} },
+        cargo           = ${ fuel_factor = 0, units = 0, goods = ${} },
     },
     entity_types = ${
         station         = ${ visual = "station",    gui = "station"   },
         stargate        = ${ visual = "stargate",   gui = "stargate"  },
-        asteroid_1      = ${ visual = "asteroid_1", gui = "asteroid"  },
         alien_struct    = ${ visual = "structure",  gui = "structure" },
     },
     systems = $[
@@ -360,7 +356,6 @@
             entities = $[
                 ${ t = "station",       name = "Station 1",    pos = $[200,   0] },
                 ${ t = "alien_struct",  name = "Voxel Struct", pos = $[572, 200] },
-                ${ t = "asteroid_1",    name = "Asteroid 1",   pos = $[400, 400] },
             ],
         }
     ],
@@ -435,8 +430,8 @@ STATE.code.update_hud_cargo_meters = {||
 
 STATE.code.recalc_ship_cargo = {
     !s = STATE.ship;
-    s.cargo.m3 = 0;
-    s.cargo.kg = 0;
+    s.cargo.units       = 0;
+    s.cargo.fuel_factor = 0;
     for s.cargo.goods \:good_loop {!(k, v) = _;
         (v <= 0) { return :good_loop $n };
 
@@ -463,61 +458,6 @@ STATE.code.recalc_ship_cargo = {
 # - display cargo space
 # - leave menu
 # - start mining
-!:global on_tick_mining_update = $n;
-!show_asteroid_win = $&&$n;
-.*show_asteroid_win = {!(ent, ent_type) = @;
-    gui:dialog_window WID:STATION ent.name {
-        $[
-            ${ t = :hbox, spacing = 5, w = 1000, childs = $[
-                ${ t = :l_text, text = "", w = 333, fg = "F00", bg = "000" },
-                ${ t = :l_text, text = "Current", w = 333, fg = c:SE2_L, bg = "000" },
-                ${ t = :l_text, text = "Ship Max", w = 333, fg = c:SE2_L, bg = "000" },
-            ]},
-            ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
-                ${ t = :l_text, text = "m³",                                         w = 333, fg = c:SE2_L, bg = "000" },
-                ${ t = :l_text, ref = :m3, text = STATE.ship.cargo.m3,                          w = 333, fg = c:SE1_L, bg = "000" },
-                ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_m3, w = 333, fg = c:SE2, bg = "000" },
-            ]},
-            ${ t = :hbox, spacing = 5, border = 1, border_color = c:SE2, w = 1000, min_h = 25, childs = $[
-                ${ t = :l_text, text = "kg",                                        w = 333, fg = c:SE2_L, bg = "000" },
-                ${ t = :l_text, ref = :kg, text = STATE.ship.cargo.kg,                          w = 333, fg = c:SE1_L, bg = "000" },
-                ${ t = :l_text, text = STATE.ship_types.(STATE.ship.t).cargo_max_kg, w = 333, fg = c:SE2, bg = "000" },
-            ]},
-            ${ t = :hbox, spacing = 5, w = 1000, h = 300, childs = $[
-                gui:action_button 500 1000 :start_mining "Start mining",
-                gui:button 500 1000 :depart "Depart",
-            ]},
-#            ${ t = :canvas,
-#                w = 1000,
-#                h = 400,
-#                ref = "map",
-#                cmds = $[
-#                    $[:circle,      10, 500, 500, 100, "F00"],
-#                    $[:line,        11, 500, 500, 600, 900, 4, "FF0"],
-#                    $[:rect,        20, 200,   0, 100, 200, "9F3"],
-#                    $[:rect_filled, 20, 300,   0, 100, 200, "FF3"],
-#                    $[:text,        12, 600, 900, 1000, 1, "Test", 0, "FFF"],
-#                ],
-#            },
-        ]
-    } {||
-#        std:displayln @;
-        match _1
-            "start_mining" {||
-                STATE.player.is_mining = $t;
-                .on_tick_mining_update = {
-                    sscg:win.set_label WID:STATION :m3 STATE.ship.cargo.m3;
-                    sscg:win.set_label WID:STATION :kg STATE.ship.cargo.kg;
-                };
-            }
-            {||
-                STATE.player.is_mining = $f;
-                sscg:win.set_window WID:STATION;
-                STATE.ship.docked = $f;
-            };
-    };
-};
-
 STATE.code.get_good_by_color = {!(color) = @;
     block :ret {
         STATE.good_types {!(v, k) = @;
@@ -628,7 +568,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     match ent_typ.gui
         "structure" {|| e_structure:show[STATE, ent, ent_typ]; }
         "station"   {|| e_station:show  [STATE, ent, ent_typ]; }
-                    {|| show_asteroid_win[ent, ent_typ] };
+                    {|| };
 };
 
 !display_fuel_out_warning = \:warn {
@@ -844,7 +784,7 @@ STATE.callbacks.on_tick = {!(ship_action_state) = @;
         std:str:cat STATE.ship.fuel " / " ship_type.fuel_capacity;
     sscg:win.set_label WID:STATUS :credits STATE.player.credits;
     sscg:win.set_label WID:STATUS :cargo_load ~
-        std:str:cat (STATE.ship.cargo.m3) " / " STATE.ship.cargo.kg;
+        std:str:cat (STATE.ship.cargo.units) " / " ship_type.max_units;
 };
 
 STATE.callbacks.on_ready = {
@@ -881,10 +821,6 @@ STATE.callbacks.on_ready = {
         !good = ${
             short       = _.symbol,
             name        = _.name,
-#            kg_p_m3     = adjusted_weights.0,
-#            unit_g      = adjusted_weights.1,
-            kg_p_m3     = int[1000.0 * _.kg/m³],
-            unit_g      = 1000 + int[1000.0 * _.kgperunit],
             baseprice   = std:num:round 1000.0 * _.BasePrice,
             mineable    = $true,
             vol_color   = i + 1,
