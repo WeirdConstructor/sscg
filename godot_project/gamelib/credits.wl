@@ -9,7 +9,8 @@
         "Sounds from freesounds.org, see assets/LICENSES_ATTRIB.txt",
     ] ],
     $["Artwork", $[
-        "Many 3D models by Weird Constructor",
+        "3D models by Weird Constructor",
+        "3D models by Leon Kocjančič \"SunderMind\"",
         "Pictures from Wikipedia, see assets/LICENSES_ATTRIB.txt",
     ] ],
     $["Feedback, Hints, Ideas and Testing", $[

@@ -748,7 +748,7 @@ STATE.callbacks.on_tick = {!(ship_action_state) = @;
             STATE.ship.cargo.goods.rock =
                 STATE.ship.cargo.goods.rock + 1;
             STATE.code.recalc_ship_cargo[];
-            on_tick_mining_update[];
+#            on_tick_mining_update[];
         }
     };
 
