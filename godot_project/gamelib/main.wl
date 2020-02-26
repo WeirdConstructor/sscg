@@ -77,7 +77,7 @@
         base_tax        = 0.2,
         credits         = 1000,
     },
-    ship = e:ship:instanciate :scout_mk1,
+    ship = e:ship:ship.new :scout_mk1,
     entity_types = ${
         station         = ${ visual = "station",    gui = "station"   },
         stargate        = ${ visual = "stargate",   gui = "stargate"  },
@@ -277,7 +277,7 @@ STATE.callbacks.on_saved_godot_state = {!(state) = @;
     } ~ sscg:game.write_savegame "sv1" ${
         version     = 1,
         player      = STATE.player,
-        ship        = STATE.ship,
+        ship        = STATE.ship.save[],
         ship_dyn    = state,
     };
 };
@@ -419,7 +419,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
             ~ sscg:game.read_savegame "sv1";
     (bool state) {
         STATE.player = state.player;
-        STATE.ship   = state.ship;
+        STATE.ship   = e:ship.load(state.ship);
         STATE.code.enumerate_entities[];
         STATE.code.build_color_to_element_index[];
         sscg:game.cmd "load_state" state.ship_dyn;
