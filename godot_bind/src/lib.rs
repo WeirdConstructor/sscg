@@ -364,7 +364,7 @@ impl GUIPaintNode {
         if self.textures.is_none() {
             let ret = sscg.call_cb("on_texture_description", &vec![]);
             let mut textures : std::vec::Vec<Texture> = vec![];
-            for t in ret.iter() {
+            for (t, _) in ret.iter() {
                 let txt = match &t.v_s_raw(0)[..] {
                     "image" => {
                         ResourceLoader::godot_singleton().load(
@@ -418,13 +418,20 @@ fn init_panic_hook() {
                         location.line());
         }
 
+        let mut inhibit_oldhook = false;
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-            godot_print!("{}: panic occurred: {:?}", loc_string, s);
+            if s.find("PoisonError").is_none() {
+                godot_print!("{}: panic occurred: {:?}", loc_string, s);
+            } else {
+                inhibit_oldhook = true;
+            }
         } else {
             godot_print!("{}: unknown panic occurred", loc_string);
         }
 
-        unsafe { (*(OLDHOOK.as_ref().unwrap()))(panic_info); }
+        if !inhibit_oldhook {
+            unsafe { (*(OLDHOOK.as_ref().unwrap()))(panic_info); }
+        }
     }));
 }
 

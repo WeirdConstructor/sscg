@@ -6,7 +6,7 @@ use wlambda::util::{SplitMix64, u64_to_open01};
 
 pub fn variant2vval(v: &Variant) -> VVal {
     match v.get_type() {
-        VariantType::Nil         => VVal::Nul,
+        VariantType::Nil         => VVal::None,
         VariantType::Bool        => VVal::Bol(v.to_bool()),
         VariantType::I64         => VVal::Int(v.to_i64()),
         VariantType::F64         => VVal::Flt(v.to_f64()),
@@ -17,8 +17,8 @@ pub fn variant2vval(v: &Variant) -> VVal {
             let keys = dict.keys();
             for i in 0..keys.len() {
                 let val = dict.get_ref(keys.get_ref(i));
-                map.set_map_key(
-                    keys.get_ref(i).to_string(),
+                map.set_key_str(
+                    &keys.get_ref(i).to_string(),
                     variant2vval(val));
             }
             map
@@ -37,23 +37,23 @@ pub fn variant2vval(v: &Variant) -> VVal {
 
 pub fn vval2variant(v: &VVal) -> Variant {
     match v {
-        VVal::Nul => Variant::new(),
+        VVal::None   => Variant::new(),
         VVal::Bol(b) => Variant::from_bool(*b),
         VVal::Int(i) => Variant::from_i64(*i),
         VVal::Flt(i) => Variant::from_f64(*i),
         VVal::Lst(_) => {
             let mut arr = gdnative::VariantArray::new();
-            for i in v.iter() {
+            for (i, _) in v.iter() {
                 arr.push(&vval2variant(&i));
             }
             Variant::from_array(&arr)
         },
         VVal::Map(_) => {
             let mut dict = gdnative::Dictionary::new();
-            for kv in v.iter() {
+            for (v, k) in v.iter() {
                 dict.set(
-                    &Variant::from_str(kv.v_s_raw(0)),
-                    &vval2variant(&kv.v_(1)));
+                    &Variant::from_str(k.unwrap().v_s_raw(0)),
+                    &vval2variant(&v));
             }
             Variant::from_dictionary(&dict)
         },
@@ -202,19 +202,19 @@ pub fn read_vval_json_file(filename: &str) -> VVal {
                         },
                         Err(e) => {
                             println!("SAVE DESERIALIZE ERROR: {}", e);
-                            VVal::Nul
+                            VVal::None
                         },
                     }
                 },
                 Err(e) => {
                     println!("SAVE READ ERROR: {}", e);
-                    VVal::Nul
+                    VVal::None
                 }
             }
         },
         Err(e) => {
             println!("SAVE OPEN ERROR: {}", e);
-            VVal::Nul
+            VVal::None
         }
     }
 }

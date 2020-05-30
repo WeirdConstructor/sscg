@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use super::widgets::*;
-use wlambda::{VVal, StackAction, VValUserData};
+use wlambda::{VVal, StackAction, VValUserData, Env};
 //#[macro_use]
 use wlambda::set_vval_method;
 
@@ -134,10 +134,10 @@ impl WindowManager {
 
     pub fn get_window_state(&self, idx: usize) -> VVal {
         if idx >= self.windows.len() {
-            return VVal::Nul;
+            return VVal::None;
         }
         if self.windows[idx].is_none() {
-            return VVal::Nul;
+            return VVal::None;
         }
 
         if let Some(e) = self.windows.get(idx) {
@@ -145,21 +145,21 @@ impl WindowManager {
             let s = VVal::map();
             let v = VVal::map();
             for (lblref, text) in txts.into_iter() {
-                v.set_map_key(lblref, VVal::new_str_mv(text));
+                v.set_key_str(&lblref, VVal::new_str_mv(text));
             }
-            s.set_map_key("labels".to_string(), v);
+            s.set_key_str("labels", v);
             s
         } else {
-            VVal::Nul
+            VVal::None
         }
     }
 
     pub fn get_label_text(&self, idx: usize, lblref: &str) -> VVal {
         if idx >= self.windows.len() {
-            return VVal::Nul;
+            return VVal::None;
         }
         if self.windows[idx].is_none() {
-            return VVal::Nul;
+            return VVal::None;
         }
 
         if let Some(e) = self.windows.get(idx) {
@@ -167,10 +167,10 @@ impl WindowManager {
             if r.is_some() {
                 VVal::new_str_mv(r.unwrap())
             } else {
-                VVal::Nul
+                VVal::None
             }
         } else {
-            VVal::Nul
+            VVal::None
         }
     }
 
@@ -185,14 +185,14 @@ impl WindowManager {
     pub fn delete(&mut self, idx: usize) {
         if idx >= self.windows.len() { return; }
         self.windows[idx] = None;
-        self.ev_cbs[idx] = VVal::Nul;
+        self.ev_cbs[idx] = VVal::None;
         self.need_redraw = true;
     }
 
     pub fn set(&mut self, idx: usize, mut win: Window, cb: VVal) -> usize {
         if idx >= self.windows.len() {
             self.windows.resize(idx + 1, None);
-            self.ev_cbs.resize(idx + 1, VVal::Nul);
+            self.ev_cbs.resize(idx + 1, VVal::None);
         }
         win.id = idx;
         self.windows[idx] = Some(win);
@@ -267,7 +267,7 @@ fn vval2widget(v: VVal, win: &mut Window) -> usize {
         }
     }
 
-    match &v.get_key("t").unwrap_or(VVal::Nul).s_raw()[..] {
+    match &v.get_key("t").unwrap_or(VVal::None).s_raw()[..] {
         "vbox" => {
             return win.add_layout(
                 vval2size(v.clone()),
@@ -291,7 +291,7 @@ fn vval2widget(v: VVal, win: &mut Window) -> usize {
         },
         "canvas" => {
             let mut cv = Canvas::new(v.v_s_rawk("ref"));
-            for elem in v.clone().v_k("cmds").iter() {
+            for (elem, _) in v.clone().v_k("cmds").iter() {
                 let id = if elem.v_(1).is_none() {
                     None
                 } else {
@@ -405,7 +405,7 @@ fn vval2win(v: VVal) -> Window {
     if let Some(tc) = v.get_key("title_color") {
         w.title_color = color_hex24tpl(&tc.s_raw());
     }
-    let id = vval2widget(v.get_key("child").unwrap_or(VVal::Nul), &mut w);
+    let id = vval2widget(v.get_key("child").unwrap_or(VVal::None), &mut w);
     w.child = id;
 
     w
@@ -414,7 +414,8 @@ fn vval2win(v: VVal) -> Window {
 impl VValUserData for WindowManagerWlWrapper {
     fn s(&self) -> String { format!("$<WindowManager>") }
     fn i(&self) -> i64 { 0 }
-    fn call(&self, args: &[VVal]) -> Result<VVal, StackAction> {
+    fn call(&self, env: &mut Env) -> Result<VVal, StackAction> {
+        let args = env.argv_ref();
         if args.len() < 1 {
             return Err(StackAction::panic_msg(
                 format!("{} called with too few arguments", self.s())));
@@ -475,7 +476,7 @@ impl VValUserData for WindowManagerWlWrapper {
                 let idx = args[1].i();
                 Ok(self.0.borrow_mut().get_window_state(idx as usize))
             },
-            _ => Ok(VVal::Nul)
+            _ => Ok(VVal::None)
         }
     }
     fn as_any(&mut self) -> &mut dyn std::any::Any { self }

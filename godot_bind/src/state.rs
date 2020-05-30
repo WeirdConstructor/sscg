@@ -65,7 +65,7 @@ impl SSCGState {
                 v.push(env.arg(i));
             }
             cmd_queue.borrow_mut().push(v);
-            Ok(VVal::Nul)
+            Ok(VVal::None)
         });
 
         set_vval_method!(o, cmd_queue, gd_call, Some(2), None, env, argc, {
@@ -75,7 +75,7 @@ impl SSCGState {
                 v.push(env.arg(i));
             }
             cmd_queue.borrow_mut().push(v);
-            Ok(VVal::Nul)
+            Ok(VVal::None)
         });
         let _cmd_queue = cmd_queue.clone();
         set_vval_method!(o, _cmd_queue, read_data_text, Some(1), Some(1), env, _argc, {
@@ -168,27 +168,27 @@ impl SSCGState {
             temp_stations:   vec![(1, 1), (900, 500)],
             update_stations: true,
             wlctx:           EvalContext::new(genv),
-            state:           VVal::Nul,
+            state:           VVal::None,
         }
     }
 
     pub fn call_cb(&mut self, name: &str, args: &[VVal]) -> VVal {
         let cb =
             match self.state.get_key("callbacks")
-                      .expect("Expected 'code' in STATE!")
+                      .expect("Expected 'callbacks' in STATE!")
                       .get_key(name) {
                 None => {
                     godot_print!(
                         "No such callback {} (args: {:?})!",
                         name, args);
-                    return VVal::Nul;
+                    return VVal::None;
                 },
                 Some(cb) => cb,
             };
         match self.wlctx.call(&cb, args) {
             Err(e) => {
                 godot_print!("Error on {} (args: {:?}): {}", name, args, e);
-                VVal::Nul
+                VVal::None
             },
             Ok(v) => v,
         }
@@ -198,7 +198,9 @@ impl SSCGState {
         println!("START WLAM");
         match self.wlctx.eval(r"
             !@import main main;
+            std:displayln $q/WLambda main imported./;
             !:global STATE = main:STATE;
+            std:displayln $q/STATE: / (str STATE);
             main:init[]")
         {
             Ok(state) => {

@@ -64,7 +64,7 @@ impl SystemMap {
         let vv = variant2vval(&v);
         let mut args = vec![];
         if vv.is_vec() {
-            for v in vv.iter() {
+            for (v, _) in vv.iter() {
                 args.push(v);
             }
         } else {
@@ -107,7 +107,7 @@ impl SystemMap {
     fn update_stations(&mut self, sscg: &mut SSCGState, mut entities: Spatial) {
         if !sscg.update_stations { return; }
 
-        let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
+        let vvship = sscg.state.get_key("ship").unwrap_or(VVal::None);
         let sys_id = vvship.v_ik("system_id");
         let sys    = sscg.state.v_k("systems").v_(sys_id as usize);
         let types  = sscg.state.v_k("entity_types");
@@ -147,7 +147,7 @@ impl SystemMap {
     }
 
     fn handle_commands(&mut self, sscg: &mut SSCGState, owner: &mut Spatial, delta: f64) {
-        let vvship = sscg.state.get_key("ship").unwrap_or(VVal::Nul);
+        let vvship = sscg.state.get_key("ship").unwrap_or(VVal::None);
 
         let mut ship = unsafe {
             let mut ship = owner.get_node(NodePath::from_str("ship"))
@@ -212,14 +212,14 @@ impl SystemMap {
 
             self.time_tick_sum -= 0.25;
             let vgodot_state = VVal::map();
-            vgodot_state.set_map_key(
-                String::from("engine_on_secs"),
+            vgodot_state.set_key_str(
+                "engine_on_secs",
                 VVal::Int(
                     unsafe {
-                    ship.get(GodotString::from_str("engine_on_secs")) 
-                        .to_i64() }));
-            vgodot_state.set_map_key(
-                String::from("speed"),
+                        ship.get(GodotString::from_str("engine_on_secs")) 
+                            .to_i64() }));
+            vgodot_state.set_key_str(
+                "speed",
                 VVal::Flt(
                     unsafe {
                     ship.get(GodotString::from_str("speed")) 

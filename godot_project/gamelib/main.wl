@@ -1,6 +1,6 @@
-!@import wlambda;
-!@import std            std;
-!@import sscg           sscg;
+!@wlambda;
+!@import std;
+!@import sscg;
 !@import c              colors;
 !@import e_station      station;
 !@import e_structure    structure;
@@ -299,9 +299,8 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     std:displayln "ARRIVED! " ent_typ;
 
     match ent_typ.gui
-        "structure" {|| e_structure:show[STATE, ent, ent_typ]; }
-        "station"   {|| e_station:show  [STATE, ent, ent_typ]; }
-                    {|| };
+        "structure" => { e_structure:show[STATE, ent, ent_typ]; }
+        "station"   => { e_station:show  [STATE, ent, ent_typ]; };
 };
 
 !display_fuel_out_warning = \:warn {
@@ -419,7 +418,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
             ~ sscg:game.read_savegame "sv1";
     (bool state) {
         STATE.player = state.player;
-        STATE.ship   = e:ship.load(state.ship);
+        STATE.ship   = e:ship:ship.load(state.ship);
         STATE.code.enumerate_entities[];
         STATE.code.build_color_to_element_index[];
         sscg:game.cmd "load_state" state.ship_dyn;
@@ -453,11 +452,11 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
         },
     } {||
         match _1
-            "start"     {|| open_start_info[]; }
-            "save"      {|| sscg:game.cmd "save_state" $n; }
-            "credits"   {|| open_credits[]; }
-            "load"      {|| load_save[]; }
-            {||
+            "start"     => { open_start_info[]; }
+            "save"      => { sscg:game.cmd "save_state" $n; }
+            "credits"   => { open_credits[]; }
+            "load"      => { load_save[]; }
+            {
                 sscg:win.set_window WID:MAIN_MENU;
                 sscg:game.gd_call "GUI" :close_window;
             };
@@ -552,7 +551,7 @@ STATE.callbacks.on_ready = {
         .i = i + 1;
         (i < 20) {
 #            std:displayln "EL:" ~ std:ser:json good;
-            std:displayln "EL:" (std:str:padl 20 " " good.name) "; g/unit=" (std:str:padl 10 " " good.unit_g) ", kg/m³=" good.kg_p_m3;
+            std:displayln "EL:" (std:str:pad_start 20 " " good.name) "; g/unit=" (std:str:pad_start 10 " " good.unit_g) ", kg/m³=" good.kg_p_m3;
         };
     };
 #    std:displayln :ELEMENS ">>" elements "<<" ;
@@ -608,7 +607,7 @@ STATE.callbacks.on_ready = {
         }
     } {||
         match _1
-            "menu" {|| open_menu[]; };
+            "menu" => { open_menu[]; };
     };
 
     std:displayln "DISPLAY INIT";

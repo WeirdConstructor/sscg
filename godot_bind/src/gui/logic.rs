@@ -42,9 +42,9 @@ impl GameState {
     }
 
     pub fn deserialize(&mut self, v: VVal) {
-        self.object_registry.borrow_mut().deserialize(v.at(4).unwrap_or(VVal::Nul));
-        self.state          = v.at(2).unwrap_or(VVal::Nul);
-        self.active_ship_id = v.at(3).unwrap_or(VVal::Nul).i() as ObjectID;
+        self.object_registry.borrow_mut().deserialize(v.at(4).unwrap_or(VVal::None));
+        self.state          = v.at(2).unwrap_or(VVal::None);
+        self.active_ship_id = v.at(3).unwrap_or(VVal::None).i() as ObjectID;
     }
 
     pub fn get_ship(&self, id: ObjectID) -> Option<Rc<RefCell<Ship>>> {
@@ -81,7 +81,7 @@ impl GameState {
         x: i32, y: i32, state: VVal) -> Rc<RefCell<Entity>> {
 
         let typ =
-            match &state.get_key("type").unwrap_or(VVal::Nul).s_raw()[..] {
+            match &state.get_key("type").unwrap_or(VVal::None).s_raw()[..] {
                 "station"           => SystemObject::Station,
                 "asteroid_field"    => SystemObject::AsteroidField,
                 _                   => SystemObject::AsteroidField,
@@ -152,7 +152,7 @@ impl ObjectRegistry {
                 Object::Entity(e) => e.borrow().serialize(),
                 Object::System(e) => e.borrow().serialize(),
                 Object::Ship(e)   => e.borrow().serialize(),
-                _                 => VVal::Nul,
+                _                 => VVal::None,
             });
         }
         v.push(objs);
@@ -161,7 +161,7 @@ impl ObjectRegistry {
     }
 
     fn vval_to_object(&mut self, v: VVal) -> Object {
-        let typ : String = v.at(0).unwrap_or(VVal::Nul).s_raw();
+        let typ : String = v.at(0).unwrap_or(VVal::None).s_raw();
         match &typ[..] {
             "ship"   => Object::Ship(Rc::new(RefCell::new(Ship::deserialize(self, v)))),
             "system" => Object::System(Rc::new(RefCell::new(System::deserialize(self, v)))),
@@ -182,7 +182,7 @@ impl ObjectRegistry {
             s.at(0).unwrap_or(VVal::Int(0)).i() as usize,
             Object::None);
 
-        if let VVal::Lst(m) = s.at(1).unwrap_or(VVal::Nul) {
+        if let VVal::Lst(m) = s.at(1).unwrap_or(VVal::None) {
             for v in m.borrow().iter() {
                 let o = self.vval_to_object(v.clone());
                 match o {
@@ -206,7 +206,7 @@ impl ObjectRegistry {
         self.tick_count += 1;
         if self.tick_count > TICK_RES {
             self.tick_count = 0;
-            er.emit("tick".to_string(), VVal::Nul);
+            er.emit("tick".to_string(), VVal::None);
         }
 
         for o in self.objects.iter() {
@@ -403,7 +403,7 @@ impl Ship {
             s.course = None;
         }
         s.tick_count        = v.at(10).unwrap_or(VVal::Int(0)).i() as i32;
-        s.state             = v.at(11).unwrap_or(VVal::Nul);
+        s.state             = v.at(11).unwrap_or(VVal::None);
         s
     }
 
@@ -426,7 +426,7 @@ impl Ship {
             cv.push(VVal::Int(c.to.1 as i64));
             v.push(cv);
         } else {
-            v.push(VVal::Nul);
+            v.push(VVal::None);
         }
         v.push(VVal::Int(self.tick_count  as i64));
         v.push(self.state.clone());
@@ -558,7 +558,7 @@ impl Entity {
         s.x             = v.at(4).unwrap_or(VVal::Int(0)).i() as i32;
         s.y             = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
         s.name          = v.at(6).unwrap_or(VVal::new_str("")).s_raw();
-        s.state         = v.at(7).unwrap_or(VVal::Nul);
+        s.state         = v.at(7).unwrap_or(VVal::None);
         s
     }
 
@@ -692,7 +692,7 @@ impl System {
         s.x             = v.at(3).unwrap_or(VVal::Int(0)).i() as i32;
         s.y             = v.at(4).unwrap_or(VVal::Int(0)).i() as i32;
         s.tick_count    = v.at(5).unwrap_or(VVal::Int(0)).i() as i32;
-        s.state         = v.at(6).unwrap_or(VVal::Nul);
+        s.state         = v.at(6).unwrap_or(VVal::None);
         if let Some(VVal::Lst(l)) = v.at(7) {
             for o in l.borrow().iter() {
                 let e = Rc::new(RefCell::new(Entity::deserialize(or, o.clone())));

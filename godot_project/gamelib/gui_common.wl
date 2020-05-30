@@ -1,6 +1,6 @@
-!@import sscg sscg;
-!@import wlambda;
-!@import std std;
+!@wlambda;
+!@import sscg;
+!@import std;
 !@import c   colors;
 
 !dialog_window = {!(wid, title, child_fun, ev_cb) = @;

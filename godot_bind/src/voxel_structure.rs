@@ -33,13 +33,15 @@ const SUBVOLS     : usize = VOL_SIZE / SUBVOL_SIZE;
 fn vval2colors(clr: VVal) -> ColorMap {
     let mut colors = [[0.0; 3]; 256];
     use crate::gui::wlambda_api::color_hex24tpl;
-    for (i, c) in clr.iter().enumerate() {
-        let tpl = color_hex24tpl(&c.s_raw());
-        colors[i] = [
-            tpl.0 as f32 / 255.0,
-            tpl.1 as f32 / 255.0,
-            tpl.2 as f32 / 255.0,
-        ];
+    for (i, (c, _)) in clr.iter().enumerate() {
+        c.with_s_ref(|s| {
+            let tpl = color_hex24tpl(s);
+            colors[i] = [
+                tpl.0 as f32 / 255.0,
+                tpl.1 as f32 / 255.0,
+                tpl.2 as f32 / 255.0,
+            ];
+        })
     }
     ColorMap::new_from(colors)
 }

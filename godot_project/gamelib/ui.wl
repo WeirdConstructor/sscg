@@ -1,6 +1,6 @@
-!@import wlambda;
-!@import std std;
-!@import sscg sscg;
+!@wlambda;
+!@import std;
+!@import sscg;
 
 !@export dialog_yes_no {!(id, title, text, yes_lbl, no_lbl, cb) = @;
     sscg:win :set_window id ${

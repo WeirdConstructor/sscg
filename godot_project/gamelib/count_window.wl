@@ -1,6 +1,6 @@
-!@import sscg sscg;
-!@import wlambda;
-!@import std std;
+!@wlambda;
+!@import sscg;
+!@import std;
 !@import c   colors;
 !@import gui gui_common;
 !@import WID gui_window_ids;

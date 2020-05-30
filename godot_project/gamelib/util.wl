@@ -1,5 +1,5 @@
-!@import std std;
-!@import wlambda;
+!@import std;
+!@wlambda;
 
 !strip_ws = { std:re:replace_all "\\s+" {|| "" } _ };
 !@export strip_ws = strip_ws;
