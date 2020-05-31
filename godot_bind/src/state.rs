@@ -219,7 +219,7 @@ impl SSCGState {
 #[macro_export]
 macro_rules! lock_sscg {
     ($var: ident) => {
-        let mut sscg_lock = SSCG.lock().unwrap();
+        let mut sscg_lock = SSCG.lock().expect("lock clean");
         let $var = sscg_lock.as_mut().unwrap();
     }
 }

@@ -18,7 +18,7 @@
 # The color scheme of Jmol
 !color_map = def_colors:color_map;
 
-!STATE = ${
+!:global STATE = ${
     good_types = ${
         rock = ${
             name        = "Unknown Minerals",
@@ -565,7 +565,7 @@ STATE.callbacks.on_ready = {
 #    count.open[];
 };
 
-!@export init {
+!@export init = {
 
     !status_value = {!(lbl, ref) = @;
         ${ t = "hbox", w = 1000, spacing = 2, childs = $[
@@ -610,7 +610,7 @@ STATE.callbacks.on_ready = {
             "menu" => { open_menu[]; };
     };
 
-    std:displayln "DISPLAY INIT";
+    std:displayln "DISPLAY INIT: " STATE &> str;
 
     .*vp = sscg:new_voxel_painter[];
 #    std:displayln "VOXPAINT INIT " vp;
