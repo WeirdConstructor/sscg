@@ -413,12 +413,14 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 };
 
 !load_save = \:r {
+    std:displayln "Loading savegame...";
     !state =
         on_error {|| std:displayln "Couldn't load savegame: " @; return :r $n; }
             ~ sscg:game.read_savegame "sv1";
     (bool state) {
         STATE.player = state.player;
         STATE.ship   = e:ship:ship.load(state.ship);
+        std:displayln "STATE SHIP:" STATE.ship;
         STATE.code.enumerate_entities[];
         STATE.code.build_color_to_element_index[];
         sscg:game.cmd "load_state" state.ship_dyn;
@@ -472,6 +474,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
 #    count.tick[];
+    std:displayln "on_tick STATE SHIP:" STATE.ship;
 
     !engine_on_delta =
         ship_action_state.engine_on_secs - STATE.ship.engine_on_secs;

@@ -12,12 +12,15 @@
 
     !rng = std:rand:split_mix64_new[];
 
-    !self = $&${};
+    !self_ref = $&${};
+    !self     = $w& $:self_ref;
+
     self.tick = {
         update_counters float[progress] / 100.0 field_values;
         for field_values \sscg:win.set_label WID:COUNTING _.0 _.1;
         .progress = progress + 1;
     };
+
     self.open = {
         !heigh_of_one = 1000 / len[fields];
         !panel_rows = fields {!(ref, lbl) = _;
@@ -42,11 +45,11 @@
         self.tick[];
     };
 
-    self.on_destroy = std:to_drop $true {
+    self.on_destroy = std:to_drop {
         sscg:win.set_window WID:COUNTING;
     };
 
-    std:strengthen self;
+    $:self_ref;
 };
 
 !@export new = new;
