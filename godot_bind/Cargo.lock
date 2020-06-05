@@ -847,6 +847,8 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "wlambda"
 version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "523d86d99ffcf54972c19354d0035d6e2ec366f44580019a7ae548fecf2ea197"
 dependencies = [
  "chrono",
  "fnv",
@@ -856,3 +858,7 @@ dependencies = [
  "serde",
  "serde_json",
 ]
+
+[[patch.unused]]
+name = "wlambda"
+version = "0.6.2-beta"

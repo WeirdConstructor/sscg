@@ -177,6 +177,7 @@ impl SystemMap {
                         sscg.call_cb("on_saved_godot_state", &vec![vv]);
                     },
                     "load_state" => {
+                        println!(">>>>> CMD: {}", cmd.s());
                         let v = vval2variant(&cmd.v_(1));
                         unsafe {
                             ship.call(GodotString::from_str("sscg_load"),

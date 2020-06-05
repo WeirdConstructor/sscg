@@ -284,7 +284,3 @@ pub fn render_octree_to_am(cm: &ColorMap, vt: &Octree<u8>) -> RenderedMeshArrays
         cvshape_arr: va,
     }
 }
-
-
-
-

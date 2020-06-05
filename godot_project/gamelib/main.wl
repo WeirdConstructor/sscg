@@ -248,7 +248,7 @@ STATE.callbacks.on_texture_description = {|| std:displayln "Describing textures 
 ] };
 
 STATE.callbacks.on_draw_voxel_structure = {!(sys_id, ent_id) = @;
-    !vp = $*vp;
+    !vp = $* vp;
 #    std:displayln "LOADDED on_draw_voxel_structure " vp "|" sys_id ent_id;
     vp.clear[];
     !main_vol = vp.new 128 0.0;
@@ -417,12 +417,13 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     !state =
         on_error {|| std:displayln "Couldn't load savegame: " @; return :r $n; }
             ~ sscg:game.read_savegame "sv1";
-    (bool state) {
+    ? state {
         STATE.player = state.player;
         STATE.ship   = e:ship:ship.load(state.ship);
         std:displayln "STATE SHIP:" STATE.ship;
         STATE.code.enumerate_entities[];
         STATE.code.build_color_to_element_index[];
+        std:displayln "LOAD DYN SHIP: " state.ship_dyn;
         sscg:game.cmd "load_state" state.ship_dyn;
     };
 };
@@ -465,50 +466,42 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     };
 };
 
-!count = $&&(
-    w_count:new
-        $[$[:cred, "Credits:"],
-          $[:wust, "Wurst:"]]
-        { _1.cred = int[_ * 1000];
-          _1.wust = int[_ * 102010] });
-
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
-#    count.tick[];
-    std:displayln "on_tick STATE SHIP:" STATE.ship;
-
-    !engine_on_delta =
-        ship_action_state.engine_on_secs - STATE.ship.engine_on_secs;
-    STATE.ship.engine_on_secs = ship_action_state.engine_on_secs;
-
-    !typ = STATE.ship.t;
-    !ship_type = STATE.ship_types.(typ);
-
-    !fuel_usage_factor =
-        (STATE.ship.cargo.kg * ship_type.max_kg_fuel_factor)
-        / ship_type.cargo_max_kg;
-    .fuel_usage_factor = fuel_usage_factor + 100;
-
-    STATE.ship.fuel =
-        STATE.ship.fuel
-        - (fuel_usage_factor * ship_type.fuel_per_sec * engine_on_delta) / 100;
-    (STATE.ship.fuel <= 0) {
-        display_fuel_out_warning[];
-        STATE.ship.fuel = 0;
-    };
-
-    #d# std:displayln "TICK" ship_type;
-
-    !speed_i = std:num:ceil ~ 1000.0 * ship_action_state.speed;
-    .speed_i = speed_i >= 100 { str speed_i } { std:str:cat "(docking) " speed_i };
-
-    sscg:win.set_label WID:STATUS :speed speed_i;
-    sscg:win.set_label WID:STATUS :engine_on_secs (str STATE.ship.engine_on_secs);
-    sscg:win.set_label WID:STATUS :fuel_usage ~ std:str:cat fuel_usage_factor "%";
-    sscg:win.set_label WID:STATUS :fuel ~
-        std:str:cat STATE.ship.fuel " / " ship_type.fuel_capacity;
-    sscg:win.set_label WID:STATUS :credits STATE.player.credits;
-    sscg:win.set_label WID:STATUS :cargo_load ~
-        std:str:cat (STATE.ship.cargo.units) " / " ship_type.max_units;
+#    std:displayln "on_tick STATE SHIP:" STATE.ship;
+#
+#    !engine_on_delta =
+#        ship_action_state.engine_on_secs - STATE.ship.engine_on_secs;
+#    STATE.ship.engine_on_secs = ship_action_state.engine_on_secs;
+#
+#    !typ = STATE.ship.t;
+#    !ship_type = STATE.ship_types.(typ);
+#
+#    !fuel_usage_factor =
+#        (STATE.ship.cargo.kg * ship_type.max_kg_fuel_factor)
+#        / ship_type.cargo_max_kg;
+#    .fuel_usage_factor = fuel_usage_factor + 100;
+#
+#    STATE.ship.fuel =
+#        STATE.ship.fuel
+#        - (fuel_usage_factor * ship_type.fuel_per_sec * engine_on_delta) / 100;
+#    (STATE.ship.fuel <= 0) {
+#        display_fuel_out_warning[];
+#        STATE.ship.fuel = 0;
+#    };
+#
+#    #d# std:displayln "TICK" ship_type;
+#
+#    !speed_i = std:num:ceil ~ 1000.0 * ship_action_state.speed;
+#    .speed_i = speed_i >= 100 { str speed_i } { std:str:cat "(docking) " speed_i };
+#
+#    sscg:win.set_label WID:STATUS :speed speed_i;
+#    sscg:win.set_label WID:STATUS :engine_on_secs (str STATE.ship.engine_on_secs);
+#    sscg:win.set_label WID:STATUS :fuel_usage ~ std:str:cat fuel_usage_factor "%";
+#    sscg:win.set_label WID:STATUS :fuel ~
+#        std:str:cat STATE.ship.fuel " / " ship_type.fuel_capacity;
+#    sscg:win.set_label WID:STATUS :credits STATE.player.credits;
+#    sscg:win.set_label WID:STATUS :cargo_load ~
+#        std:str:cat (STATE.ship.cargo.units) " / " ship_type.max_units;
 };
 
 STATE.callbacks.on_ready = {
@@ -563,9 +556,6 @@ STATE.callbacks.on_ready = {
     STATE.code.build_color_to_element_index[];
 #    open_menu[];
     load_save[];
-
-    std:displayln "READY:" count;
-#    count.open[];
 };
 
 !@export init = {

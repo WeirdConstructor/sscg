@@ -190,30 +190,6 @@ impl GUIPaintNode {
 
     #[export]
     fn _ready(&mut self, _owner: Node2D) {
-        // The `godot_print!` macro works like `println!` but prints to the Godot-editor
-        // output tab as well.
-        godot_print!("NODE PAINT READY");
-
-//        self.win.w = 250;
-//        self.win.h = 250;
-//        self.win.x = 500;
-//        self.win.y = 750;
-//        self.win.title = String::from("HUD");
-//        let c1 = self.win.add_label(
-//            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-//            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255)));
-//        let c2 = self.win.add_label(
-//            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-//            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
-//            .clickable());
-//        let c3 = self.win.add_label(
-//            sscg::gui::Size { min_w: 10, w: 1000, min_h: 0, h: 0, margin: 0 },
-//            sscg::gui::Label::new("Test123", (255, 0, 255, 255), (0, 0, 0, 255))
-//            .editable("."));
-//        self.win.child =
-//            self.win.add_layout(
-//                sscg::gui::Size { min_w: 10, w: 500, min_h: 10, h: 1000, margin: 0 },
-//                BoxDir::Vert(1), &vec![c1, c2, c3]);
     }
 
     #[export]
@@ -447,12 +423,3 @@ fn init(handle: gdnative::init::InitHandle) {
 godot_gdnative_init!();
 godot_nativescript_init!(init);
 godot_gdnative_terminate!(terminate);
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

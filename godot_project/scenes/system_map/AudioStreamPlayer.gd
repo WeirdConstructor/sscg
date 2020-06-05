@@ -5,8 +5,8 @@ extends AudioStreamPlayer
 # var b = "text"
 
 const tracks = [
-	"Ryan_Andersen_-_07_-_Synthwave.ogg",
 	"nemeton_preview_v02.ogg",
+	"Ryan_Andersen_-_07_-_Synthwave.ogg",
 ];
 
 var i = 0;

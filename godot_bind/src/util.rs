@@ -52,7 +52,7 @@ pub fn vval2variant(v: &VVal) -> Variant {
             let mut dict = gdnative::Dictionary::new();
             for (v, k) in v.iter() {
                 dict.set(
-                    &Variant::from_str(k.unwrap().v_s_raw(0)),
+                    &Variant::from_str(k.unwrap().s_raw()),
                     &vval2variant(&v));
             }
             Variant::from_dictionary(&dict)

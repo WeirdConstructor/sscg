@@ -34,6 +34,7 @@ func sscg_save():
 	}
 
 func sscg_load(state):
+	print("LOAD SHIP:", state)
 	speed           = state["speed"]
 	engine_on_fract = state["engine_on_fract"]
 	engine_on_secs  = state["engine_on_secs"]
@@ -42,7 +43,6 @@ func sscg_load(state):
 	self.translation.y = 0.6
 	self.translation.z = float(state["y"])
 	self.rotation.y = state["rot_z"]
-	print("LOAD SHIP:", state)
 
 func deploy_drone(ent):
 	var entities = self.get_parent().get_node("entities")

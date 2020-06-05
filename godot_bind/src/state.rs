@@ -64,6 +64,7 @@ impl SSCGState {
             for i in 0..argc {
                 v.push(env.arg(i));
             }
+            println!(">>>>>>>>>> CMDQUEUE CMD: {}", v.s());
             cmd_queue.borrow_mut().push(v);
             Ok(VVal::None)
         });
