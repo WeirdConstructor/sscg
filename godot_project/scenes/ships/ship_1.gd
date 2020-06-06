@@ -24,13 +24,13 @@ var engine_running = false
 
 func sscg_save():
 	return {
-		"speed": speed,
+		"speed":           speed,
 		"engine_on_fract": engine_on_fract,
-		"engine_on_secs": engine_on_secs,
-		"thruster_speed": thruster_speed,
-		"x": int(self.translation.x),
-		"y": int(self.translation.z),
-		"rot_z": self.rotation.y,
+		"engine_on_secs":  engine_on_secs,
+		"thruster_speed":  thruster_speed,
+		"x":               int(self.translation.x),
+		"y":               int(self.translation.z),
+		"rot_z":           self.rotation.y,
 	}
 
 func sscg_load(state):

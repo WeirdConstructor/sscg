@@ -6,6 +6,7 @@
 !@import WID gui_window_ids;
 
 !show = {!(STATE, ent, ent_type) = @;
+	std:displayln "OPEN STRUCTURE WINDOW";
     gui:window WID:STRUCTURE {
         $[ent.name, $[
             gui:hpanel 700 { $[

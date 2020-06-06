@@ -467,6 +467,7 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 };
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
+    std:displayln "on_tick: " ~ std:ser:json ship_action_state;
 #    std:displayln "on_tick STATE SHIP:" STATE.ship;
 #
 #    !engine_on_delta =
