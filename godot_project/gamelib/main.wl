@@ -466,8 +466,22 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     };
 };
 
+!update_status_gui = {!(ship) = @;
+    sscg:win.set_label WID:STATUS :speed ship.get_speed_i[];
+    sscg:win.set_label WID:STATUS :engine_on_secs (str STATE.ship.engine_on_secs);
+    sscg:win.set_label WID:STATUS :fuel_usage ship.get_fuel_gui_str[];
+    sscg:win.set_label WID:STATUS :fuel ship.get_fuel_gui_str[];
+    sscg:win.set_label WID:STATUS :credits STATE.player.credits;
+#    sscg:win.set_label WID:STATUS :cargo_load ~
+#        std:str:cat (STATE.ship.cargo.units) " / " ship_type.max_units;
+};
+
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
     std:displayln "on_tick: " ~ std:ser:json ship_action_state;
+
+    STATE.ship.set_action_state(ship_action_state);
+    update_status_gui STATE.ship;
+
 #    std:displayln "on_tick STATE SHIP:" STATE.ship;
 #
 #    !engine_on_delta =
@@ -477,32 +491,13 @@ STATE.callbacks.on_tick = {!(ship_action_state) = @;
 #    !typ = STATE.ship.t;
 #    !ship_type = STATE.ship_types.(typ);
 #
-#    !fuel_usage_factor =
-#        (STATE.ship.cargo.kg * ship_type.max_kg_fuel_factor)
-#        / ship_type.cargo_max_kg;
-#    .fuel_usage_factor = fuel_usage_factor + 100;
-#
-#    STATE.ship.fuel =
-#        STATE.ship.fuel
-#        - (fuel_usage_factor * ship_type.fuel_per_sec * engine_on_delta) / 100;
-#    (STATE.ship.fuel <= 0) {
-#        display_fuel_out_warning[];
-#        STATE.ship.fuel = 0;
-#    };
 #
 #    #d# std:displayln "TICK" ship_type;
 #
 #    !speed_i = std:num:ceil ~ 1000.0 * ship_action_state.speed;
 #    .speed_i = speed_i >= 100 { str speed_i } { std:str:cat "(docking) " speed_i };
 #
-#    sscg:win.set_label WID:STATUS :speed speed_i;
-#    sscg:win.set_label WID:STATUS :engine_on_secs (str STATE.ship.engine_on_secs);
-#    sscg:win.set_label WID:STATUS :fuel_usage ~ std:str:cat fuel_usage_factor "%";
-#    sscg:win.set_label WID:STATUS :fuel ~
-#        std:str:cat STATE.ship.fuel " / " ship_type.fuel_capacity;
-#    sscg:win.set_label WID:STATUS :credits STATE.player.credits;
-#    sscg:win.set_label WID:STATUS :cargo_load ~
-#        std:str:cat (STATE.ship.cargo.units) " / " ship_type.max_units;
+
 };
 
 STATE.callbacks.on_ready = {

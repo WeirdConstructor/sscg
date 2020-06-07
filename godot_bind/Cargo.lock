@@ -499,9 +499,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54a21852a652ad6f610c9510194f398ff6f8692e334fd1145fed931f7fbe44ea"
+checksum = "aa563d17ecb180e500da1cfd2b028310ac758de548efdd203e18f283af693f37"
 dependencies = [
  "proc-macro2",
 ]
@@ -846,9 +846,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "wlambda"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "523d86d99ffcf54972c19354d0035d6e2ec366f44580019a7ae548fecf2ea197"
+version = "0.6.2-beta"
 dependencies = [
  "chrono",
  "fnv",
@@ -858,7 +856,3 @@ dependencies = [
  "serde",
  "serde_json",
 ]
-
-[[patch.unused]]
-name = "wlambda"
-version = "0.6.2-beta"

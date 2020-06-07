@@ -21,7 +21,7 @@ impl ModuleResolver for GodotModuleResolver {
     fn resolve(&self, global: GlobalEnvRef, path: &[String], _import_file_path: Option<&str>)
         -> Result<SymbolTable, ModuleLoadError>
     {
-//        println!("***** GODOT RESOLVE MODULE: {:?}", path);
+        println!("***** GODOT RESOLVE MODULE: {:?}", path);
         let genv = GlobalEnv::new_empty_default();
         genv.borrow_mut().import_modules_from(&*global.borrow());
         genv.borrow_mut().set_resolver(Rc::new(RefCell::new(GodotModuleResolver::new())));
