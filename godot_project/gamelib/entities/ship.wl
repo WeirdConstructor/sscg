@@ -36,6 +36,9 @@
 	get_fuel_gui_str = {
 		std:str:cat $d.fuel " / " ship_types.($d.t).fuel_capacity
 	},
+	get_refuel_amount = {
+		ship_types.($d.t).fuel_capacity - $d.fuel
+	},
 	calc_fuel_usage = {
 #    !fuel_usage_factor =
 #        (STATE.ship.cargo.kg * ship_type.max_kg_fuel_factor)

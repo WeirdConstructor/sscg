@@ -8,9 +8,7 @@
 !calc_refuel = {!(STATE) = @;
     !cc_per_fuelunit = 125;
 
-    !fuel_delta =
-        STATE.ship_types.(STATE.ship.t).fuel_capacity
-        - STATE.ship.fuel;
+    !fuel_delta = STATE.ship.get_refuel_amount[];
 
     !pay_fuel_max =
         (100.0 * STATE.player.credits) / cc_per_fuelunit | std:num:floor;

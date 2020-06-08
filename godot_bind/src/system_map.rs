@@ -147,7 +147,7 @@ impl SystemMap {
     }
 
     fn handle_commands(&mut self, sscg: &mut SSCGState, owner: &mut Spatial, delta: f64) {
-        let vvship = sscg.state.get_key("ship").unwrap_or(VVal::None);
+        let vvship = sscg.state.v_k("ship").v_k("_data");
 
         let mut ship = unsafe {
             let mut ship = owner.get_node(NodePath::from_str("ship"))
