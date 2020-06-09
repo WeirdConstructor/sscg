@@ -467,32 +467,26 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
 };
 
 !update_status_gui = {!(ship) = @;
-    sscg:win.set_label WID:STATUS :speed ship.get_speed_i[];
-    sscg:win.set_label WID:STATUS :engine_on_secs (str STATE.ship.engine_on_secs);
-    sscg:win.set_label WID:STATUS :fuel_usage ship.get_fuel_gui_str[];
-    sscg:win.set_label WID:STATUS :fuel ship.get_fuel_gui_str[];
-    sscg:win.set_label WID:STATUS :credits STATE.player.credits;
-#    sscg:win.set_label WID:STATUS :cargo_load ~
+    sscg:win.set_label WID:STATUS :speed            ship.get_speed_i[];
+    sscg:win.set_label WID:STATUS :engine_on_secs   (str STATE.ship.engine_on_secs);
+    sscg:win.set_label WID:STATUS :fuel_usage       ship.get_fuel_usage_factor[];
+    sscg:win.set_label WID:STATUS :fuel             ship.get_fuel_gui_str[];
+    sscg:win.set_label WID:STATUS :cargo_load       ship.get_cargo_units[];
+    sscg:win.set_label WID:STATUS :credits          STATE.player.credits;
 #        std:str:cat (STATE.ship.cargo.units) " / " ship_type.max_units;
 };
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
     std:displayln "on_tick: " ~ std:ser:json ship_action_state;
 
-    STATE.ship.set_action_state(ship_action_state);
-    update_status_gui STATE.ship;
+    !ship = STATE.ship;
 
+    ship.set_action_state(ship_action_state);
+    ship.calc_fuel_usage[];
+    update_status_gui ship;
+
+    ? ship.is_fuel_empty[] display_fuel_out_warning[];
 #    std:displayln "on_tick STATE SHIP:" STATE.ship;
-#
-#    !engine_on_delta =
-#        ship_action_state.engine_on_secs - STATE.ship.engine_on_secs;
-#    STATE.ship.engine_on_secs = ship_action_state.engine_on_secs;
-#
-#    !typ = STATE.ship.t;
-#    !ship_type = STATE.ship_types.(typ);
-#
-#
-#    #d# std:displayln "TICK" ship_type;
 #
 #    !speed_i = std:num:ceil ~ 1000.0 * ship_action_state.speed;
 #    .speed_i = speed_i >= 100 { str speed_i } { std:str:cat "(docking) " speed_i };
@@ -581,7 +575,7 @@ STATE.callbacks.on_ready = {
                 status_value "Speed"       :speed,
                 status_value "Fuel"        :fuel,
                 status_value "Credits"     :credits,
-                status_value "Cargo m³/kg" :cargo_load,
+                status_value "Cargo"       :cargo_load,
                 status_value "Fuel usage"  :fuel_usage,
                 ${ t = :l_button, text = "Menu", w = 1000, bg = c:CON, fg = "000", ref = "menu" },
                 ${ t = :field, text = "1.0", w = 1000, bg = c:CON, fg = "000", ref = "foo", },

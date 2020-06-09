@@ -543,14 +543,19 @@ impl VoxStruct {
     fn wait_for_mesh_rendering(&mut self) {
         let cur_vol_gen = self.vol_generation;
         let mut max = 5;
-        while let Some(VoxRendResult { arrs, oct_subtree_idx, empty, vol_generation }) = self.workers.get_result() {
+        while let Some(VoxRendResult {
+                            arrs, oct_subtree_idx,
+                            empty, vol_generation })
+            = self.workers.get_result()
+        {
 
             if vol_generation < cur_vol_gen {
                 continue;
             }
 
             let d = std::time::Instant::now();
-            let (mut static_body, shape_owner_idx) = self.collision_shapes[oct_subtree_idx];
+            let (mut static_body, shape_owner_idx) =
+                self.collision_shapes[oct_subtree_idx];
             unsafe {
                 let mut am = ArrayMesh::new();
                 let mut cvshape = ConcavePolygonShape::new();
