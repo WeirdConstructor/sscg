@@ -96,6 +96,15 @@
     callbacks = ${},
 };
 
+!init_ship_callbacks = {!(ship) = @;
+    ship.reg_event :recalc_cargo {|| !(ship) = @;
+        std:displayln "FULL: " ship.get_cargo_percent_full[];
+        sscg:game.gd_call "GUI" :set_cargo_meter $[ship.get_cargo_percent_full[], 0];
+    };
+
+    ship.loaded[];
+};
+
 !@export STATE STATE;
 
 STATE.code.build_color_to_element_index = {||
@@ -140,53 +149,6 @@ STATE.code.sell_ship_cargo_good = {!(good_t) = @;
     STATE.code.recalc_ship_cargo[];
 };
 
-STATE.code.calc_unit_capacity_for_good = \:r {!(good_t) = @;
-    (is_none good_t) { return :r $none; };
-
-    !good_type  = STATE.good_types.(good_t);
-    !ship_type  = STATE.ship_types.(STATE.ship.t);
-    !kg_free    = ship_type.cargo_max_kg - STATE.ship.cargo.kg;
-    !m3_free    = ship_type.cargo_max_m3 - STATE.ship.cargo.m3;
-    !m3_free_kg = (m3_free * good_type.kg_p_m3) / 1000;
-    !min_kg_free = (kg_free < m3_free_kg) { kg_free } { m3_free_kg };
-    (min_kg_free * 1000) / good_type.unit_g
-};
-
-STATE.code.update_hud_cargo_meters = {||
-    !m3_perc = (100 * STATE.ship.cargo.m3)
-               / STATE.ship_types.(STATE.ship.t).cargo_max_m3;
-    !kg_perc = (100 * STATE.ship.cargo.kg)
-               / STATE.ship_types.(STATE.ship.t).cargo_max_kg;
-
-    sscg:game.gd_call "GUI" :set_cargo_meter $[kg_perc, m3_perc];
-};
-
-STATE.code.recalc_ship_cargo = {
-    !s = STATE.ship;
-    s.cargo.units       = 0;
-    s.cargo.fuel_factor = 0;
-    for s.cargo.goods \:good_loop {!(k, v) = _;
-        (v <= 0) { return :good_loop $n };
-
-        !good_type = STATE.good_types.(k);
-#        std:displayln k "::" s.cargo.kg ";" s.cargo.m3
-#        std:displayln k "::" v "=" (std:ser:json good_type);
-#        std:displayln k "=> m³="
-#            (good_type.unit_g * v) / 1000
-#            "; kg="
-#            (good_type.unit_g * v * 1000)
-#             / (1000 * good_type.kg_p_m3);
-
-        s.cargo.kg =
-            s.cargo.kg + (good_type.unit_g * v) / 1000;
-        s.cargo.m3 =
-            s.cargo.m3 + ((good_type.unit_g * v * 1000)
-                          / (1000 * good_type.kg_p_m3));
-    };
-
-    STATE.code.update_hud_cargo_meters[];
-};
-
 # Actions
 # - display cargo space
 # - leave menu
@@ -223,20 +185,19 @@ STATE.callbacks.on_mine = \:r {
 
     std:displayln "MINE:" @;
 
-    !capacity_units =
-        STATE.code.calc_unit_capacity_for_good k;
-
-    (capacity_units > 0) &and (_2 != 0)
+    (STATE.ship.get_free_units[] > 0) &and (_2 != 0)
 };
 
 STATE.callbacks.on_mined_voxel = {||
 #    std:displayln "MINEDD:" @ STATE.code.get_good_by_color[_2];
     !(k, v) = STATE.code.get_good_by_color[_2];
-    not[is_none[k]] {
-        STATE.ship.cargo.goods.(k) =
-            STATE.ship.cargo.goods.(k) + 1;
-#        std:displayln "CARGO:" STATE.ship.cargo;
-        STATE.code.recalc_ship_cargo[];
+    std:displayln "MINED GOOD: " k "=>" v;
+    ? not <& is_none[k] {
+        STATE.ship.store_good_unit k 1;
+#        STATE.ship.cargo.goods.(k) =
+#            STATE.ship.cargo.goods.(k) + 1;
+##        std:displayln "CARGO:" STATE.ship.cargo;
+#        STATE.code.recalc_ship_cargo[];
     };
     $t
 };
@@ -420,10 +381,13 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     ? state {
         STATE.player = state.player;
         STATE.ship   = e:ship:ship.load(state.ship);
+        init_ship_callbacks STATE.ship;
+
         std:displayln "STATE SHIP:" STATE.ship;
         STATE.code.enumerate_entities[];
         STATE.code.build_color_to_element_index[];
         std:displayln "LOAD DYN SHIP: " state.ship_dyn;
+
         sscg:game.cmd "load_state" state.ship_dyn;
     };
 };
@@ -471,13 +435,12 @@ STATE.callbacks.on_arrived = {!(too_fast, sys_id, ent_id) = @;
     sscg:win.set_label WID:STATUS :engine_on_secs   (str STATE.ship.engine_on_secs);
     sscg:win.set_label WID:STATUS :fuel_usage       ship.get_fuel_usage_factor[];
     sscg:win.set_label WID:STATUS :fuel             ship.get_fuel_gui_str[];
-    sscg:win.set_label WID:STATUS :cargo_load       ship.get_cargo_units[];
+    sscg:win.set_label WID:STATUS :cargo_load       ship.get_cargo_units_gui_str[];
     sscg:win.set_label WID:STATUS :credits          STATE.player.credits;
-#        std:str:cat (STATE.ship.cargo.units) " / " ship_type.max_units;
 };
 
 STATE.callbacks.on_tick = {!(ship_action_state) = @;
-    std:displayln "on_tick: " ~ std:ser:json ship_action_state;
+#    std:displayln "on_tick: " ~ std:ser:json ship_action_state;
 
     !ship = STATE.ship;
 
@@ -600,6 +563,8 @@ STATE.callbacks.on_ready = {
 
 #    STATE.ship.cargo.goods.rock = 100;
 #    STATE.code.recalc_ship_cargo[];
+
+    init_ship_callbacks STATE.ship;
 
     STATE
 };

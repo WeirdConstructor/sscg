@@ -10,10 +10,29 @@
     },
 };
 
+!observable = ${
+    reg_event = {!(event, cb) = @;
+        ? not <& $s.events { $s.events = ${} };
+        ? not <& $s.events.(event) {
+            $s.events.(event) = $[];
+        };
+        std:push $s.events.(event) cb;
+    },
+    event = {!(event) = @;
+        !cbs = $s.events.(event);
+        std:displayln "EVENT: " cbs;
+        !args = @;
+        std:unshift args $s;
+        iter cb cbs { cb[[args]] };
+    },
+};
+
 !ship = ${
+    _proto = observable,
     new = {!(t) = @;
         ${
             _proto = $self,
+            _type = ship_types.(t),
             _data = ${
                 t               = t,
                 system_id       = 0,
@@ -21,7 +40,6 @@
                 engine_on_secs  = 0,
                 fuel            = ship_types.(t).fuel_capacity,
                 cargo           = ${
-                    fuel_factor = 0,
                     units       = 0,
                     goods       = ${},
                 },
@@ -29,24 +47,27 @@
         }
     },
     load = {!(data) = @;
-        !self = ${ _proto = $self, _data = data };
+        !self = ${
+            _proto = $self,
+            _type  = ship_types.(data.t),
+            _data  = data,
+        };
         self.recalc_cargo[];
         self
     },
     save = { $d },
+    loaded = { $s.recalc_cargo[]; },
     get_fuel_gui_str = {
-        std:str:cat $d.fuel " / " ship_types.($d.t).fuel_capacity
+        std:str:cat $d.fuel " / " $s._type.fuel_capacity
     },
     get_refuel_amount = {
-        ship_types.($d.t).fuel_capacity - $d.fuel
+        $s._type.fuel_capacity - $d.fuel
     },
     calc_fuel_usage = {
-        !ship_type = ship_types.($d.t);
-
         !fuel_usage_factor =
             1.0
-            + ($d.cargo.units * ship_type.max_units_fuel_factor)
-              / ship_type.max_units;
+            + ($d.cargo.units * $s._type.max_units_fuel_factor)
+              / $s._type.max_units;
 
         !engine_on_delta =
             $s.action_state.engine_on_secs - $s.engine_on_secs;
@@ -54,7 +75,7 @@
 
         $d.fuel = int ~
             $d.fuel
-            - (fuel_usage_factor * ship_type.fuel_per_sec * engine_on_delta);
+            - (fuel_usage_factor * $s._type.fuel_per_sec * engine_on_delta);
 
         ? $d.fuel <= 0 {
             $d.fuel = 0;
@@ -79,12 +100,23 @@
         $s.recalc_cargo[];
         $[avail_units, credits]
     },
-    get_cargo_units = { $d.cargo.units },
+    store_good_unit = {!(good_t, units) = @;
+        std:displayln "STORE:" good_t units;
+        $d.cargo.goods.(good_t) =
+            $d.cargo.goods.(good_t) + units;
+        $s.recalc_cargo[];
+    },
+    get_cargo_units         = { $d.cargo.units },
+    get_cargo_units_gui_str = { std:str:cat $s.get_cargo_units[] " / " $s._type.max_units  },
+    get_free_units          = { $s._type.max_units - $d.cargo.units },
+    get_cargo_percent_full = {
+        (100 * $s.get_cargo_units[]) / $s._type.max_units
+    },
     # TODO: Test this code!
     recalc_cargo = {
         !cargo = $d.cargo;
-        cargo.units       = 0;
-        cargo.fuel_factor = 0;
+        cargo.units = $@int iter c cargo.goods { $+ c.0 };
+        $s.event :recalc_cargo;
     },
 };
 
