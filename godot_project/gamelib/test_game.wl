@@ -8,7 +8,7 @@
 add_test :reading_elements_table {
     !elements =
         el:read_elements ~
-            sscg:game.read_data_text "elements.csv";
+            sscg:game.read_data_text "data/elements.csv";
 
     std:assert_eq (len elements) 118                "number of elements is right";
     std:assert_eq elements.2.symbol "Li"            "got the right elements";
