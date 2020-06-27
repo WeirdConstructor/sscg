@@ -74,3 +74,29 @@ iter c (fusion_candidate a) {
     !rel = elements.(c.1.1 - 1);
     std:displayln e_lbl[c.0] "x" e_lbl[c.1.0] "=>" e_lbl[rel];
 };
+
+
+# DNA
+# N inputs
+# Mutations:
+#   - Combine 2 element-inputs by FUSE(a, b) if possible
+#   - FISS(x) to make new outputs
+#   - combine 2 inputs into a molecule
+#   - split an input molecule
+#   - remove leaf action and remutate
+# Archetypes:
+# FUSE(FUSE(1, 2), 3)
+# FUSE(FISS(1), 3), FISS(2)
+# FUSE(FISS(1), 2), FISS(3)
+# x=FISS(1);FISS(x.0),FISS(x.1)
+
+
+# DNA
+# $[$p(:FUSE/:FISS/:COMBINE/:SPLIT, $[in1, in2, ...], $[out1, out2, ...]), ...]
+#
+
+
+!gen_dna = {!(init_elem, cost_factor, steps) = @;
+    
+};
+
