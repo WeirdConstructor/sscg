@@ -1,4 +1,5 @@
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::*;
 use euclid::{vec2, vec3};
 use crate::voxeltree::*;
 

@@ -1,5 +1,6 @@
 use crate::state::SSCG;
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::*;
 use euclid::{vec3};
 use wlambda::VVal;
 use std::rc::Rc;
@@ -7,7 +8,7 @@ use crate::state::*;
 use crate::util::{variant2vval, vval2variant};
 
 #[derive(NativeClass)]
-#[inherit(gdnative::Spatial)]
+#[inherit(Spatial)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct SystemMap {
     templates:     std::collections::HashMap<String, PackedScene>,
@@ -20,7 +21,7 @@ unsafe impl Send for SystemMap { }
 
 #[methods]
 impl SystemMap {
-    fn _init(_owner: Spatial) -> Self {
+    fn new(_owner: &Spatial) -> Self {
         let main_font_resource =
             ResourceLoader::godot_singleton().load(
                 GodotString::from_str("res://fonts/main_font_normal.tres"),

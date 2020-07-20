@@ -1,6 +1,7 @@
 use crate::state::SSCG;
 #[macro_use]
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::*;
 use crate::voxeltree::*;
 use crate::gd_voxel_impl::*;
 use crate::util::WorkerPool;
@@ -10,7 +11,7 @@ use std::sync::RwLock;
 use std::sync::Arc;
 
 #[derive(NativeClass)]
-#[inherit(gdnative::Spatial)]
+#[inherit(Spatial)]
 pub struct VoxStruct {
     meshes:           std::vec::Vec<MeshInstance>,
     collision_shapes: std::vec::Vec<(StaticBody, i64)>,
@@ -329,7 +330,7 @@ impl VoxStruct {
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
         let v = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
-        let mut dict = gdnative::Dictionary::new();
+        let mut dict = Dictionary::new();
         dict.set(&Variant::from_str("material"), &Variant::from_i64(v.color as i64));
         dict.set(&Variant::from_str("time"),     &Variant::from_f64(1.2));
         dict.set(&Variant::from_str("x"),        &Variant::from_i64(self.cursor[0] as i64));

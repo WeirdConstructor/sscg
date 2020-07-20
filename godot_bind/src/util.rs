@@ -1,6 +1,8 @@
-use gdnative::Color;
-use gdnative::Variant;
-use gdnative::VariantType;
+use gdnative::core_types::Color;
+use gdnative::core_types::Variant;
+use gdnative::core_types::VariantType;
+use gdnative::core_types::VariantArray;
+use gdnative::core_types::Dictionary;
 use wlambda::VVal;
 use wlambda::util::{SplitMix64, u64_to_open01};
 
@@ -42,14 +44,14 @@ pub fn vval2variant(v: &VVal) -> Variant {
         VVal::Int(i) => Variant::from_i64(*i),
         VVal::Flt(i) => Variant::from_f64(*i),
         VVal::Lst(_) => {
-            let mut arr = gdnative::VariantArray::new();
+            let mut arr = VariantArray::new();
             for (i, _) in v.iter() {
                 arr.push(&vval2variant(&i));
             }
             Variant::from_array(&arr)
         },
         VVal::Map(_) => {
-            let mut dict = gdnative::Dictionary::new();
+            let mut dict = Dictionary::new();
             for (v, k) in v.iter() {
                 dict.set(
                     &Variant::from_str(k.unwrap().s_raw()),

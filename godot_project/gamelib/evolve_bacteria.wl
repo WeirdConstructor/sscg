@@ -47,11 +47,11 @@
 };
 
 !fusion_candidate = {!(e1) = @;
-#    filter_duplicate_elements ~
         $@v iter e2 elements {
             !res_protons = (e1.NumberofProtons + e2.NumberofProtons) - 2;
-            !res_elem = elements.(res_protons - 1);
-            ?      e1.Group != e2.Group
+            !res_elem    = elements.(res_protons - 1);
+
+            ?      e1.Group  != e2.Group
               &and e1.Period != e2.Period
               &and res_elem &> is_some
               &and res_elem.Period > e1.Period

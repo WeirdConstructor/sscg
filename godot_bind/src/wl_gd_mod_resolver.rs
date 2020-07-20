@@ -1,6 +1,7 @@
 use wlambda::{GlobalEnv, EvalContext, SymbolTable};
-use gdnative::godot_print;
-use gdnative::{File, GodotString};
+use gdnative::prelude::godot_print;
+use gdnative::api::File;
+use gdnative::core_types::GodotString;
 use wlambda::compiler::{GlobalEnvRef, ModuleResolver, ModuleLoadError};
 use std::rc::Rc;
 use std::cell::RefCell;

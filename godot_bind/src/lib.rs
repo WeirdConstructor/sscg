@@ -13,7 +13,8 @@ mod gui;
 extern crate lazy_static;
 extern crate gdnative;
 
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::*;
 use euclid::rect;
 use euclid::vec2;
 use euclid::Vector2D;
@@ -24,13 +25,13 @@ use util::c2c;
 use wlambda::VVal;
 
 #[derive(NativeClass)]
-#[inherit(gdnative::Node2D)]
+#[inherit(Node2D)]
 #[user_data(user_data::MutexData<GUIPaintNode>)]
 pub struct GUIPaintNode {
     cache: std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
     w: i64,
     h: i64,
-    textures: Option<std::vec::Vec<Texture>>,
+    textures: Option<std::vec::Vec<Ref<Texture, Shared>>>,
     num_input: Option<(usize, f64, f64)>,
 }
 
@@ -40,7 +41,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
              cache: &mut std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
              n: &mut Node2D,
              fh: &FontHolder,
-             textures: &[Texture],
+             textures: &[Ref<Texture, Shared>],
              cmds: &[DrawCmd])
 {
     for c in cmds {
@@ -58,7 +59,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
             },
             DrawCmd::Texture { txt_idx, x, y, w, h, centered } => {
                 unsafe {
-                    let txt = &textures[*txt_idx];
+                    let txt = textures[*txt_idx].assume_safe();
                     let sz  = txt.get_size();
 
                     let xo = if *centered { -(sz.x / 2.0) } else { 0.0 };
@@ -77,7 +78,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
                         };
 
                     n.draw_texture_rect(
-                        Some(txt.clone()),
+                        txt,
                         rect(xo + (xxo + *x) as f32,
                              yo + (yyo + *y) as f32,
                              w,
@@ -85,7 +86,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
                         false,
                         Color::rgba(1.0, 1.0, 1.0, 1.0),
                         false,
-                        None);
+                        Null::null());
                 }
             },
             DrawCmd::Text { txt, align, color, x, y, w, fs } => {
@@ -109,7 +110,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
                             0.0
                         };
                     n.draw_string(
-                        Some(font.to_font()),
+                        *font,
                         vec2(xxo as f32 + xo + *x as f32,
                              yyo as f32 + *y as f32
                              + font.get_ascent() as f32),
@@ -178,7 +179,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
 
 #[methods]
 impl GUIPaintNode {
-    fn _init(_owner: Node2D) -> Self {
+    fn new(_owner: &Node2D) -> Self {
         Self {
             w:          0,
             h:          0,
@@ -339,7 +340,7 @@ impl GUIPaintNode {
 
         if self.textures.is_none() {
             let ret = sscg.call_cb("on_texture_description", &vec![]);
-            let mut textures : std::vec::Vec<Texture> = vec![];
+            let mut textures : std::vec::Vec<Ref<Texture, Shared>> = vec![];
             for (t, _) in ret.iter() {
                 let txt = match &t.v_s_raw(0)[..] {
                     "image" => {
@@ -411,7 +412,7 @@ fn init_panic_hook() {
     }));
 }
 
-fn init(handle: gdnative::init::InitHandle) {
+fn init(handle: InitHandle) {
     dbg!("*** init sscg native");
     init_panic_hook();
     handle.add_class::<GUIPaintNode>();
