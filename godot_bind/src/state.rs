@@ -13,16 +13,16 @@ use crate::wl_gd_mod_resolver::*;
 
 #[derive(Debug, Clone)]
 pub struct FontHolder {
-    pub main_font:  DynamicFont,
-    pub small_font: DynamicFont,
+    pub main_font:  Ref<DynamicFont, Shared>,
+    pub small_font: Ref<DynamicFont, Shared>,
 }
 
 impl FontMetric for FontHolder {
     fn text_size(&self, text: &str, fs: FontSize) -> (u32, u32) {
         let s = match fs {
-            FontSize::Normal => self.main_font.get_string_size(GodotString::from_str(text)),
-            FontSize::Small  => self.small_font.get_string_size(GodotString::from_str(text)),
-        };
+            FontSize::Normal => unsafe { self.main_font.assume_safe() },
+            FontSize::Small  => unsafe { self.small_font.assume_safe() },
+        }.get_string_size(GodotString::from_str(text));
         (s.x as u32, s.y as u32)
     }
 }

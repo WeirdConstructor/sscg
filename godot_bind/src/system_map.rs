@@ -11,7 +11,7 @@ use crate::util::{variant2vval, vval2variant};
 #[inherit(Spatial)]
 //#[user_data(user_data::ArcData<SystemMap>)]
 pub struct SystemMap {
-    templates:     std::collections::HashMap<String, PackedScene>,
+    templates:     std::collections::HashMap<String, Ref<PackedScene, Shared>>,
     time_tick_sum: f64,
 }
 
@@ -32,11 +32,11 @@ impl SystemMap {
                 GodotString::from_str("res://fonts/main_font_small.tres"),
                 GodotString::from_str("DynamicFont"),
                 false);
-        let main_font : DynamicFont =
+        let main_font : Ref<DynamicFont, Shared> =
             main_font_resource
                 .and_then(|font_res| font_res.cast::<DynamicFont>())
                 .unwrap();
-        let small_font : DynamicFont =
+        let small_font : Ref<DynamicFont, Shared> =
             small_font_resource
                 .and_then(|font_res| font_res.cast::<DynamicFont>())
                 .unwrap();
@@ -105,7 +105,7 @@ impl SystemMap {
         sscg.call_cb("on_ready", &vec![]);
     }
 
-    fn update_stations(&mut self, sscg: &mut SSCGState, mut entities: Spatial) {
+    fn update_stations(&mut self, sscg: &mut SSCGState, mut entities: TRef<Spatial, Shared>) {
         if !sscg.update_stations { return; }
 
         let vvship = sscg.state.get_key("ship").unwrap_or(VVal::None);
@@ -123,11 +123,21 @@ impl SystemMap {
             let y   = pos.v_i(1);
             println!("ENT! {} {},{}", ent.s(), x, y);
             unsafe {
-                let mut ins = self.templates.get(&vis).as_ref()
-                                  .expect("Entry for this entity")
-                                  .instance(0).expect("Instance in Spatial")
-                                  .cast::<Spatial>()
-                                  .expect("Scene must be a Spatial");
+                let tmpl = unsafe {
+                    self.templates.get(&vis)
+                        .expect("Entry for this entity")
+                        .assume_safe()
+                };
+                let mut ins = unsafe {
+                    tmpl
+                    .instance(0)
+                    .expect("Instance in Spatial")
+                    .assume_safe()
+                };
+                let mut ins =
+                    ins
+                    .cast::<Spatial>()
+                    .expect("Scene must be a Spatial");
                 let v = vec3(x as f32, 1.0, y as f32);
                 ins.set(
                     GodotString::from_str("label_name"),
@@ -139,7 +149,7 @@ impl SystemMap {
                     GodotString::from_str("entity_id"),
                     Variant::from_i64(i));
                 ins.translate(v);
-                entities.add_child(Some(ins.to_node()), false);
+                entities.add_child(ins, false);
             }
             i += 1;
         });
@@ -151,18 +161,17 @@ impl SystemMap {
         let vvship = sscg.state.v_k("ship").v_k("_data");
 
         let mut ship = unsafe {
-            let mut ship = owner.get_node(NodePath::from_str("ship"))
-                 .expect("Find 'ship' node")
-                 .cast::<Spatial>()
-                 .unwrap();
-            ship.set(
-                GodotString::from_str("no_fuel"),
-                Variant::from_bool(vvship.v_ik("fuel") <= 0));
-            ship.set(
-                GodotString::from_str("docked"),
-                Variant::from_bool(vvship.v_ik("docked") > 0));
-            ship
+            owner.get_node(NodePath::from_str("ship"))
+            .expect("Find 'ship' node")
+            .assume_safe()
         };
+        let ship = ship.cast::<Spatial>().unwrap();
+        ship.set(
+            GodotString::from_str("no_fuel"),
+            Variant::from_bool(vvship.v_ik("fuel") <= 0));
+        ship.set(
+            GodotString::from_str("docked"),
+            Variant::from_bool(vvship.v_ik("docked") > 0));
 
         self.time_tick_sum += delta;
         while self.time_tick_sum > 0.25 {
@@ -187,23 +196,24 @@ impl SystemMap {
                     "gd_call" => {
                         let path   = cmd.v_s_raw(1);
                         let method = cmd.v_s_raw(2);
-                        unsafe {
-                        let mut node = owner.get_node(NodePath::from_str(&path));
-                            match node {
-                                Some(mut n) => {
-                                    let mut argv = vec![];
-                                    for argidx in 3..cmd.len() {
-                                        argv.push(vval2variant(&cmd.v_(argidx)));
-                                    }
-                                    n.call(GodotString::from_str(&method), &argv);
-                                    godot_print!("CALLED {} . {}", path, method);
-                                },
-                                None => {
-                                    godot_print!(
-                                        "Couldn't find godot node in gd_call: {}",
-                                        path);
-                                },
-                            }
+                        let mut node = unsafe {
+                            owner.get_node(NodePath::from_str(&path)).map(|n| n.assume_safe())
+                        };
+
+                        match node {
+                            Some(mut n) => {
+                                let mut argv = vec![];
+                                for argidx in 3..cmd.len() {
+                                    argv.push(vval2variant(&cmd.v_(argidx)));
+                                }
+                                n.call(GodotString::from_str(&method), &argv);
+                                godot_print!("CALLED {} . {}", path, method);
+                            },
+                            None => {
+                                godot_print!(
+                                    "Couldn't find godot node in gd_call: {}",
+                                    path);
+                            },
                         }
                     },
                     _ => {
@@ -231,10 +241,11 @@ impl SystemMap {
 
     }
 
-    fn get_entities_node(&mut self, mut owner: Spatial) -> Spatial {
+    fn get_entities_node(&mut self, mut owner: Spatial) -> TRef<Spatial, Shared> {
         unsafe {
             owner.get_node(NodePath::from_str("entities"))
                  .expect("Find 'entities' node")
+                 .assume_safe()
                  .cast::<Spatial>()
                  .unwrap()
         }
@@ -249,13 +260,14 @@ impl SystemMap {
 
             self.handle_commands(sscg, &mut owner, delta);
 
-            unsafe {
-                for i in 0..entities.get_child_count() {
-                    let mut ent = entities.get_child(i).unwrap();
-                    if ent.get(GodotString::from_str("selected")).to_bool() {
-                        ent.set(GodotString::from_str("selected"), Variant::from_i64(0));
-                        println!("GOT SELECTION: {}", i);
-                    }
+            for i in 0..entities.get_child_count() {
+                let mut ent = unsafe {
+                    entities.get_child(i).unwrap().assume_safe()
+                };
+
+                if ent.get(GodotString::from_str("selected")).to_bool() {
+                    ent.set(GodotString::from_str("selected"), Variant::from_i64(0));
+                    println!("GOT SELECTION: {}", i);
                 }
             }
 
@@ -267,12 +279,12 @@ impl SystemMap {
         };
 
         if load_entity_state {
-            unsafe {
-                for i in 0..entities.get_child_count() {
-                    let mut ent = entities.get_child(i).unwrap();
-                    println!("LES {}", i);
-                    ent.call(GodotString::from_str("on_wlambda_init"), &vec![]);
-                }
+            for i in 0..entities.get_child_count() {
+                let mut ent = unsafe {
+                    entities.get_child(i).unwrap().assume_safe()
+                };
+                println!("LES {}", i);
+                ent.call(GodotString::from_str("on_wlambda_init"), &vec![]);
             }
         }
     }

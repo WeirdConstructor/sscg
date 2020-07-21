@@ -58,119 +58,110 @@ fn draw_cmds(xxo: i32, yyo: i32,
                 std::mem::replace(&mut cache[*id], my_cmds);
             },
             DrawCmd::Texture { txt_idx, x, y, w, h, centered } => {
-                unsafe {
-                    let txt = textures[*txt_idx].assume_safe();
-                    let sz  = txt.get_size();
+                let txt = unsafe { textures[*txt_idx].assume_safe() };
+                let sz  = txt.get_size();
 
-                    let xo = if *centered { -(sz.x / 2.0) } else { 0.0 };
-                    let yo = if *centered { -(sz.y / 2.0) } else { 0.0 };
+                let xo = if *centered { -(sz.x / 2.0) } else { 0.0 };
+                let yo = if *centered { -(sz.y / 2.0) } else { 0.0 };
 
-                    let w = if *w == 0 { sz.x } else { *w as f32 };
-                    let h = if *h == 0 { sz.y } else { *h as f32 };
+                let w = if *w == 0 { sz.x } else { *w as f32 };
+                let h = if *h == 0 { sz.y } else { *h as f32 };
 
-                    let aspect = if sz.y > 0.0 { sz.x / sz.y } else { 1.0 };
-                    let min_edge = w.min(h);
-                    let (w, h) =
-                        if sz.x > sz.y {
-                            ((sz.x / sz.y) * min_edge, min_edge)
-                        } else {
-                            (min_edge, (sz.y / sz.x) * min_edge)
-                        };
+                let aspect = if sz.y > 0.0 { sz.x / sz.y } else { 1.0 };
+                let min_edge = w.min(h);
+                let (w, h) =
+                    if sz.x > sz.y {
+                        ((sz.x / sz.y) * min_edge, min_edge)
+                    } else {
+                        (min_edge, (sz.y / sz.x) * min_edge)
+                    };
 
-                    n.draw_texture_rect(
-                        txt,
-                        rect(xo + (xxo + *x) as f32,
-                             yo + (yyo + *y) as f32,
-                             w,
-                             h),
-                        false,
-                        Color::rgba(1.0, 1.0, 1.0, 1.0),
-                        false,
-                        Null::null());
-                }
+                n.draw_texture_rect(
+                    txt,
+                    rect(xo + (xxo + *x) as f32,
+                         yo + (yyo + *y) as f32,
+                         w,
+                         h),
+                    false,
+                    Color::rgba(1.0, 1.0, 1.0, 1.0),
+                    false,
+                    Null::null());
             },
             DrawCmd::Text { txt, align, color, x, y, w, fs } => {
-                unsafe {
-                    let font : &DynamicFont =
+                let font : TRef<DynamicFont, Shared> =
+                    unsafe {
                         match fs {
-                            FontSize::Normal => &fh.main_font,
-                            FontSize::Small  => &fh.small_font,
-                        };
-                    let size = font.get_string_size(GodotString::from(txt));
-
-                    let xo =
-                        if *w as f32 > size.x  {
-                            match *align {
-                                1  => 0.0,
-                                0  => (*w as f32 - size.x) / 2.0,
-                                -1 => (*w as f32 - size.x),
-                                _  => 0.0,
-                            }
-                        } else {
-                            0.0
-                        };
-                    n.draw_string(
-                        *font,
-                        vec2(xxo as f32 + xo + *x as f32,
-                             yyo as f32 + *y as f32
-                             + font.get_ascent() as f32),
-                        GodotString::from_str(txt),
-                        c2c(*color),
-                        *w as i64);
-                }
+                            FontSize::Normal => fh.main_font.assume_safe(),
+                            FontSize::Small  => fh.small_font.assume_safe(),
+                        }
+                    };
+                let size = font.get_string_size(GodotString::from(txt));
+                let xo =
+                    if *w as f32 > size.x  {
+                        match *align {
+                            1  => 0.0,
+                            0  => (*w as f32 - size.x) / 2.0,
+                            -1 => (*w as f32 - size.x),
+                            _  => 0.0,
+                        }
+                    } else {
+                        0.0
+                    };
+                n.draw_string(
+                    font,
+                    vec2(xxo as f32 + xo + *x as f32,
+                         yyo as f32 + *y as f32
+                         + font.get_ascent() as f32),
+                    GodotString::from_str(txt),
+                    c2c(*color),
+                    *w as i64);
             },
             DrawCmd::Circle { x, y, r, color } => {
-                unsafe {
-                    println!("CIRCLE: {},{},{} : {:?}", x, y, r, color);
-                    n.draw_circle(
-                        vec2((xxo + *x) as f32,
-                             (yyo + *y) as f32),
-                        *r as f64,
-                        c2c(*color));
-                }
+                println!("CIRCLE: {},{},{} : {:?}", x, y, r, color);
+                n.draw_circle(
+                    vec2((xxo + *x) as f32,
+                         (yyo + *y) as f32),
+                    *r as f64,
+                    c2c(*color));
             },
             DrawCmd::FilledCircle { x, y, r, color } => {
-                unsafe {
-                    n.draw_circle(
-                        vec2((xxo + *x) as f32,
-                             (yyo + *y) as f32),
-                        *r as f64,
-                        c2c(*color));
-                }
+                n.draw_circle(
+                    vec2((xxo + *x) as f32,
+                         (yyo + *y) as f32),
+                    *r as f64,
+                    c2c(*color));
             },
             DrawCmd::Line { x, y, x2, y2, t, color } => {
-                unsafe {
-                    n.draw_line(
-                        vec2((xxo + *x) as f32,
-                             (yyo + *y) as f32),
-                        vec2((xxo + *x2) as f32,
-                             (yyo + *y2) as f32),
-                        c2c(*color),
-                        *t as f64,
-                        true);
-                }
+                n.draw_line(
+                    vec2((xxo + *x) as f32,
+                         (yyo + *y) as f32),
+                    vec2((xxo + *x2) as f32,
+                         (yyo + *y2) as f32),
+                    c2c(*color),
+                    *t as f64,
+                    true);
             },
             DrawCmd::Rect { x, y, w, h, color } => {
-                unsafe {
-                    n.draw_rect(
-                        rect((xxo + *x) as f32,
-                             (yyo + *y) as f32,
-                             *w as f32,
-                             *h as f32),
-                        c2c(*color),
-                        false);
-                }
+                n.draw_rect(
+                    rect((xxo + *x) as f32,
+                         (yyo + *y) as f32,
+                         *w as f32,
+                         *h as f32),
+                    c2c(*color),
+                    false,
+                    0.0,
+                    true);
             },
             DrawCmd::FilledRect { x, y, w, h, color } => {
-                unsafe {
-                    n.draw_rect(
-                        rect((xxo + *x) as f32,
-                             (yyo + *y) as f32,
-                             *w as f32,
-                             *h as f32),
-                        c2c(*color),
-                        true);
-                }
+                n.draw_rect(
+                    rect((xxo + *x) as f32,
+                         (yyo + *y) as f32,
+                         *w as f32,
+                         *h as f32),
+                    c2c(*color),
+                    true,
+                    0.0,
+                    true);
             },
             _ => (),
         }

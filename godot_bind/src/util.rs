@@ -48,16 +48,16 @@ pub fn vval2variant(v: &VVal) -> Variant {
             for (i, _) in v.iter() {
                 arr.push(&vval2variant(&i));
             }
-            Variant::from_array(&arr)
+            Variant::from_array(&arr.into_shared())
         },
         VVal::Map(_) => {
             let mut dict = Dictionary::new();
             for (v, k) in v.iter() {
-                dict.set(
+                dict.insert(
                     &Variant::from_str(k.unwrap().s_raw()),
                     &vval2variant(&v));
             }
-            Variant::from_dictionary(&dict)
+            Variant::from_dictionary(&dict.into_shared())
         },
         _ => Variant::from_str(v.s_raw()),
     }

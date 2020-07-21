@@ -13,8 +13,8 @@ use std::sync::Arc;
 #[derive(NativeClass)]
 #[inherit(Spatial)]
 pub struct VoxStruct {
-    meshes:           std::vec::Vec<MeshInstance>,
-    collision_shapes: std::vec::Vec<(StaticBody, i64)>,
+    meshes:           std::vec::Vec<Ref<MeshInstance, Shared>>,
+    collision_shapes: std::vec::Vec<(Ref<StaticBody, Shared>, i64)>,
     vol:              Vol<u8>,
     vol_generation:   usize,
     octrees:          std::vec::Vec<Arc<RwLock<Octree<u8>>>>,
@@ -99,7 +99,7 @@ unsafe impl Send for VoxRendResult { }
 
 #[methods]
 impl VoxStruct {
-    fn _init(_owner: Spatial) -> Self {
+    fn new(_owner: &Spatial) -> Self {
         Self {
             meshes:           vec![],
             collision_shapes: vec![],
@@ -157,29 +157,30 @@ impl VoxStruct {
         for z in 0..SUBVOLS {
             for y in 0..SUBVOLS {
                 for x in 0..SUBVOLS {
-                    self.meshes.push(MeshInstance::new());
+                    self.meshes.push(MeshInstance::new().into_shared());
 
                     let mut sb = StaticBody::new();
 
-                    unsafe {
-                        self.meshes[i].set_material_override(Some(voxel_material.clone()));
-                        let mut t = self.meshes[i].get_transform();
-                        t.origin.x = (x * SUBVOL_SIZE) as f32;
-                        t.origin.y = (y * SUBVOL_SIZE) as f32;
-                        t.origin.z = (z * SUBVOL_SIZE) as f32;
-                        self.meshes[i].set_transform(t);
-                        self.meshes[i].set_layer_mask_bit(0, false);
-                        self.meshes[i].set_layer_mask_bit(1, true);
-                        sb.set_transform(t);
+                    let mesh = unsafe {
+                        self.meshes[i].assume_safe()
+                    };
 
-                        owner.add_child(self.meshes[i].cast::<Node>(), false);
+                    mesh.set_material_override(voxel_material.clone());
+                    let mut t = mesh.transform();
+                    t.origin.x = (x * SUBVOL_SIZE) as f32;
+                    t.origin.y = (y * SUBVOL_SIZE) as f32;
+                    t.origin.z = (z * SUBVOL_SIZE) as f32;
+                    mesh.set_transform(t);
+                    mesh.set_layer_mask_bit(0, false);
+                    mesh.set_layer_mask_bit(1, true);
+                    sb.set_transform(t);
 
-                        let sb_obj = Object::from_sys(sb.cast::<Object>().unwrap().to_sys());
-                        let id = sb.create_shape_owner(Some(sb_obj));
-                        self.collision_shapes.push((sb, id));
+                    owner.add_child(mesh, false);
 
-                        owner.add_child(sb.cast::<Node>(), false);
-                    }
+                    let sb_obj = sb.upcast::<Object>();
+                    let id = sb.create_shape_owner(sb_obj);
+                    owner.add_child(sb, false);
+                    self.collision_shapes.push((sb.into_shared(), id));
 
                     self.octrees.push(
                         std::sync::Arc::new(
@@ -331,46 +332,49 @@ impl VoxStruct {
                 self.cursor[2] as usize);
         let v = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
         let mut dict = Dictionary::new();
-        dict.set(&Variant::from_str("material"), &Variant::from_i64(v.color as i64));
-        dict.set(&Variant::from_str("time"),     &Variant::from_f64(1.2));
-        dict.set(&Variant::from_str("x"),        &Variant::from_i64(self.cursor[0] as i64));
-        dict.set(&Variant::from_str("y"),        &Variant::from_i64(self.cursor[1] as i64));
-        dict.set(&Variant::from_str("z"),        &Variant::from_i64(self.cursor[2] as i64));
-        Variant::from_dictionary(&dict)
+        dict.insert(&Variant::from_str("material"), &Variant::from_i64(v.color as i64));
+        dict.insert(&Variant::from_str("time"),     &Variant::from_f64(1.2));
+        dict.insert(&Variant::from_str("x"),        &Variant::from_i64(self.cursor[0] as i64));
+        dict.insert(&Variant::from_str("y"),        &Variant::from_i64(self.cursor[1] as i64));
+        dict.insert(&Variant::from_str("z"),        &Variant::from_i64(self.cursor[2] as i64));
+        Variant::from_dictionary(&dict.into_shared())
     }
 
     #[export]
     fn looking_at(&mut self, owner: Spatial, x: f64, y: f64, z: f64) -> bool {
-        unsafe {
-            let mut c =
-                owner.get_child(0)
-                     .and_then(|n| n.cast::<Spatial>())
-                     .unwrap();
-            let mut c2 =
-                owner.get_child(1)
-                     .and_then(|n| n.cast::<Spatial>())
-                     .unwrap();
+        let mut c = unsafe {
+            owner.get_child(0)
+                 .map(|n| n.assume_safe())
+                 .and_then(|n| n.cast::<Spatial>())
+                 .unwrap()
+        };
+        let mut c2 = unsafe {
+            owner.get_child(1)
+                 .map(|n| n.assume_safe())
+                 .and_then(|n| n.cast::<Spatial>())
+                 .unwrap()
+        };
 
-            let mut t = c.get_transform();
-            t.origin.x = x.floor() as f32 + 0.5;
-            t.origin.y = y.floor() as f32 + 0.5;
-            t.origin.z = z.floor() as f32 + 0.5;
-            c.set_transform(t);
-            c2.set_transform(t);
+        let mut t = c.transform();
+        t.origin.x = x.floor() as f32 + 0.5;
+        t.origin.y = y.floor() as f32 + 0.5;
+        t.origin.z = z.floor() as f32 + 0.5;
+        c.set_transform(t);
+        c2.set_transform(t);
 
-            self.cursor = [
-                t.origin.x as u16,
-                t.origin.y as u16,
-                t.origin.z as u16,
-            ];
+        self.cursor = [
+            t.origin.x as u16,
+            t.origin.y as u16,
+            t.origin.z as u16,
+        ];
 
-            let (ot, pos) =
-                self.get_octree_at(
-                    self.cursor[0] as usize,
-                    self.cursor[1] as usize,
-                    self.cursor[2] as usize);
-            let v = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
-            v.color != 0
+        let (ot, pos) =
+            self.get_octree_at(
+                self.cursor[0] as usize,
+                self.cursor[1] as usize,
+                self.cursor[2] as usize);
+        let v = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
+        v.color != 0
 
 //            {
 //                let (ot, pos) =
@@ -385,43 +389,44 @@ impl VoxStruct {
 //                    c.show();
 //                }
 //            }
-        }
     }
 
     #[export]
     fn set_marker_status(&mut self, owner: Spatial, show: bool, mining: bool) {
-        unsafe {
-            let mut looking_cursor =
-                owner.get_child(0)
-                     .and_then(|n| n.cast::<Spatial>())
-                     .unwrap();
-            let mut mining_cursor =
-                owner.get_child(1)
-                     .and_then(|n| n.cast::<Spatial>())
-                     .unwrap();
+        let mut looking_cursor = unsafe {
+            owner.get_child(0)
+                 .map(|n| n.assume_safe())
+                 .and_then(|n| n.cast::<Spatial>())
+                 .unwrap()
+        };
+        let mut mining_cursor = unsafe {
+            owner.get_child(1)
+                 .map(|n| n.assume_safe())
+                 .and_then(|n| n.cast::<Spatial>())
+                 .unwrap()
+        };
 
-            if show {
-                if mining {
-                    looking_cursor.hide();
-                    mining_cursor.show();
-                } else {
-                    looking_cursor.show();
-                    mining_cursor.hide();
-                }
-            } else {
+        if show {
+            if mining {
                 looking_cursor.hide();
+                mining_cursor.show();
+            } else {
+                looking_cursor.show();
                 mining_cursor.hide();
             }
+        } else {
+            looking_cursor.hide();
+            mining_cursor.hide();
         }
     }
 
     fn parent_info(&self, owner: &mut Spatial) -> (VVal, VVal) {
         unsafe {
             let sysid =
-                owner.get_parent().unwrap().get(
+                owner.get_parent().unwrap().assume_safe().get(
                     GodotString::from_str("system_id")).to_i64();
             let entid =
-                owner.get_parent().unwrap().get(
+                owner.get_parent().unwrap().assume_safe().get(
                     GodotString::from_str("entity_id")).to_i64();
             (VVal::Int(sysid), VVal::Int(entid))
         }
@@ -431,39 +436,42 @@ impl VoxStruct {
     fn spawn_mine_pop_at_cursor(&mut self, owner: Spatial, color: u8) {
         use palette::Hsv;
         use palette::rgb::Rgb;
-        unsafe {
-            let mut part =
-                owner.get_child(2)
-                     .and_then(|n| n.cast::<Particles>())
-                     .unwrap();
+        let mut part = unsafe {
+            owner.get_child(2)
+                 .map(|n| n.assume_safe())
+                 .and_then(|n| n.cast::<Particles>())
+                 .unwrap()
+        };
 
-            let mut m = part.get_material_override().unwrap()
-                            .cast::<SpatialMaterial>().unwrap();
-            let cm = self.color_map;
-            let mut clr = cm.map(color);
-            let mut fx_color : Rgb = Rgb::new(clr.r, clr.g, clr.b);
-            let mut fx_color_hsv : Hsv = fx_color.into();
-            fx_color_hsv.saturation = 1.0;
-            fx_color_hsv.value = 0.7;
-            fx_color = fx_color_hsv.into();
-            clr.r = fx_color.red;
-            clr.g = fx_color.green;
-            clr.b = fx_color.blue;
-            m.set_albedo(clr);
-            m.set_emission(clr);
-            part.set_material_override(m.cast::<Material>());
+        let mut m = unsafe {
+            part.material_override().unwrap()
+                .assume_safe()
+                .cast::<SpatialMaterial>().unwrap()
+        };
+        let cm = self.color_map;
+        let mut clr = cm.map(color);
+        let mut fx_color : Rgb = Rgb::new(clr.r, clr.g, clr.b);
+        let mut fx_color_hsv : Hsv = fx_color.into();
+        fx_color_hsv.saturation = 1.0;
+        fx_color_hsv.value = 0.7;
+        fx_color = fx_color_hsv.into();
+        clr.r = fx_color.red;
+        clr.g = fx_color.green;
+        clr.b = fx_color.blue;
+        m.set_albedo(clr);
+        m.set_emission(clr);
+        part.set_material_override(m);
 
-            let mut t = part.get_transform();
-            t.origin.x = self.cursor[0] as f32 + 0.5;
-            t.origin.y = self.cursor[1] as f32 + 0.5;
-            t.origin.z = self.cursor[2] as f32 + 0.5;
-            part.set_transform(t);
+        let mut t = part.transform();
+        t.origin.x = self.cursor[0] as f32 + 0.5;
+        t.origin.y = self.cursor[1] as f32 + 0.5;
+        t.origin.z = self.cursor[2] as f32 + 0.5;
+        part.set_transform(t);
 
-            part.show();
-            part.set_one_shot(true);
-            part.set_emitting(true);
-            part.restart();
-        }
+        part.show();
+        part.set_one_shot(true);
+        part.set_emitting(true);
+        part.restart();
     }
 
     #[export]
@@ -557,29 +565,29 @@ impl VoxStruct {
             let d = std::time::Instant::now();
             let (mut static_body, shape_owner_idx) =
                 self.collision_shapes[oct_subtree_idx];
-            unsafe {
-                let mut am = ArrayMesh::new();
-                let mut cvshape = ConcavePolygonShape::new();
+            let mut static_body = unsafe { static_body.assume_safe() };
+            let mut am = ArrayMesh::new();
+            let mut cvshape = ConcavePolygonShape::new();
 
-                let mut ssb = static_body.cast::<StaticBody>().unwrap();
-                ssb.shape_owner_clear_shapes(shape_owner_idx);
+            let mut ssb = static_body.cast::<StaticBody>().unwrap();
+            ssb.shape_owner_clear_shapes(shape_owner_idx);
 
-                if let Some(rend_arrs) = arrs {
-                    rend_arrs.write_to(&mut am, &mut cvshape);
+            let mesh = unsafe { self.meshes[oct_subtree_idx].assume_safe() };
 
-                    if cvshape.get_faces().len() > 0 {
-                        ssb.shape_owner_add_shape(
-                            shape_owner_idx,
-                            cvshape.cast::<Shape>());
-                    }
-                    self.meshes[oct_subtree_idx].set_mesh(am.cast::<Mesh>());
-                    self.meshes[oct_subtree_idx].show();
-                    static_body.show();
-                } else {
-                    self.meshes[oct_subtree_idx].set_mesh(am.cast::<Mesh>());
-                    self.meshes[oct_subtree_idx].hide();
-                    static_body.hide();
+            if let Some(rend_arrs) = arrs {
+                let mut cvshape = unsafe { cvshape.into_shared().assume_safe() };
+                rend_arrs.write_to(&mut am, &mut cvshape);
+
+                if cvshape.faces().len() > 0 {
+                    ssb.shape_owner_add_shape(shape_owner_idx, cvshape);
                 }
+                mesh.set_mesh(am);
+                mesh.show();
+                static_body.show();
+            } else {
+                mesh.set_mesh(am);
+                mesh.hide();
+                static_body.hide();
             }
 
             if self.workers.queued_job_count() == 0 {
