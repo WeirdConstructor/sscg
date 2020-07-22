@@ -44,14 +44,14 @@ pub fn vval2variant(v: &VVal) -> Variant {
         VVal::Int(i) => Variant::from_i64(*i),
         VVal::Flt(i) => Variant::from_f64(*i),
         VVal::Lst(_) => {
-            let mut arr = VariantArray::new();
+            let arr = VariantArray::new();
             for (i, _) in v.iter() {
                 arr.push(&vval2variant(&i));
             }
             Variant::from_array(&arr.into_shared())
         },
         VVal::Map(_) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             for (v, k) in v.iter() {
                 dict.insert(
                     &Variant::from_str(k.unwrap().s_raw()),

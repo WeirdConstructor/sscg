@@ -60,7 +60,7 @@ impl SystemMap {
     }
 
     #[export]
-    fn wl_cb(&mut self, _owner: Spatial, cb_name: String, v: Variant) -> Variant {
+    fn wl_cb(&mut self, _owner: &Spatial, cb_name: String, v: Variant) -> Variant {
         lock_sscg!(sscg);
         let vv = variant2vval(&v);
         let mut args = vec![];
@@ -87,7 +87,7 @@ impl SystemMap {
     }
 
     #[export]
-    fn _ready(&mut self, mut _owner: Spatial) {
+    fn _ready(&mut self, mut _owner: &Spatial) {
         dbg!("READY SystemMap");
 //        let mut f = File::new();
 //        f.open(GodotString::from_str("res://test.txt"), 1)
@@ -105,7 +105,7 @@ impl SystemMap {
         sscg.call_cb("on_ready", &vec![]);
     }
 
-    fn update_stations(&mut self, sscg: &mut SSCGState, mut entities: TRef<Spatial, Shared>) {
+    fn update_stations(&mut self, sscg: &mut SSCGState, entities: TRef<Spatial, Shared>) {
         if !sscg.update_stations { return; }
 
         let vvship = sscg.state.get_key("ship").unwrap_or(VVal::None);
@@ -128,16 +128,15 @@ impl SystemMap {
                         .expect("Entry for this entity")
                         .assume_safe()
                 };
-                let mut ins = unsafe {
+                let ins = unsafe {
                     tmpl
                     .instance(0)
                     .expect("Instance in Spatial")
                     .assume_safe()
                 };
-                let mut ins =
-                    ins
-                    .cast::<Spatial>()
-                    .expect("Scene must be a Spatial");
+                let ins =
+                    ins.cast::<Spatial>()
+                       .expect("Scene must be a Spatial");
                 let v = vec3(x as f32, 1.0, y as f32);
                 ins.set(
                     GodotString::from_str("label_name"),
@@ -157,10 +156,10 @@ impl SystemMap {
         sscg.update_stations = false;
     }
 
-    fn handle_commands(&mut self, sscg: &mut SSCGState, owner: &mut Spatial, delta: f64) {
+    fn handle_commands(&mut self, sscg: &mut SSCGState, owner: &Spatial, delta: f64) {
         let vvship = sscg.state.v_k("ship").v_k("_data");
 
-        let mut ship = unsafe {
+        let ship = unsafe {
             owner.get_node(NodePath::from_str("ship"))
             .expect("Find 'ship' node")
             .assume_safe()
@@ -196,12 +195,12 @@ impl SystemMap {
                     "gd_call" => {
                         let path   = cmd.v_s_raw(1);
                         let method = cmd.v_s_raw(2);
-                        let mut node = unsafe {
+                        let node = unsafe {
                             owner.get_node(NodePath::from_str(&path)).map(|n| n.assume_safe())
                         };
 
                         match node {
-                            Some(mut n) => {
+                            Some(n) => {
                                 let mut argv = vec![];
                                 for argidx in 3..cmd.len() {
                                     argv.push(vval2variant(&cmd.v_(argidx)));
@@ -241,27 +240,29 @@ impl SystemMap {
 
     }
 
-    fn get_entities_node(&mut self, mut owner: Spatial) -> TRef<Spatial, Shared> {
+    fn get_entities_node(&mut self, owner: &Spatial) -> Ref<Spatial, Shared> {
         unsafe {
             owner.get_node(NodePath::from_str("entities"))
                  .expect("Find 'entities' node")
                  .assume_safe()
                  .cast::<Spatial>()
                  .unwrap()
+                 .claim()
         }
     }
 
     #[export]
-    fn _process(&mut self, mut owner: Spatial, delta: f64) {
+    fn _process(&mut self, owner: &Spatial, delta: f64) {
         let entities = self.get_entities_node(owner);
 
         let load_entity_state = {
             lock_sscg!(sscg);
 
-            self.handle_commands(sscg, &mut owner, delta);
+            self.handle_commands(sscg, owner, delta);
 
+            let entities = unsafe { entities.assume_safe() };
             for i in 0..entities.get_child_count() {
-                let mut ent = unsafe {
+                let ent = unsafe {
                     entities.get_child(i).unwrap().assume_safe()
                 };
 
@@ -279,8 +280,9 @@ impl SystemMap {
         };
 
         if load_entity_state {
+            let entities = unsafe { entities.assume_safe() };
             for i in 0..entities.get_child_count() {
-                let mut ent = unsafe {
+                let ent = unsafe {
                     entities.get_child(i).unwrap().assume_safe()
                 };
                 println!("LES {}", i);

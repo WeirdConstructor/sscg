@@ -17,7 +17,7 @@ use gdnative::prelude::*;
 use gdnative::api::*;
 use euclid::rect;
 use euclid::vec2;
-use euclid::Vector2D;
+//use euclid::Vector2D;
 use crate::gui::tree_painter::{DrawCmd, FontSize};
 use crate::gui::widgets::*;
 use state::*;
@@ -39,7 +39,7 @@ unsafe impl Send for GUIPaintNode { }
 
 fn draw_cmds(xxo: i32, yyo: i32,
              cache: &mut std::vec::Vec<Option<std::vec::Vec<DrawCmd>>>,
-             n: &mut Node2D,
+             n: &Node2D,
              fh: &FontHolder,
              textures: &[Ref<Texture, Shared>],
              cmds: &[DrawCmd])
@@ -67,7 +67,7 @@ fn draw_cmds(xxo: i32, yyo: i32,
                 let w = if *w == 0 { sz.x } else { *w as f32 };
                 let h = if *h == 0 { sz.y } else { *h as f32 };
 
-                let aspect = if sz.y > 0.0 { sz.x / sz.y } else { 1.0 };
+                let _aspect = if sz.y > 0.0 { sz.x / sz.y } else { 1.0 };
                 let min_edge = w.min(h);
                 let (w, h) =
                     if sz.x > sz.y {
@@ -181,11 +181,11 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn _ready(&mut self, _owner: Node2D) {
+    fn _ready(&mut self, _owner: &Node2D) {
     }
 
     #[export]
-    fn on_resize(&mut self, mut s: Node2D, w: f64, h: f64) {
+    fn on_resize(&mut self, s: &Node2D, w: f64, h: f64) {
         lock_sscg!(sscg);
 
         self.w = w as i64;
@@ -196,7 +196,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn on_mouse_release(&mut self, mut s: Node2D, x: f64, y: f64) {
+    fn on_mouse_release(&mut self, _s: &Node2D, _x: f64, _y: f64) {
         lock_sscg!(sscg);
 
         if let Some((win_id, _, _)) = self.num_input {
@@ -208,7 +208,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn on_mouse_click(&mut self, mut s: Node2D, x: f64, y: f64) {
+    fn on_mouse_click(&mut self, s: &Node2D, x: f64, y: f64) {
         lock_sscg!(sscg);
 
         let mut numeric_input_start  = false;
@@ -236,7 +236,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn on_mouse_move(&mut self, mut s: Node2D, x: f64, y: f64,
+    fn on_mouse_move(&mut self, s: &Node2D, x: f64, y: f64,
                      button1_pressed: bool,
                      button2_pressed: bool,
                      mod1: bool,
@@ -278,7 +278,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn on_input(&mut self, mut s: Node2D, character: i64) {
+    fn on_input(&mut self, s: &Node2D, character: i64) {
         lock_sscg!(sscg);
 
         if character > 0 {
@@ -304,7 +304,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn _process(&mut self, mut s: Node2D, _delta: f64) {
+    fn _process(&mut self, s: &Node2D, _delta: f64) {
         lock_sscg!(sscg);
 
         let acts = sscg.wm.borrow_mut().get_activated_childs();
@@ -326,7 +326,7 @@ impl GUIPaintNode {
     }
 
     #[export]
-    fn _draw(&mut self, mut s: Node2D) {
+    fn _draw(&mut self, s: &Node2D) {
         lock_sscg!(sscg);
 
         if self.textures.is_none() {
@@ -359,14 +359,14 @@ impl GUIPaintNode {
             |win| win.draw(win.id, self.w as u32, self.h as u32, tp));
         let fh_rc = sscg.fonts.clone();
         //d// println!("DRAW CMDS {:?}", tp.ref_cmds());
-        draw_cmds(0, 0, &mut self.cache, &mut s, &*fh_rc,
+        draw_cmds(0, 0, &mut self.cache, s, &*fh_rc,
                   &self.textures.as_ref().expect("Textures loaded"),
                   tp.ref_cmds());
         sscg.wm.borrow_mut().redraw_done();
     }
 }
 
-fn terminate(_options: *mut gdnative::sys::godot_gdnative_terminate_options) {
+fn terminate(_options: &gdnative::TerminateInfo) {
     dbg!("*** terminate sscg native");
 }
 

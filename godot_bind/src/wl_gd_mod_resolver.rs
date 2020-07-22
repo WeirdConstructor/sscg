@@ -29,7 +29,7 @@ impl ModuleResolver for GodotModuleResolver {
         let mut ctx = EvalContext::new(genv);
         let pth = path.join("/");
 
-        let mut f = File::new();
+        let f = File::new();
         let mod_path = format!("res://gamelib/{}.wl", pth.clone());
         match f.open(GodotString::from_str(&mod_path), 1)
         {

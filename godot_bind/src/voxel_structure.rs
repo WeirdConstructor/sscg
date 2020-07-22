@@ -116,9 +116,9 @@ impl VoxStruct {
     }
 
     #[export]
-    fn on_wlambda_init(&mut self, mut owner: Spatial) {
+    fn on_wlambda_init(&mut self, owner: &Spatial) {
         let d = std::time::Instant::now();
-        let (sysid, entid) = self.parent_info(&mut owner);
+        let (sysid, entid) = self.parent_info(owner);
         lock_sscg!(sscg);
         let ret = sscg.call_cb("on_draw_voxel_structure", &vec![sysid, entid]);
         if !ret.is_none() {
@@ -144,8 +144,8 @@ impl VoxStruct {
     }
 
     #[export]
-    fn _ready(&mut self, mut owner: Spatial) {
-        use wlambda::util::*;
+    fn _ready(&mut self, owner: &Spatial) {
+        //use wlambda::util::*;
 
         let voxel_material =
             ResourceLoader::godot_singleton().load(
@@ -159,7 +159,6 @@ impl VoxStruct {
                 for x in 0..SUBVOLS {
                     self.meshes.push(MeshInstance::new().into_shared());
 
-                    let mut sb = StaticBody::new();
 
                     let mesh = unsafe {
                         self.meshes[i].assume_safe()
@@ -173,14 +172,20 @@ impl VoxStruct {
                     mesh.set_transform(t);
                     mesh.set_layer_mask_bit(0, false);
                     mesh.set_layer_mask_bit(1, true);
+
+                    let sb = StaticBody::new();
                     sb.set_transform(t);
 
                     owner.add_child(mesh, false);
 
-                    let sb_obj = sb.upcast::<Object>();
-                    let id = sb.create_shape_owner(sb_obj);
-                    owner.add_child(sb, false);
-                    self.collision_shapes.push((sb.into_shared(), id));
+                    let sb      = sb.into_shared();
+                    let sbref   = unsafe { sb.assume_safe() };
+                    let sbref2  = unsafe { sb.assume_safe() };
+
+                    let sb_obj = sbref2.upcast::<Object>();
+                    let id = sbref.create_shape_owner(sb_obj);
+                    owner.add_child(sbref, false);
+                    self.collision_shapes.push((sb, id));
 
                     self.octrees.push(
                         std::sync::Arc::new(
@@ -226,7 +231,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn load_vol(&mut self, mut _owner: Spatial) {
+    fn load_vol(&mut self, mut _owner: &Spatial) {
         self.last_load_vol = std::time::Instant::now();
 
         for z in 0..SUBVOLS {
@@ -324,7 +329,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn mine_info_at_cursor(&mut self, mut _owner: Spatial) -> Variant {
+    fn mine_info_at_cursor(&mut self, mut _owner: &Spatial) -> Variant {
         let (ot, pos) =
             self.get_octree_at(
                 self.cursor[0] as usize,
@@ -341,7 +346,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn looking_at(&mut self, owner: Spatial, x: f64, y: f64, z: f64) -> bool {
+    fn looking_at(&mut self, owner: &Spatial, x: f64, y: f64, z: f64) -> bool {
         let mut c = unsafe {
             owner.get_child(0)
                  .map(|n| n.assume_safe())
@@ -392,7 +397,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn set_marker_status(&mut self, owner: Spatial, show: bool, mining: bool) {
+    fn set_marker_status(&mut self, owner: &Spatial, show: bool, mining: bool) {
         let mut looking_cursor = unsafe {
             owner.get_child(0)
                  .map(|n| n.assume_safe())
@@ -420,7 +425,7 @@ impl VoxStruct {
         }
     }
 
-    fn parent_info(&self, owner: &mut Spatial) -> (VVal, VVal) {
+    fn parent_info(&self, owner: &Spatial) -> (VVal, VVal) {
         unsafe {
             let sysid =
                 owner.get_parent().unwrap().assume_safe().get(
@@ -433,7 +438,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn spawn_mine_pop_at_cursor(&mut self, owner: Spatial, color: u8) {
+    fn spawn_mine_pop_at_cursor(&mut self, owner: &Spatial, color: u8) {
         use palette::Hsv;
         use palette::rgb::Rgb;
         let mut part = unsafe {
@@ -475,7 +480,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn mine_status(&mut self, mut owner: Spatial, started: bool) -> bool {
+    fn mine_status(&mut self, mut owner: &Spatial, started: bool) -> bool {
         let (ot, pos) =
             self.get_octree_at(
                 self.cursor[0] as usize,
@@ -483,7 +488,7 @@ impl VoxStruct {
                 self.cursor[2] as usize);
         let m = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
 
-        let (sysid, entid) = self.parent_info(&mut owner);
+        let (sysid, entid) = self.parent_info(owner);
         lock_sscg!(sscg);
         let ret = sscg.call_cb(
             "on_mine",
@@ -499,7 +504,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn mine_at_cursor(&mut self, mut owner: Spatial) -> bool {
+    fn mine_at_cursor(&mut self, mut owner: &Spatial) -> bool {
         // Prevent any change of the volume while it's being rerendered.
         if self.workers.queued_job_count() > 0 {
             return false;
@@ -521,7 +526,7 @@ impl VoxStruct {
                 self.cursor[2] as usize);
 
             lock_sscg!(sscg);
-            let (sysid, entid) = self.parent_info(&mut owner);
+            let (sysid, entid) = self.parent_info(owner);
             sscg.call_cb(
                 "on_mined_voxel",
                 &vec![sysid, entid,
@@ -540,12 +545,12 @@ impl VoxStruct {
     }
 
     #[export]
-    fn looking_at_nothing(&mut self, owner: Spatial) {
+    fn looking_at_nothing(&mut self, owner: &Spatial) {
         self.set_marker_status(owner, false, false);
     }
 
     #[export]
-    fn _process(&mut self, mut _owner: Spatial, _delta: f64) {
+    fn _process(&mut self, mut _owner: &Spatial, _delta: f64) {
         self.wait_for_mesh_rendering();
     }
 
@@ -554,7 +559,7 @@ impl VoxStruct {
         let mut max = 5;
         while let Some(VoxRendResult {
                             arrs, oct_subtree_idx,
-                            empty, vol_generation })
+                            empty: _, vol_generation })
             = self.workers.get_result()
         {
 
@@ -562,7 +567,7 @@ impl VoxStruct {
                 continue;
             }
 
-            let d = std::time::Instant::now();
+            let _d = std::time::Instant::now();
             let (mut static_body, shape_owner_idx) =
                 self.collision_shapes[oct_subtree_idx];
             let mut static_body = unsafe { static_body.assume_safe() };

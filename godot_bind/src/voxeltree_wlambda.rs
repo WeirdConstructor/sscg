@@ -268,7 +268,7 @@ impl VoxelPainter {
     }
 
     pub fn fill_noise(
-        &mut self, vol_id: usize, mask: usize,
+        &mut self, vol_id: usize, _mask: usize,
         rect: Rect,
         seed: i64, noise_size: usize, noise_scale: f64, op: DrawOp)
     {
@@ -300,7 +300,7 @@ impl VoxelPainter {
     }
 
     pub fn sample_fbm(
-        &mut self, vol_id: usize, mask: usize,
+        &mut self, vol_id: usize, _mask: usize,
         rect: Rect,
         seed: i64,
         noise_size: usize,
@@ -337,7 +337,7 @@ impl VoxelPainter {
         }
     }
 
-    pub fn fill(&mut self, vol_id: usize, mask: usize,
+    pub fn fill(&mut self, vol_id: usize, _mask: usize,
                 rect: Rect, val: f64)
     {
         self.volumes[vol_id].fill(
@@ -351,6 +351,7 @@ impl VoxelPainter {
     }
 }
 
+#[allow(unused_variables)]
 pub fn new_voxel_painter(id: usize) -> (Rc<RefCell<VoxelPainter>>, VVal) {
     let o = VVal::map();
 
@@ -403,12 +404,12 @@ pub fn new_voxel_painter(id: usize) -> (Rc<RefCell<VoxelPainter>>, VVal) {
         Ok(VVal::Bol(true))
     });
 
-    set_vval_method!(o, painter, clear, Some(0), Some(0), env, _argc, {
+    set_vval_method!(o, painter, clear, Some(0), Some(0), _env, _argc, {
         painter.borrow_mut().clear();
         Ok(VVal::Bol(true))
     });
 
-    set_vval_method!(o, painter, id, Some(0), Some(0), env, _argc, {
+    set_vval_method!(o, painter, id, Some(0), Some(0), _env, _argc, {
         Ok(VVal::Int(id as i64))
     });
 

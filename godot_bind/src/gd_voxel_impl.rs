@@ -88,17 +88,17 @@ impl Face {
 
         for i in 0..4 {
             let idx = tris[i];
-            uvs.set(*vtxlen as i32, &vec2(
+            uvs.set(*vtxlen as i32, vec2(
                 FACE_TRIANGLE_VERTEX_UV[i][0],
                 FACE_TRIANGLE_VERTEX_UV[i][1]));
-            uvs2.set(*vtxlen as i32, &vec2(size as f32, size as f32));
+            uvs2.set(*vtxlen as i32, vec2(size as f32, size as f32));
             let v = vec3(
                 (CUBE_VERTICES[idx][0] * size + offs.x) * scale,
                 (CUBE_VERTICES[idx][1] * size + offs.y) * scale,
                 (CUBE_VERTICES[idx][2] * size + offs.z) * scale);
-            verts.set(*vtxlen as i32, &v);
-            colors.set(*vtxlen as i32, &color);
-            normals.set(*vtxlen as i32, &vec3(normal[0], normal[1], normal[2]));
+            verts.set(*vtxlen as i32, v);
+            colors.set(*vtxlen as i32, color);
+            normals.set(*vtxlen as i32, vec3(normal[0], normal[1], normal[2]));
             *vtxlen += 1;
         }
 
@@ -106,7 +106,7 @@ impl Face {
             let idx = tris[i];
             let tri_vertex_index = *vtxlen as i32 - (4 - idx as i32);
             indices.set(*idxlen as i32, tri_vertex_index);
-            collision_tris.set(*idxlen as i32, &verts.get(tri_vertex_index));
+            collision_tris.set(*idxlen as i32, verts.get(tri_vertex_index));
             *idxlen += 1;
         }
     }
@@ -156,7 +156,7 @@ impl ColorMap {
 }
 
 pub struct RenderedMeshArrays {
-    arr: VariantArray,
+    arr:         VariantArray,
     cvshape_arr: Vector3Array,
 }
 
@@ -166,7 +166,11 @@ impl RenderedMeshArrays {
         am: &mut ArrayMesh,
         cv: &mut ConcavePolygonShape)
     {
-        am.add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, self.arr, VariantArray::new(), 97280);
+        am.add_surface_from_arrays(
+            Mesh::PRIMITIVE_TRIANGLES,
+            self.arr,
+            VariantArray::new().into_shared(),
+            97280);
         cv.set_faces(self.cvshape_arr);
     }
 }
@@ -180,8 +184,6 @@ pub fn render_octree_to_am(cm: &ColorMap, vt: &Octree<u8>) -> RenderedMeshArrays
     let mut colors  = ColorArray::new();
     let mut normals = Vector3Array::new();
     let mut indices = Int32Array::new();
-
-    let vol_size = vt.vol.size;
 
     let mut curr_vert_size : usize = 1 << 4;
     let mut curr_index_size : usize  = 1 << 5;
@@ -281,7 +283,7 @@ pub fn render_octree_to_am(cm: &ColorMap, vt: &Octree<u8>) -> RenderedMeshArrays
     arr.push(&Variant::from_int32_array(&indices));
 
     RenderedMeshArrays {
-        arr: arr,
+        arr:         arr.into_shared(),
         cvshape_arr: va,
     }
 }

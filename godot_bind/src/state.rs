@@ -84,7 +84,7 @@ impl SSCGState {
             let filename = env.arg(0).s_raw();
             let fileurl = format!("res://{}", filename);
 
-            let mut f = File::new();
+            let f = File::new();
             match f.open(GodotString::from_str(fileurl.clone()), 1) {
                 Ok(_) => {
                     Ok(VVal::new_str_mv(f.get_as_text().to_string()))
@@ -100,7 +100,7 @@ impl SSCGState {
 
             let savegame_url = format!("user://{}.json", filename);
 
-            let mut f = File::new();
+            let f = File::new();
             match f.open(GodotString::from_str(savegame_url.clone()), 1) {
                 Ok(_) => {
                     let txt = f.get_as_text().to_string();
@@ -126,7 +126,7 @@ impl SSCGState {
 
             let savegame_url = format!("user://{}.json", filename);
 
-            let mut f = File::new();
+            let f = File::new();
             match f.open(GodotString::from_str(savegame_url.clone()), 2) {
                 Ok(_) => {
                     match state.to_json(false) {
