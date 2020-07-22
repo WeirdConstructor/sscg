@@ -163,8 +163,8 @@ pub struct RenderedMeshArrays {
 impl RenderedMeshArrays {
     pub fn write_to(
         self,
-        am: &mut ArrayMesh,
-        cv: &mut ConcavePolygonShape)
+        am: Ref<ArrayMesh, Unique>,
+        cv: Ref<ConcavePolygonShape, Unique>)
     {
         am.add_surface_from_arrays(
             Mesh::PRIMITIVE_TRIANGLES,

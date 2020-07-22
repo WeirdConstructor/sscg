@@ -178,12 +178,9 @@ impl VoxStruct {
 
                     owner.add_child(mesh, false);
 
-                    let sb      = sb.into_shared();
-                    let sbref   = unsafe { sb.assume_safe() };
-                    let sbref2  = unsafe { sb.assume_safe() };
-
-                    let sb_obj = sbref2.upcast::<Object>();
-                    let id = sbref.create_shape_owner(sb_obj);
+                    let sb     = sb.into_shared();
+                    let sbref  = unsafe { sb.assume_safe() };
+                    let id = sbref.create_shape_owner(sbref);
                     owner.add_child(sbref, false);
                     self.collision_shapes.push((sb, id));
 
@@ -448,10 +445,9 @@ impl VoxStruct {
                  .unwrap()
         };
 
+        let mat_ovr = part.material_override().unwrap();
         let mut m = unsafe {
-            part.material_override().unwrap()
-                .assume_safe()
-                .cast::<SpatialMaterial>().unwrap()
+            mat_ovr.assume_safe().cast::<SpatialMaterial>().unwrap()
         };
         let cm = self.color_map;
         let mut clr = cm.map(color);
@@ -580,8 +576,7 @@ impl VoxStruct {
             let mesh = unsafe { self.meshes[oct_subtree_idx].assume_safe() };
 
             if let Some(rend_arrs) = arrs {
-                let mut cvshape = unsafe { cvshape.into_shared().assume_safe() };
-                rend_arrs.write_to(&mut am, &mut cvshape);
+                rend_arrs.write_to(am, cvshape);
 
                 if cvshape.faces().len() > 0 {
                     ssb.shape_owner_add_shape(shape_owner_idx, cvshape);
