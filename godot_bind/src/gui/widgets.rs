@@ -487,6 +487,7 @@ fn p2r(value: u32, ratio: i32) -> u32 {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(dead_code)]
 pub enum NumericDragRes {
     VeryFine,
     Fine,

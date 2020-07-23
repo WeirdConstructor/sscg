@@ -59,6 +59,7 @@ impl Into<Voxel<FColor>> for f64 {
 
 
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 enum Mask {
     Value { a: f64, b: f64 },
     Area  { x: u16, y: u16, z: u16, w: u16, h: u16, d: u16 },
@@ -91,6 +92,7 @@ impl Rect {
             d: env.arg(offs + 5).i() as u16,
         }
     }
+    #[allow(dead_code)]
     pub fn from_usize(x: usize, y: usize, z: usize, w: usize, h: usize, d: usize) -> Self {
         Self {
             x: x as u16,
@@ -102,6 +104,7 @@ impl Rect {
         }
     }
 
+    #[allow(dead_code)]
     pub fn pos(&self) -> Pos {
         Pos { x: self.x, y: self.y, z: self.z }
     }
@@ -167,7 +170,7 @@ impl DrawOp {
                                    vv.v_f(1), vv.v_f(2),
                                    vv.v_f(3), vv.v_f(4)),
             "min"           => DrawOp::Min(vv.v_f(1)),
-            "max"           => DrawOp::Min(vv.v_f(1)),
+            "max"           => DrawOp::Max(vv.v_f(1)),
             "chain"         => DrawOp::Chain(
                                    Box::new(Self::from_vval(vv.v_(1))),
                                    Box::new(Self::from_vval(vv.v_(2)))),
@@ -278,12 +281,12 @@ impl VoxelPainter {
         for z in 0..rect.d {
             for y in 0..rect.h {
                 for x in 0..rect.w {
-                    let dst_val =
-                        vol.color_at(Pos {
+                    let dst_val : f64 =
+                        (*vol.color_at(Pos {
                             x: rect.x + x,
                             y: rect.y + y,
                             z: rect.z + z,
-                        });
+                        })).into();
                     let src_val =
                         n.at(
                             noise_scale * x as f64 / (rect.w as f64),
@@ -293,7 +296,7 @@ impl VoxelPainter {
                         rect.x + x as u16,
                         rect.y + y as u16,
                         rect.z + z as u16,
-                        op.apply(src_val, (*dst_val).into()).into());
+                        op.apply(src_val, dst_val).into());
                 }
             }
         }
@@ -316,11 +319,11 @@ impl VoxelPainter {
         for z in 0..rect.d {
             for y in 0..rect.h {
                 for x in 0..rect.w {
-                    let dst_val = vol.color_at(Pos {
+                    let dst_val : f64 = (*vol.color_at(Pos {
                         x: rect.x + x as u16,
                         y: rect.y + y as u16,
                         z: rect.z + z as u16,
-                    });
+                    })).into();
                     let src_val =
                         n.at_fbm(
                             noise_scale * (x as f64) / (rect.w as f64),
@@ -331,7 +334,7 @@ impl VoxelPainter {
                         rect.x + x as u16,
                         rect.y + y as u16,
                         rect.z + z as u16,
-                        op.apply(src_val, (*dst_val).into()).into());
+                        op.apply(src_val, dst_val).into());
                 }
             }
         }

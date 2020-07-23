@@ -192,7 +192,7 @@ impl GUIPaintNode {
         self.h = h as i64;
         dbg!("RESIZE {} {}", w, h);
         sscg.wm.borrow_mut().for_each_window(|win| win.does_need_redraw());
-        unsafe { s.update(); }
+        s.update();
     }
 
     #[export]
@@ -231,7 +231,7 @@ impl GUIPaintNode {
         }
 
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
-            unsafe { s.update(); }
+            s.update();
         }
     }
 
@@ -273,7 +273,7 @@ impl GUIPaintNode {
         sscg.wm.borrow_mut().for_each_window_stop_on_true(
             |win| { win.handle_event(WindowEvent::MousePos(x as i32, y as i32)) });
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
-            unsafe { s.update(); }
+            s.update();
         }
     }
 
@@ -299,7 +299,7 @@ impl GUIPaintNode {
                 |win| { win.handle_event(event.clone()) });
         }
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
-            unsafe { s.update(); }
+            s.update();
         }
     }
 
@@ -321,7 +321,7 @@ impl GUIPaintNode {
         }
 
         if sscg.wm.borrow_mut().some_win_needs_redraw(){
-            unsafe { s.update(); }
+            s.update();
         }
     }
 

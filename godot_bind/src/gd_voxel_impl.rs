@@ -163,8 +163,8 @@ pub struct RenderedMeshArrays {
 impl RenderedMeshArrays {
     pub fn write_to(
         self,
-        am: Ref<ArrayMesh, Unique>,
-        cv: Ref<ConcavePolygonShape, Unique>)
+        am: TRef<ArrayMesh, Unique>,
+        cv: TRef<ConcavePolygonShape, Unique>)
     {
         am.add_surface_from_arrays(
             Mesh::PRIMITIVE_TRIANGLES,
@@ -271,7 +271,7 @@ pub fn render_octree_to_am(cm: &ColorMap, vt: &Octree<u8>) -> RenderedMeshArrays
     indices.resize(idxlen as i32);
     va     .resize(idxlen as i32);
 
-    let mut arr = VariantArray::new();
+    let arr = VariantArray::new();
     arr.push(&Variant::from_vector3_array(&verts));
     arr.push(&Variant::from_vector3_array(&normals));
     arr.push(&Variant::new()); // tangent

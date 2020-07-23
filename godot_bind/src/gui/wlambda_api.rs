@@ -145,9 +145,10 @@ impl WindowManager {
             let s = VVal::map();
             let v = VVal::map();
             for (lblref, text) in txts.into_iter() {
-                v.set_key_str(&lblref, VVal::new_str_mv(text));
+                v.set_key_str(&lblref, VVal::new_str_mv(text))
+                 .expect("only 1 user");
             }
-            s.set_key_str("labels", v);
+            s.set_key_str("labels", v).expect("only 1 user");
             s
         } else {
             VVal::None
@@ -174,6 +175,7 @@ impl WindowManager {
         }
     }
 
+    #[allow(dead_code)]
     pub fn new_ref() -> std::rc::Rc<std::cell::RefCell<Self>> {
         std::rc::Rc::new(std::cell::RefCell::new(Self::new()))
     }
@@ -204,6 +206,7 @@ impl WindowManager {
 #[derive(Clone)]
 pub struct WindowManagerWlWrapper(Rc<RefCell<WindowManager>>);
 impl WindowManagerWlWrapper {
+    #[allow(dead_code)]
     pub fn vval_from(r: Rc<RefCell<WindowManager>>) -> VVal {
         VVal::Usr(Box::new(WindowManagerWlWrapper(r)))
     }

@@ -123,17 +123,15 @@ impl SystemMap {
             let y   = pos.v_i(1);
             println!("ENT! {} {},{}", ent.s(), x, y);
             unsafe {
-                let tmpl = unsafe {
+                let tmpl =
                     self.templates.get(&vis)
                         .expect("Entry for this entity")
-                        .assume_safe()
-                };
-                let ins = unsafe {
+                        .assume_safe();
+                let ins =
                     tmpl
                     .instance(0)
                     .expect("Instance in Spatial")
-                    .assume_safe()
-                };
+                    .assume_safe();
                 let ins =
                     ins.cast::<Spatial>()
                        .expect("Scene must be a Spatial");
@@ -205,7 +203,9 @@ impl SystemMap {
                                 for argidx in 3..cmd.len() {
                                     argv.push(vval2variant(&cmd.v_(argidx)));
                                 }
-                                n.call(GodotString::from_str(&method), &argv);
+                                unsafe {
+                                    n.call(GodotString::from_str(&method), &argv);
+                                }
                                 godot_print!("CALLED {} . {}", path, method);
                             },
                             None => {
@@ -226,15 +226,14 @@ impl SystemMap {
             vgodot_state.set_key_str(
                 "engine_on_secs",
                 VVal::Int(
-                    unsafe {
-                        ship.get(GodotString::from_str("engine_on_secs")) 
-                            .to_i64() }));
+                    ship.get(
+                        GodotString::from_str("engine_on_secs")).to_i64()))
+                .expect("only 1 user");
             vgodot_state.set_key_str(
                 "speed",
                 VVal::Flt(
-                    unsafe {
-                    ship.get(GodotString::from_str("speed")) 
-                        .to_f64() }));
+                    ship.get(GodotString::from_str("speed")).to_f64()))
+                .expect("only 1 user");
             sscg.call_cb("on_tick", &vec![vgodot_state]);
         }
 
@@ -282,11 +281,10 @@ impl SystemMap {
         if load_entity_state {
             let entities = unsafe { entities.assume_safe() };
             for i in 0..entities.get_child_count() {
-                let ent = unsafe {
-                    entities.get_child(i).unwrap().assume_safe()
-                };
-                println!("LES {}", i);
-                ent.call(GodotString::from_str("on_wlambda_init"), &vec![]);
+                unsafe {
+                    let ent = entities.get_child(i).unwrap().assume_safe();
+                    ent.call(GodotString::from_str("on_wlambda_init"), &vec![]);
+                }
             }
         }
     }

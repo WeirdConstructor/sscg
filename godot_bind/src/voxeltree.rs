@@ -84,6 +84,7 @@ impl<C> Vol<C> where C: VoxelColor {
         }
     }
 
+    #[allow(dead_code)]
     pub fn deserialize(&mut self, data: &[u8]) {
         let size = data[4] as usize;
         let mut dv : std::vec::Vec<Voxel<C>> = std::vec::Vec::new();
@@ -97,6 +98,7 @@ impl<C> Vol<C> where C: VoxelColor {
         self.data = dv;
     }
 
+    #[allow(dead_code)]
     pub fn serialize(&self) -> Vec<u8> {
         let mut out : Vec<u8> = vec![];
         out.resize(5 + self.size.pow(3) as usize, 0);
@@ -212,6 +214,7 @@ impl Pos {
         Self { x: self.x + xo, y: self.y + yo, z: self.z + zo }
     }
 
+    #[allow(dead_code)]
     pub fn mul(&self, m: PInt) -> Self {
         Self { x: self.x * m, y: self.y * m, z: self.z * m }
     }
@@ -272,6 +275,7 @@ pub struct OctNode<C: VoxelColor> {
 }
 
 impl<C> OctNode<C> where C: VoxelColor {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             voxel:  None,
@@ -366,10 +370,12 @@ impl<C> Octree<C> where C: VoxelColor {
         self.vol.set(x, (self.vol.size - 1) as u16 - y, z, v);
     }
 
+    #[allow(dead_code)]
     pub fn set(&mut self, x: PInt, y: PInt, z: PInt, v: Voxel<C>) {
         self.vol.set(x, y, z, v);
     }
 
+    #[allow(dead_code)]
     pub fn fill(&mut self, x: PInt, y: PInt, z: PInt,
                 w: PInt, h: PInt, d: PInt, v: Voxel<C>)
     {
@@ -456,10 +462,12 @@ impl<C> Octree<C> where C: VoxelColor {
         n
     }
 
+    #[allow(dead_code)]
     fn node_at(&self, offs: usize,  x: usize, y: usize, z: usize) -> &OctNode<C> {
         &self.nodes[offs + (z * 2 * 2) + (y * 2) + x]
     }
 
+    #[allow(dead_code)]
     fn node(&mut self, offs: usize, x: usize, y: usize, z: usize) -> &mut OctNode<C> {
         &mut self.nodes[offs + (z * 2 * 2) + (y * 2) + x]
 //        println!("ANOD lvl={}, pos={:?} => {:?}", level, pos, self.nodes);

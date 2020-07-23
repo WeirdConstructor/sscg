@@ -44,6 +44,7 @@ impl TreePainter {
     pub fn clear_cmds(&mut self) { self.cmds.clear(); }
     pub fn ref_cmds(&self) -> &[DrawCmd] { &self.cmds }
 
+    #[allow(dead_code)]
     pub fn consume_cmds(&mut self) -> std::vec::Vec<DrawCmd> {
         std::mem::replace(&mut self.cmds, std::vec::Vec::new())
     }

@@ -1,5 +1,4 @@
 use crate::state::SSCG;
-#[macro_use]
 use gdnative::prelude::*;
 use gdnative::api::*;
 use crate::voxeltree::*;
@@ -88,11 +87,12 @@ impl VoxRendJob {
     }
 }
 
+#[allow(dead_code)]
 struct VoxRendResult {
-    vol_generation: usize,
+    vol_generation:  usize,
     oct_subtree_idx: usize,
-    arrs: Option<RenderedMeshArrays>,
-    empty: bool,
+    arrs:            Option<RenderedMeshArrays>,
+    empty:           bool,
 }
 
 unsafe impl Send for VoxRendResult { }
@@ -199,6 +199,7 @@ impl VoxStruct {
 //        println!("loaded godot objects");
     }
 
+    #[allow(dead_code)]
     fn serialize_vol(&mut self) -> Vec<u8> {
         for z in 0..VOL_SIZE {
             let iz  = z / SUBVOL_SIZE;
@@ -333,7 +334,7 @@ impl VoxStruct {
                 self.cursor[1] as usize,
                 self.cursor[2] as usize);
         let v = ot.read().unwrap().get_inv_y(pos[0], pos[1], pos[2]);
-        let mut dict = Dictionary::new();
+        let dict = Dictionary::new();
         dict.insert(&Variant::from_str("material"), &Variant::from_i64(v.color as i64));
         dict.insert(&Variant::from_str("time"),     &Variant::from_f64(1.2));
         dict.insert(&Variant::from_str("x"),        &Variant::from_i64(self.cursor[0] as i64));
@@ -344,13 +345,13 @@ impl VoxStruct {
 
     #[export]
     fn looking_at(&mut self, owner: &Spatial, x: f64, y: f64, z: f64) -> bool {
-        let mut c = unsafe {
+        let c = unsafe {
             owner.get_child(0)
                  .map(|n| n.assume_safe())
                  .and_then(|n| n.cast::<Spatial>())
                  .unwrap()
         };
-        let mut c2 = unsafe {
+        let c2 = unsafe {
             owner.get_child(1)
                  .map(|n| n.assume_safe())
                  .and_then(|n| n.cast::<Spatial>())
@@ -395,13 +396,13 @@ impl VoxStruct {
 
     #[export]
     fn set_marker_status(&mut self, owner: &Spatial, show: bool, mining: bool) {
-        let mut looking_cursor = unsafe {
+        let looking_cursor = unsafe {
             owner.get_child(0)
                  .map(|n| n.assume_safe())
                  .and_then(|n| n.cast::<Spatial>())
                  .unwrap()
         };
-        let mut mining_cursor = unsafe {
+        let mining_cursor = unsafe {
             owner.get_child(1)
                  .map(|n| n.assume_safe())
                  .and_then(|n| n.cast::<Spatial>())
@@ -438,7 +439,7 @@ impl VoxStruct {
     fn spawn_mine_pop_at_cursor(&mut self, owner: &Spatial, color: u8) {
         use palette::Hsv;
         use palette::rgb::Rgb;
-        let mut part = unsafe {
+        let part = unsafe {
             owner.get_child(2)
                  .map(|n| n.assume_safe())
                  .and_then(|n| n.cast::<Particles>())
@@ -446,7 +447,7 @@ impl VoxStruct {
         };
 
         let mat_ovr = part.material_override().unwrap();
-        let mut m = unsafe {
+        let m = unsafe {
             mat_ovr.assume_safe().cast::<SpatialMaterial>().unwrap()
         };
         let cm = self.color_map;
@@ -476,7 +477,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn mine_status(&mut self, mut owner: &Spatial, started: bool) -> bool {
+    fn mine_status(&mut self, owner: &Spatial, started: bool) -> bool {
         let (ot, pos) =
             self.get_octree_at(
                 self.cursor[0] as usize,
@@ -500,7 +501,7 @@ impl VoxStruct {
     }
 
     #[export]
-    fn mine_at_cursor(&mut self, mut owner: &Spatial) -> bool {
+    fn mine_at_cursor(&mut self, owner: &Spatial) -> bool {
         // Prevent any change of the volume while it's being rerendered.
         if self.workers.queued_job_count() > 0 {
             return false;
@@ -564,19 +565,19 @@ impl VoxStruct {
             }
 
             let _d = std::time::Instant::now();
-            let (mut static_body, shape_owner_idx) =
+            let (static_body, shape_owner_idx) =
                 self.collision_shapes[oct_subtree_idx];
-            let mut static_body = unsafe { static_body.assume_safe() };
-            let mut am = ArrayMesh::new();
-            let mut cvshape = ConcavePolygonShape::new();
+            let static_body = unsafe { static_body.assume_safe() };
+            let am = ArrayMesh::new();
+            let cvshape = ConcavePolygonShape::new();
 
-            let mut ssb = static_body.cast::<StaticBody>().unwrap();
+            let ssb = static_body.cast::<StaticBody>().unwrap();
             ssb.shape_owner_clear_shapes(shape_owner_idx);
 
             let mesh = unsafe { self.meshes[oct_subtree_idx].assume_safe() };
 
             if let Some(rend_arrs) = arrs {
-                rend_arrs.write_to(am, cvshape);
+                rend_arrs.write_to(am.as_ref(), cvshape.as_ref());
 
                 if cvshape.faces().len() > 0 {
                     ssb.shape_owner_add_shape(shape_owner_idx, cvshape);

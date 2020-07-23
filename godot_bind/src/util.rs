@@ -18,10 +18,12 @@ pub fn variant2vval(v: &Variant) -> VVal {
             let dict = v.to_dictionary();
             let keys = dict.keys();
             for i in 0..keys.len() {
-                let val = dict.get_ref(keys.get_ref(i));
-                map.set_key_str(
-                    &keys.get_ref(i).to_string(),
-                    variant2vval(val));
+                unsafe {
+                    let val = dict.get_ref(keys.get_ref(i));
+                    map.set_key_str(
+                        &keys.get_ref(i).to_string(),
+                        variant2vval(val)).expect("only 1 user");
+                }
             }
             map
         },
@@ -29,7 +31,9 @@ pub fn variant2vval(v: &Variant) -> VVal {
             let lst = VVal::vec();
             let arr = v.to_array();
             for i in 0..arr.len() {
-                lst.push(variant2vval(arr.get_ref(i)));
+                unsafe {
+                    lst.push(variant2vval(arr.get_ref(i)));
+                }
             }
             lst
         },
@@ -117,6 +121,7 @@ impl<J,R> WorkerPool<J,R>
 
     pub fn queued_job_count(&self) -> usize { self.queued_job_count }
 
+    #[allow(dead_code)]
     pub fn get_result_blocking(&mut self) -> Option<R> {
         match self.result_rx.recv() {
             Ok(v) => {
@@ -174,7 +179,7 @@ impl<J> WorkerThreadRef<J>
                     },
                 }
             }
-        });
+        }).expect("spawning builder thread successful");
 
         Self {
             job_tx: tx,
@@ -182,6 +187,7 @@ impl<J> WorkerThreadRef<J>
     }
 }
 
+#[allow(dead_code)]
 pub fn write_file_safely(filename: &str, s: &str) -> std::io::Result<()> {
     use std::io::Write;
     let tmpfile = format!("{}~", filename);
@@ -191,6 +197,7 @@ pub fn write_file_safely(filename: &str, s: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn read_vval_json_file(filename: &str) -> VVal {
     use std::io::Read;
     match std::fs::File::open(filename) {
