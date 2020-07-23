@@ -103,7 +103,6 @@ quality/shadows/filter_mode=0
 quality/reflections/texture_array_reflections=false
 quality/reflections/high_quality_ggx=false
 quality/filters/use_nearest_mipmap_filter=true
-quality/voxel_cone_tracing/high_quality=false
 environment/default_clear_color=Color( 0.0862745, 0, 0.0823529, 1 )
 quality/filters/msaa=1
 environment/default_environment="res://default_env.tres"

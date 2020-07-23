@@ -30,7 +30,7 @@ func _input(event):
 	elif event is InputEventMouseMotion:
 		var mp = self.get_local_mouse_position()
 		self.find_node("GUIDrawing").on_mouse_move(
-		    mp.x, mp.y,
+			mp.x, mp.y,
 			Input.is_mouse_button_pressed(BUTTON_LEFT),
 			Input.is_mouse_button_pressed(BUTTON_RIGHT),
 			Input.is_key_pressed(KEY_CONTROL),
