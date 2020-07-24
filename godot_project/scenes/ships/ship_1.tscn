@@ -112,17 +112,16 @@ tracks/1/keys = {
 "values": [ false ]
 }
 
-[node name="Ship" index="0" instance=ExtResource( 1 )]
+[node name="Ship" instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0308598 )
 script = ExtResource( 2 )
 
 [node name="Ship" parent="." index="0"]
-editor/display_folded = true
 transform = Transform( 0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, -0.121388, 0.256606 )
 use_in_baked_light = true
 
 [node name="BackEngineParticles" type="Particles" parent="Ship" index="0"]
-transform = Transform( -20, 0, -3.01992e-06, 0, 20, 0, 3.01992e-06, 0, -20, 0, -0.0425324, -4.45109 )
+transform = Transform( -3.25841e-06, 0, 20, 0, 20, 0, -20, 0, -3.25841e-06, 0, -0.0425324, -4.45109 )
 cast_shadow = 0
 emitting = false
 amount = 23
@@ -145,7 +144,6 @@ fov = 81.7
 far = 2000.0
 
 [node name="Area" type="Area" parent="." index="2"]
-editor/display_folded = true
 
 [node name="CollisionShape" type="CollisionShape" parent="Area" index="0"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.103383 )
@@ -162,7 +160,6 @@ process_material = SubResource( 5 )
 draw_pass_1 = SubResource( 7 )
 
 [node name="ShipSounds" type="AnimationPlayer" parent="." index="4"]
-editor/display_folded = true
 anims/Fadein = SubResource( 8 )
 anims/Fadeout = SubResource( 9 )
 

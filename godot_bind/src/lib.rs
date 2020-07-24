@@ -160,8 +160,8 @@ fn draw_cmds(xxo: i32, yyo: i32,
                          *h as f32),
                     c2c(*color),
                     true,
-                    0.0,
-                    true);
+                    1.0,
+                    false);
             },
             _ => (),
         }
