@@ -7,7 +7,7 @@ func set_hud_info(text):
 	
 func set_cargo_meter(fill_levels):
 	print("FILL:", fill_levels)
-	self.get_node("CargoMeter/CargoKG").value = fill_levels[0]
+	self.get_node("CargoMeter/CargoBar").value = fill_levels[0]
 #	self.get_node("CargoMeter/CargoM3").value = fill_levels[1]
 	
 func open_window():

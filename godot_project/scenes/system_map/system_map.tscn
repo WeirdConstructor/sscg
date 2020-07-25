@@ -246,12 +246,12 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -362.5
-margin_top = -42.0
-margin_right = -277.5
-margin_bottom = 42.0
+margin_left = -240.0
+margin_top = 40.0
+margin_right = -155.0
+margin_bottom = 124.0
 
-[node name="CargoKG" type="TextureProgress" parent="GUI/CargoMeter"]
+[node name="CargoBar" type="TextureProgress" parent="GUI/CargoMeter"]
 margin_left = 12.5
 margin_top = 13.0
 margin_right = 76.5
@@ -263,6 +263,7 @@ texture_progress = ExtResource( 16 )
 fill_mode = 3
 
 [node name="CargoM3" type="TextureProgress" parent="GUI/CargoMeter"]
+visible = false
 margin_left = 37.5
 margin_top = 13.0
 margin_right = 101.5
@@ -273,21 +274,22 @@ texture_over = ExtResource( 18 )
 texture_progress = ExtResource( 19 )
 fill_mode = 3
 
-[node name="KGLbl" type="Label" parent="GUI/CargoMeter"]
-margin_left = 19.2301
+[node name="CargoLbl" type="Label" parent="GUI/CargoMeter"]
+margin_left = 9.2301
 margin_top = -2.56125
-margin_right = 58.2301
+margin_right = 88.2301
 margin_bottom = 26.4388
 rect_scale = Vector2( 0.5, 0.5 )
 custom_fonts/font = SubResource( 13 )
 custom_colors/font_color = Color( 1, 1, 1, 0.545098 )
-text = "kg"
+text = "Cargo"
 align = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="M3Lbl" type="Label" parent="GUI/CargoMeter"]
+visible = false
 margin_left = 44.4679
 margin_top = -2.84451
 margin_right = 83.4679
